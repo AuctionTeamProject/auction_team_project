@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sparta.auction_team_project.common.entity.BaseEntity;
+import sparta.auction_team_project.domain.user.enums.MemberShip;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 
 import java.math.BigInteger;
@@ -17,10 +18,13 @@ public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private BigInteger id;
+    private Long id;
 
     @Column(unique = true)
     private String nickname;
+
+    @Column(unique = true)
+    private String name;
 
     @Column(unique = true) @Email
     private String email;
@@ -35,10 +39,18 @@ public class User extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private UserRole userRole;
 
-    private User(String email, UserRole userRole, String nickname) {
-        this.email = email;
-        this.userRole = userRole;
+    @Enumerated(value = EnumType.STRING)
+    private MemberShip memberShip;
+
+    public User(String nickname, String name, String email, String password, String phone, UserRole userRole) {
         this.nickname = nickname;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.phone = phone;
+        this.point = BigInteger.ZERO;
+        this.userRole = userRole;
+        this.memberShip = MemberShip.NORMAL;
     }
 
 //    public static User fromAuthUser(AuthUser authUser) {
