@@ -33,6 +33,10 @@ public class UserController {
     }
 
     //닉네임 변경
-
+    @PatchMapping("/me")
+    public BaseResponse<Void> changeNickname(@AuthenticationPrincipal AuthUser authUser, @Valid @RequestBody UserChangeNicknameRequest userChangeNicknameRequest) {
+        userService.changeNickname(authUser.getId(), userChangeNicknameRequest);
+        return BaseResponse.success("200", "닉네임 변경 성공", null);
+    }
 
 }
