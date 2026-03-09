@@ -27,13 +27,14 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
 
-        //바꿀 비밀번호와 현재 비밀번호가 일치
-        if (passwordEncoder.matches(userChangePasswordRequest.getNewPassword(), user.getPassword())) {
+        //현재 비밀번호가 틀림
+        if (!passwordEncoder.matches(userChangePasswordRequest.getOldPassword(), user.getPassword())) {
             throw new ServiceErrorException(ErrorEnum.ERR_INVALID_PASSWORD);
         }
 
-        //현재 비밀번호가 틀림
-        if (!passwordEncoder.matches(userChangePasswordRequest.getOldPassword(), user.getPassword())) {
+        //바꿀 비밀번호와 현재 비밀번호가 일치
+        //비밀번호 오류의 경우 보안상 자세한 오류메시지를 전달하지 않음
+        if (passwordEncoder.matches(userChangePasswordRequest.getNewPassword(), user.getPassword())) {
             throw new ServiceErrorException(ErrorEnum.ERR_INVALID_PASSWORD);
         }
 
