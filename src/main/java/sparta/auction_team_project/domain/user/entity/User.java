@@ -34,7 +34,7 @@ public class User extends BaseEntity {
     @Column(unique = true, length = 11)
     private String phone;
 
-    private BigInteger point;
+    private Long point;
 
     @Enumerated(value = EnumType.STRING)
     private UserRole userRole;
@@ -48,14 +48,10 @@ public class User extends BaseEntity {
         this.email = email;
         this.password = password;
         this.phone = phone;
-        this.point = BigInteger.ZERO;
+        this.point = 0L;
         this.userRole = userRole;
         this.memberShip = MemberShip.NORMAL;
     }
-
-//    public static User fromAuthUser(AuthUser authUser) {
-//        return new User(authUser.getId(), authUser.getEmail(), authUser.getUserRole(), authUser.getNickname());
-//    }
 
     public void changePassword(String password) {
         this.password = password;
@@ -63,5 +59,13 @@ public class User extends BaseEntity {
 
     public void updateRole(UserRole userRole) {
         this.userRole = userRole;
+    }
+
+    public void plusPoint(Long point) {
+        this.point += point;
+    }
+
+    public void minusPoint(Long point) {
+        this.point -= point;
     }
 }

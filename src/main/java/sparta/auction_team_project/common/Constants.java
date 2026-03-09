@@ -7,6 +7,7 @@ public class Constants {
     public static final String MSG_DUPLICATE_EMAIL = "중복된 이메일 입니다";
     public static final String MSG_DUPLICATE_NICKNAME = "중복된 닉네임 입니다";
     public static final String MSG_DUPLICATE_PHONE = "중복된 번호 입니다";
+    public static final String MSG_INVALID_PASSWORD = "비밀번호가 잘못되었습니다";
     public static final String MSG_NOT_MATCH_LOGIN = "아이디 또는 비밀번호가 일치하지 않습니다";
     public static final String MSG_NOT_MATCH_ENUM = "Enum 가 일치하지 않습니다";
     public static final String MSG_INVALID_TOKEN = "토큰이 유효하지 않습니다.";
