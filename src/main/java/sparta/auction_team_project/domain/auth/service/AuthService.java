@@ -36,7 +36,7 @@ public class AuthService {
             throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_NICKNAME);
         }
 
-        if (userRepository.existsByNickname(signupRequest.getPhone())) {
+        if (userRepository.existsByPhone(signupRequest.getPhone())) {
             throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE);
         }
 

@@ -23,7 +23,6 @@ public class User extends BaseEntity {
     @Column(unique = true)
     private String nickname;
 
-    @Column(unique = true)
     private String name;
 
     @Column(unique = true) @Email

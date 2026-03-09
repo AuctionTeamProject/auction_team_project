@@ -2,6 +2,7 @@ package sparta.auction_team_project.domain.user.repository;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.data.jpa.repository.JpaRepository;
 import sparta.auction_team_project.domain.user.entity.User;
 
@@ -14,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, BigInteger> {
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    boolean existsByPhone(String phone);
 }

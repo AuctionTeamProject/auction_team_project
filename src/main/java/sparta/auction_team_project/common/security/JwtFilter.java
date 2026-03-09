@@ -52,6 +52,10 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             // JWT 유효성 검사와 claims 추출
             Claims claims = jwtUtil.extractClaims(jwt);
+            if (claims == null) {
+                httpResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 JWT 토큰입니다.");
+                return;
+            }
             String email = claims.get("email", String.class);
 
             CustomUserDetails userDetails =
@@ -60,8 +64,7 @@ public class JwtFilter extends OncePerRequestFilter {
             AuthUser authUser = new AuthUser(
                     Long.parseLong(claims.getSubject()),
                     claims.get("email", String.class),
-                    UserRole.valueOf(claims.get("userRole", String.class)),
-                    claims.get("nickname", String.class)
+                    UserRole.valueOf(claims.get("userRole", String.class))
             );
 
             UsernamePasswordAuthenticationToken authentication =
@@ -73,11 +76,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-
-            if (claims == null) {
-                httpResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 JWT 토큰입니다.");
-                return;
-            }
 
             UserRole userRole = UserRole.valueOf(claims.get("userRole", String.class));
 
