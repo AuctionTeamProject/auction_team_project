@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Table(name = "coupons")
@@ -18,6 +20,10 @@ public class Coupon {
     private CouponStatus status;
 
     private RewardType rewardType;
+
+    private LocalDateTime issuedAt;
+
+    private LocalDateTime usedAt;
 
     private Long userId;
 
