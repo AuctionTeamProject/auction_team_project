@@ -1,17 +1,20 @@
 package sparta.auction_team_project.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
+import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -35,4 +38,9 @@ public class UserService {
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
     }
 
+    public UserGetResponse getUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
+        return new UserGetResponse(user.getNickname(), user.getName(), user.getEmail(), user.getPhone(), user.getPoint(), user.getGrade());
+
+    }
 }
