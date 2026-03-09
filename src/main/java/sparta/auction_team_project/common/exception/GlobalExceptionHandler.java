@@ -57,6 +57,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Void>> handleCriticalErrorException(Exception e) {
         log.error("서버 에러 발생", e);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.fail(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), MSG_SERVER_ERROR_OCCUR, null));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.fail(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), MSG_SERVER_ERROR_OCCUR, null));
     }
 }

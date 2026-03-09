@@ -20,9 +20,10 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(length = 8, unique = true)
     private String nickname;
 
+    @Column(length = 8)
     private String name;
 
     @Column(unique = true) @Email
@@ -30,7 +31,7 @@ public class User extends BaseEntity {
 
     private String password;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 11)
     private String phone;
 
     private BigInteger point;
