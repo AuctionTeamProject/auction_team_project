@@ -3,6 +3,7 @@ package sparta.auction_team_project.domain.auction.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +28,7 @@ public class AuctionController {
      - 정은식
      */
     @PostMapping
-    public BaseResponse<AuctionCreateResponse> createAuction(
+    public ResponseEntity<BaseResponse<AuctionCreateResponse>> createAuction(
             @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody AuctionCreateRequest request
     ) {
@@ -35,6 +36,7 @@ public class AuctionController {
         AuctionCreateResponse response =
                 auctionService.createAuction(authUser.getEmail(), request);
 
-        return BaseResponse.success("201", "경매 상품 등록 성공", response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.success("201", "경매 상품 등록 성공", response));
     }
 }
