@@ -1,4 +1,4 @@
-package sparta.auction_team_project.common;
+package sparta.auction_team_project.common.constants;
 
 public class Constants {
 

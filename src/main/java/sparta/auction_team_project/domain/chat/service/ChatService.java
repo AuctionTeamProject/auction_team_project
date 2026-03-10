@@ -8,4 +8,5 @@ import sparta.auction_team_project.domain.chat.repository.ChatRepository;
 @RequiredArgsConstructor
 public class ChatService {
     private final ChatRepository chatRepository;
+
 }
