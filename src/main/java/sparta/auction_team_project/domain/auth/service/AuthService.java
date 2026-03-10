@@ -45,7 +45,7 @@ public class AuthService {
 
         //String nickname, String email, String password, String phone, UserRole userRole
         User newUser = new User(
-                signupRequest.getNickname(), signupRequest.getName(), signupRequest.getEmail(), encodedPassword, signupRequest.getPhone(), UserRole.USER
+                signupRequest.getNickname(), signupRequest.getName(), signupRequest.getEmail(), encodedPassword, signupRequest.getPhone(), UserRole.ROLE_USER
         );
         User savedUser = userRepository.save(newUser);
 

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import sparta.auction_team_project.common.response.BaseResponse;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType("application/json;charset=UTF-8");
 
 
-        ErrorResponseDto error = new ErrorResponseDto("ACCESS_DENIED", "접근 권한이 없습니다.");
+        BaseResponse<Void> error = BaseResponse.fail("403", "접근 권한이 없습니다.", null);
         response.getWriter().write(objectMapper.writeValueAsString(error));
     }
 }
