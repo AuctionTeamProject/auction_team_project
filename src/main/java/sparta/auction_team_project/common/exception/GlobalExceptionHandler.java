@@ -12,7 +12,7 @@ import sparta.auction_team_project.common.response.BaseResponse;
 
 import javax.naming.AuthenticationException;
 
-import static sparta.auction_team_project.common.Constants.*;
+import static sparta.auction_team_project.common.constants.Constants.*;
 
 @Slf4j
 @RestControllerAdvice

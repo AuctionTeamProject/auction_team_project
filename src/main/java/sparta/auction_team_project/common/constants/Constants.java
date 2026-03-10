@@ -1,4 +1,4 @@
-package sparta.auction_team_project.common;
+package sparta.auction_team_project.common.constants;
 
 public class Constants {
 
@@ -12,6 +12,15 @@ public class Constants {
     public static final String MSG_NOT_MATCH_ENUM = "Enum 가 일치하지 않습니다";
     public static final String MSG_INVALID_TOKEN = "토큰이 유효하지 않습니다.";
     // endregion
+
+    // 경매 관련 메세지
+    public static final String MSG_INVALID_MINIMUM_BID = "최소 입찰 단위는 1000원 이상이어야 합니다";
+    public static final String MSG_INVALID_START_PRICE = "시작 가격은 최소 입찰 단위보다 크거나 같아야 합니다";
+    public static final String MSG_INVALID_AUCTION_TIME = "경매 종료 시간은 시작 시간보다 최소 1시간 이후여야 합니다";
+    public static final String MSG_ONLY_SELLER_CAN_CREATE_AUCTION = "SELLER 회원만 경매를 등록할 수 있습니다";
+    public static final String MSG_INVALID_AUCTION_START_TIME = "경매 시작 시간은 현재 시간 이후여야 합니다";
+
+
 
     // region 서버 관련 메세지
     public static final String MSG_NOT_VALID_VALUE = "유효하지 않은 값이 입력되었습니다";
