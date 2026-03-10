@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import sparta.auction_team_project.common.response.BaseResponse;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setContentType("application/json;charset=UTF-8");
 
 
-        ErrorResponseDto error = new ErrorResponseDto("AUTH_FAILED", "인증 정보가 유효하지 않습니다.");
+        BaseResponse<Void> error = BaseResponse.fail("401", "인증 정보가 유효하지 않습니다.", null);
         response.getWriter().write(objectMapper.writeValueAsString(error));
     }
 }

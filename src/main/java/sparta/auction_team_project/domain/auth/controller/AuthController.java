@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import sparta.auction_team_project.common.response.BaseResponse;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
@@ -20,12 +21,13 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public SignupResponse signup(@Valid @RequestBody SignupRequest signupRequest) {
-        return authService.signup(signupRequest);
+    public BaseResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
+        return BaseResponse.success("200", "회원가입 성공", authService.signup(signupRequest));
+
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
-        return authService.signin(loginRequest);
+    public BaseResponse<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+        return BaseResponse.success("200", "로그인 성공", authService.signin(loginRequest));
     }
 }

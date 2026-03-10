@@ -5,10 +5,8 @@ import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sparta.auction_team_project.common.entity.BaseEntity;
-import sparta.auction_team_project.domain.user.enums.MemberShip;
+import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
 import sparta.auction_team_project.domain.user.enums.UserRole;
-
-import java.math.BigInteger;
 
 @Getter
 @Entity
@@ -40,7 +38,7 @@ public class User extends BaseEntity {
     private UserRole userRole;
 
     @Enumerated(value = EnumType.STRING)
-    private MemberShip memberShip;
+    private MembershipEnum grade;
 
     public User(String nickname, String name, String email, String password, String phone, UserRole userRole) {
         this.nickname = nickname;
@@ -50,11 +48,15 @@ public class User extends BaseEntity {
         this.phone = phone;
         this.point = 0L;
         this.userRole = userRole;
-        this.memberShip = MemberShip.NORMAL;
+        this.grade = MembershipEnum.NORMAL;
     }
 
     public void changePassword(String password) {
         this.password = password;
+    }
+
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public void updateRole(UserRole userRole) {
