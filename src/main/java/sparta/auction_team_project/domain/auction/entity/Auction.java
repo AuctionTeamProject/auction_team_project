@@ -26,7 +26,7 @@ public class Auction extends BaseEntity {
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    // 임시 URL S3 적용하겠슴다!!!!!!!!!!!!!!!!!!
+    // S3url
     @Column(name = "image_url")
     private String imageUrl;
 
