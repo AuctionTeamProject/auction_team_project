@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 //        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/**", "/sub/**", "/pub/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(jwtUtil, cuds),
                         UsernamePasswordAuthenticationFilter.class)
