@@ -42,4 +42,7 @@ public class Constants {
 
     //동시성 관련 메시지
     public static final String MSG_CONCURRENCY_OCCURRED = "동시에 처리 중인 요청이 있어 작업을 수행할 수 없습니다. 잠시 후 다시 시도해주세요";
+
+    // 이벤트 관련 메세지
+    public static final String MSG_INVALID_EVENT_PERIOD = "이벤트 종료 시간은 시작 시간보다 늦어야 합니다.";
 }
