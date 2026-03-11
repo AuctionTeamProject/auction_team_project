@@ -39,7 +39,10 @@ public enum ErrorEnum {
     ERR_BID_AUTO_MAX_PRICE_EXCEEDED(HttpStatus.BAD_REQUEST, MSG_BID_AUTO_MAX_PRICE_EXCEEDED),
 
     //동시성 관련
-    ERR_CONCURRENCY_OCCURRED(HttpStatus.CONFLICT, MSG_CONCURRENCY_OCCURRED);
+    ERR_CONCURRENCY_OCCURRED(HttpStatus.CONFLICT, MSG_CONCURRENCY_OCCURRED),
+
+    // 이벤트 관련
+    ERR_INVALID_EVENT_PERIOD(HttpStatus.BAD_REQUEST, MSG_INVALID_EVENT_PERIOD);
 
     private final HttpStatus status;
     private final String message;

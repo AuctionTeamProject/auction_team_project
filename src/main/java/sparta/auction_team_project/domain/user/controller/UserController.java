@@ -2,6 +2,7 @@ package sparta.auction_team_project.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -21,22 +22,22 @@ public class UserController {
 
     //마이페이지 조회
     @GetMapping("/me")
-    public BaseResponse<UserGetResponse> getUser(@AuthenticationPrincipal AuthUser authUser) {
-        return BaseResponse.success("200", "마이페이지 조회 성공", userService.getUser(authUser.getId()));
+    public ResponseEntity<BaseResponse<UserGetResponse>> getUser(@AuthenticationPrincipal AuthUser authUser) {
+        return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "마이페이지 조회 성공", userService.getUser(authUser.getId())));
     }
 
     //비밀번호 변경
     @PatchMapping("/me/password")
-    public BaseResponse<Void> changePassword(@AuthenticationPrincipal AuthUser authUser, @Valid @RequestBody UserChangePasswordRequest userChangePasswordRequest) {
+    public ResponseEntity<BaseResponse<Void>> changePassword(@AuthenticationPrincipal AuthUser authUser, @Valid @RequestBody UserChangePasswordRequest userChangePasswordRequest) {
         userService.changePassword(authUser.getId(), userChangePasswordRequest);
-        return BaseResponse.success("200", "비밀번호 변경 성공", null);
+        return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "비밀번호 변경 성공", null));
     }
 
     //닉네임 변경
     @PatchMapping("/me")
-    public BaseResponse<Void> changeNickname(@AuthenticationPrincipal AuthUser authUser, @Valid @RequestBody UserChangeNicknameRequest userChangeNicknameRequest) {
+    public ResponseEntity<BaseResponse<Void>> changeNickname(@AuthenticationPrincipal AuthUser authUser, @Valid @RequestBody UserChangeNicknameRequest userChangeNicknameRequest) {
         userService.changeNickname(authUser.getId(), userChangeNicknameRequest);
-        return BaseResponse.success("200", "닉네임 변경 성공", null);
+        return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "닉네임 변경 성공", null));
     }
 
 }

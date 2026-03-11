@@ -14,7 +14,7 @@ public enum UserRole {
 
     private final String userRole;
 
-    //String role 을 enum UserRole로 바꿈
+    //String role 을 enum UserRole로 바꿈 ROLE_USER 형식으로 작성
     public static UserRole of(String role) {
         return Arrays.stream(UserRole.values())
                 .filter(r -> r.name().equalsIgnoreCase(role))

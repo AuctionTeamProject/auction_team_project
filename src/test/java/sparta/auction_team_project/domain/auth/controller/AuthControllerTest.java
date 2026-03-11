@@ -76,12 +76,13 @@ class AuthControllerTest {
                 "email": "email@test.com",
                 "password": "password123!",
                 "phone": "01012345678",
-                "userRole": "USER"
+                "userRole": "ROLE_USER"
             }
             """;
 
         given(authService.signup(any()))
                 .willThrow(new ServiceErrorException(ErrorEnum.ERR_NOT_MATCH_ENUM));
+
         //when&then
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
