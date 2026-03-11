@@ -8,6 +8,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import sparta.auction_team_project.common.exception.ErrorEnum;
+import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
@@ -44,7 +46,7 @@ class AuthControllerTest {
                 "email@test.com",
                 "password123!",
                 "01012345678",
-                UserRole.ROLE_USER
+                "ROLE_USER"
 
         );
 
@@ -78,13 +80,15 @@ class AuthControllerTest {
             }
             """;
 
+        given(authService.signup(any()))
+                .willThrow(new ServiceErrorException(ErrorEnum.ERR_NOT_MATCH_ENUM));
         //when&then
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidRequest))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false)) // baseResponse의 success 필드 검증
-                .andExpect(jsonPath("$.message").value("유효하지 않은 값이 입력되었습니다")); // baseResponse의 data 의 nickname 필드 확인
+                .andExpect(jsonPath("$.message").value("Enum 가 일치하지 않습니다")); // baseResponse의 data 의 nickname 필드 확인
 
     }
 

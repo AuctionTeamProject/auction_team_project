@@ -37,5 +37,5 @@ public class SignupRequest {
     private String phone;
 
     @NotNull
-    private UserRole userRole;
+    private String userRole;
 }

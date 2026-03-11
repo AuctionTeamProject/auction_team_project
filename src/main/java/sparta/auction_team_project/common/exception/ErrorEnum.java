@@ -3,7 +3,7 @@ package sparta.auction_team_project.common.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-import static sparta.auction_team_project.common.Constants.*;
+import static sparta.auction_team_project.common.constants.Constants.*;
 
 @Getter
 public enum ErrorEnum {
