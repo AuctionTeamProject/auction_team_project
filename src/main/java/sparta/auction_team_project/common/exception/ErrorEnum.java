@@ -26,17 +26,18 @@ public enum ErrorEnum {
     ERR_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, MSG_INVALID_TOKEN),
     // endregion
 
-    // region 입찰 관련
-    ERR_BID_ALREADY_TOP_BIDDER(HttpStatus.BAD_REQUEST, "현재 최고 입찰자는 추가 입찰이 불가합니다."),
-    ERR_BID_PRICE_TOO_LOW(HttpStatus.BAD_REQUEST, "현재 입찰가보다 높은 금액을 입찰해야 합니다."),
-    ERR_BID_INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "잔액이 부족합니다."),
-    ERR_BID_AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 경매입니다."),
-    ERR_BID_AUCTION_NOT_STARTED(HttpStatus.BAD_REQUEST, "아직 시작되지 않은 경매입니다."),
-    ERR_BID_AUCTION_CLOSED(HttpStatus.BAD_REQUEST, "종료된 경매입니다."),
-    ERR_BID_AUTO_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "종료 5분 전부터는 자동 입찰이 불가합니다."),
-    ERR_BID_AUTO_MAX_PRICE_EXCEEDED(HttpStatus.BAD_REQUEST, "자동 입찰 금액이 최대 입찰 금액을 초과합니다."),
-    ERR_BID_CONCURRENCY(HttpStatus.CONFLICT, "입찰 처리 중 충돌이 발생했습니다. 다시 시도해 주세요.");
-    // endregion
+    // 입찰 관련
+    ERR_BID_ALREADY_TOP_BIDDER(HttpStatus.BAD_REQUEST, MSG_BID_ALREADY_TOP_BIDDER),
+    ERR_BID_PRICE_TOO_LOW(HttpStatus.BAD_REQUEST, MSG_BID_PRICE_TOO_LOW),
+    ERR_BID_INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, MSG_BID_INSUFFICIENT_BALANCE),
+    ERR_BID_AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, MSG_BID_AUCTION_NOT_FOUND),
+    ERR_BID_AUCTION_NOT_STARTED(HttpStatus.BAD_REQUEST, MSG_BID_AUCTION_NOT_STARTED),
+    ERR_BID_AUCTION_CLOSED(HttpStatus.BAD_REQUEST, MSG_BID_AUCTION_CLOSED),
+    ERR_BID_AUTO_NOT_ALLOWED(HttpStatus.BAD_REQUEST, MSG_BID_AUTO_NOT_ALLOWED),
+    ERR_BID_AUTO_MAX_PRICE_EXCEEDED(HttpStatus.BAD_REQUEST, MSG_BID_AUTO_MAX_PRICE_EXCEEDED),
+
+    //동시성 관련
+    ERR_CONCURRENCY_OCCURRED(HttpStatus.CONFLICT, MSG_CONCURRENCY_OCCURRED);
 
     private final HttpStatus status;
     private final String message;
