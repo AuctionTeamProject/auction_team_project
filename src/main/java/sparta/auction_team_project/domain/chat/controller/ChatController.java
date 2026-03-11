@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import sparta.auction_team_project.common.interceptor.AuthenticatedUser;
+import sparta.auction_team_project.common.redis.ChatRedisPublisher;
+import sparta.auction_team_project.common.redis.RedisChat;
 import sparta.auction_team_project.domain.chat.dto.request.ChatRequest;
 import sparta.auction_team_project.domain.chat.dto.response.ChatResponse;
 import sparta.auction_team_project.domain.chat.service.ChatService;
@@ -22,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class ChatController {
 
+    private final ChatRedisPublisher chatRedisPublisher;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ChatService chatService;
 
@@ -30,8 +33,18 @@ public class ChatController {
 
         User sender = AuthenticatedUser.fromPrincipal(principal);
 
-        ChatResponse chatResponse = chatService.send(sender.getId(), sender.getNickname(), request);
+        ChatResponse chatResponse = chatService.save(sender.getId(), sender.getNickname(), request);
 
-        simpMessagingTemplate.convertAndSend("/sub/chat/" + request.getChatRoomId() , chatResponse);
+        RedisChat redisChat = new RedisChat(
+                chatResponse.getRoomId(),
+                chatResponse.getUserId(),
+                chatResponse.getUserName(),
+                chatResponse.getMessage(),
+                chatResponse.getCreatedAt(),
+                chatResponse.getModifiedAt()
+        );
+
+        chatRedisPublisher.publish(redisChat.getRoomId(), redisChat);
+
     }
 }

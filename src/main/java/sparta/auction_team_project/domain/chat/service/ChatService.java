@@ -21,7 +21,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final ChatRoomRepository chatRoomRepository;
 
-    public ChatResponse send(Long senderId, String nickname, ChatRequest request) {
+    public ChatResponse save(Long senderId, String nickname, ChatRequest request) {
         ChatRoom chatRoom = chatRoomRepository.findById(request.getChatRoomId())
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_CHATROOM));
         Chat chat = new Chat(chatRoom.getId(), senderId, request.getMessage());
@@ -30,6 +30,7 @@ public class ChatService {
         return new ChatResponse(
                 savedChat.getId(),
                 savedChat.getMessage(),
+                savedChat.getChatRoomId(),
                 savedChat.getUserId(),
                 nickname,
                 savedChat.getCreatedAt(),

@@ -20,7 +20,8 @@ public enum ErrorEnum {
     // endregion
 
     // region 채팅 관련
-    ERR_NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, MSG_NOT_FOUND_CHATROOM);
+    ERR_NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, MSG_NOT_FOUND_CHATROOM),
+    ERR_NOT_FOUND_MESSAGE(HttpStatus.NOT_FOUND, MSG_NOT_FOUND_MESSAGE);
     // endregion
 
     private final HttpStatus status;
