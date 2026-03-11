@@ -1,11 +1,9 @@
 package sparta.auction_team_project.domain.auth.dto.request;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import sparta.auction_team_project.domain.user.enums.UserRole;
 
 @Getter
 @NoArgsConstructor
@@ -36,6 +34,6 @@ public class SignupRequest {
     @Pattern(regexp = "^\\d{11}$", message = "전화번호는 - 없이 숫자 11자리로 입력해주세요.")
     private String phone;
 
-    @NotNull
-    private UserRole userRole;
+    @NotBlank(message = "역할을/를 입력해주세요.")
+    private String userRole;
 }

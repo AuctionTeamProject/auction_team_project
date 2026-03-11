@@ -1,7 +1,7 @@
 package sparta.auction_team_project.domain.event.entity;
 
-public enum eventStatus {
+public enum EventStatus {
 
-    YES,
-    NO
+    OPEN,
+    CLOSED
 }
