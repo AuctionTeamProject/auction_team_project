@@ -95,4 +95,9 @@ public class Auction extends BaseEntity {
 
         return auction;
     }
+
+    // 관리자 승인
+    public void approve() {
+        this.status = AuctionStatus.READY;
+    }
 }

@@ -21,6 +21,8 @@ public class Constants {
     public static final String MSG_INVALID_AUCTION_START_TIME = "경매 시작 시간은 현재 시간 이후여야 합니다";
     public static final String MSG_FILE_UPLOAD_FAILED = "파일 업로드에 실패했습니다.";
     public static final String MSG_FILE_DOWNLOAD_FAILED = "파일 다운로드 URL 생성에 실패했습니다.";
+    public static final String MSG_AUCTION_NOT_FOUND = "경매를 찾을 수 없습니다.";
+    public static final String MSG_INVALID_AUCTION_STATUS = "경매 상태가 올바르지 않습니다.";
 
 
 

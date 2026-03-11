@@ -6,8 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
+import sparta.auction_team_project.domain.auction.dto.response.AuctionApproveResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
 import sparta.auction_team_project.domain.auction.entity.Auction;
+import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
 import sparta.auction_team_project.domain.user.entity.User;
@@ -67,5 +69,23 @@ public class AuctionService {
         Auction savedAuction = auctionRepository.save(auction);
 
         return new AuctionCreateResponse(savedAuction.getId());
+    }
+
+    // 관리자 승인
+    @Transactional
+    public AuctionApproveResponse approveAuction(Long auctionId) {
+
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND));
+
+        // PENDING 상태일때만 승인 가능
+        if (auction.getStatus() != AuctionStatus.PENDING) {
+            throw new ServiceErrorException(ErrorEnum.ERR_INVALID_AUCTION_STATUS);
+        }
+
+        // 상태 변경
+        auction.approve();
+
+        return new AuctionApproveResponse(auction.getId(), auction.getStatus());
     }
 }
