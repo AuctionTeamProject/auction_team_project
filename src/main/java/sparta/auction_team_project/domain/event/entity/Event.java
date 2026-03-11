@@ -18,17 +18,28 @@ public class Event extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String eventName;
 
+    @Column(nullable = false)
     private String eventDescription;
 
-    private Integer quantity;
+    @Column(nullable = false)
+    private Integer totalQuantity;
 
+    @Column(nullable = false)
+    private Integer issuedQuantity;
+
+    @Column(nullable = false)
     private LocalDateTime startAt;
 
+    @Column(nullable = false)
     private LocalDateTime endAt;
 
-    private eventStatus status;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private EventStatus status;
 
+    @Column(nullable = false)
     private Long adminId;
 }
