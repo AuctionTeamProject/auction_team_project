@@ -1,9 +1,10 @@
 package sparta.auction_team_project.domain.auction.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import sparta.auction_team_project.common.entity.BaseEntity;
 
 import java.time.LocalDateTime;
 
@@ -11,13 +12,13 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "auctions")
-public class Auction {
+public class Auction extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 경매 개최자
+    // 판매자 ID
     @Column(name = "seller_id", nullable = false)
     private Long sellerId;
 
@@ -25,16 +26,22 @@ public class Auction {
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    // 이미지 URL
+    // S3url
     @Column(name = "image_url")
     private String imageUrl;
 
+    // 조회수
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount = 0L;
+
     // 경매 상태
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AuctionStatus status;
 
     // 경매 카테고리
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private AuctionCategory category;
 
     // 시작 가격
@@ -45,7 +52,7 @@ public class Auction {
     @Column(name = "minimum_bid", nullable = false)
     private Long minimumBid;
 
-    // 낙찰자
+    // 낙찰자 ID
     @Column(name = "winner_id")
     private Long winnerId;
 
@@ -53,20 +60,39 @@ public class Auction {
     @Column(name = "final_price")
     private Long finalPrice;
 
-    // 경매 시작시간
+    // 경매 시작 시간
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
 
-    // 경매 종료시간
+    // 경매 종료 시간
     @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
 
-    // 생성일
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    // 경매 상품 등록
+    public static Auction createAuction(
+            Long sellerId,
+            String productName,
+            String imageUrl,
+            AuctionCategory category,
+            Long startPrice,
+            Long minimumBid,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        Auction auction = new Auction();
 
-    // 수정일
-    @UpdateTimestamp
-    private LocalDateTime modifiedAt;
+        auction.sellerId = sellerId;
+        auction.productName = productName;
+        auction.imageUrl = imageUrl;
+        auction.category = category;
+        auction.startPrice = startPrice;
+        auction.minimumBid = minimumBid;
+        auction.startAt = startAt;
+        auction.endAt = endAt;
 
+        auction.status = AuctionStatus.PENDING; // PENDING 승인대기
+        auction.viewCount = 0L; // 조회수 0
+
+        return auction;
+    }
 }

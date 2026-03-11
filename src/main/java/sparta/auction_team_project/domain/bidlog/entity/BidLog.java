@@ -1,14 +1,17 @@
 package sparta.auction_team_project.domain.bidlog.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import sparta.auction_team_project.domain.bid.entity.BidStatus;
+import lombok.NoArgsConstructor;
+import sparta.auction_team_project.common.entity.BaseEntity;
 
 @Getter
 @Entity
 @Table(name = "bidlogs")
-public class BidLog {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class BidLog extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
