@@ -27,4 +27,17 @@ public class Constants {
     public static final String MSG_DATA_INSERT_FAIL = "데이터 등록에 실패하였습니다";
     public static final String MSG_SERVER_ERROR_OCCUR = "서버 오류가 발생하였습니다, 잠시 후 다시 시도 바랍니다";
     // endregion
+
+    // 입찰 관련 메시지
+    public static final String MSG_BID_ALREADY_TOP_BIDDER = "현재 최고 입찰자는 추가 입찰이 불가합니다.";
+    public static final String MSG_BID_PRICE_TOO_LOW = "현재 입찰가보다 높은 금액을 입찰해야 합니다.";
+    public static final String MSG_BID_INSUFFICIENT_BALANCE = "잔액이 부족합니다.";
+    public static final String MSG_BID_AUCTION_NOT_FOUND = "존재하지 않는 경매입니다.";
+    public static final String MSG_BID_AUCTION_NOT_STARTED = "아직 시작되지 않은 경매입니다.";
+    public static final String MSG_BID_AUCTION_CLOSED = "종료된 경매입니다.";
+    public static final String MSG_BID_AUTO_NOT_ALLOWED = "종료 5분 전부터는 자동 입찰이 불가합니다.";
+    public static final String MSG_BID_AUTO_MAX_PRICE_EXCEEDED = "자동 입찰 금액이 최대 입찰 금액을 초과합니다.";
+
+    //동시성 관련 메시지
+    public static final String MSG_CONCURRENCY_OCCURRED = "동시에 처리 중인 요청이 있어 작업을 수행할 수 없습니다. 잠시 후 다시 시도해주세요";
 }
