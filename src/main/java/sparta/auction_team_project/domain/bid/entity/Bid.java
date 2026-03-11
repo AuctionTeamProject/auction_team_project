@@ -5,12 +5,13 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import sparta.auction_team_project.common.entity.BaseEntity;
 
 @Getter
 @Entity
 @Table(name = "bids")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Bid {
+public class Bid extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
