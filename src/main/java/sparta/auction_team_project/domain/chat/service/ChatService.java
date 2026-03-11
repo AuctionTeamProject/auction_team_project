@@ -1,9 +1,8 @@
 package sparta.auction_team_project.domain.chat.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.chat.dto.request.ChatRequest;
@@ -21,6 +20,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final ChatRoomRepository chatRoomRepository;
 
+    @Transactional
     public ChatResponse save(Long senderId, String nickname, ChatRequest request) {
         ChatRoom chatRoom = chatRoomRepository.findById(request.getChatRoomId())
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_CHATROOM));
@@ -33,14 +33,15 @@ public class ChatService {
                 savedChat.getChatRoomId(),
                 savedChat.getUserId(),
                 nickname,
-                savedChat.getCreatedAt(),
-                savedChat.getModifiedAt());
+                savedChat.getCreatedAt());
     }
 
+    @Transactional(readOnly = true)
     public List<ChatResponse> getMessagesBefore(Long roomId, Long cursor, int size) {
         return chatRepository.findMessagesBefore(roomId, cursor, size);
     }
 
+    @Transactional(readOnly = true)
     public List<ChatResponse> getRecentMessages(Long roomId, int size) {
         return chatRepository.getRecentMessages(roomId, size);
     }

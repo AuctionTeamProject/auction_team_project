@@ -15,5 +15,4 @@ public class RedisChat {
     private String nickname;
     private String message;
     private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
 }

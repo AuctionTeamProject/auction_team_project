@@ -14,15 +14,13 @@ public class ChatResponse {
     private final Long userId;
     private final String userName;
     private final LocalDateTime createdAt;
-    private final LocalDateTime modifiedAt;
 
-    public ChatResponse(Long id, String message, Long roomId, Long userId, String userName, LocalDateTime createdAt, LocalDateTime modifiedAt) {
+    public ChatResponse(Long id, String message, Long roomId, Long userId, String userName, LocalDateTime createdAt) {
         this.id = id;
         this.message = message;
         this.roomId = roomId;
         this.userId = userId;
         this.userName = userName;
         this.createdAt = createdAt;
-        this.modifiedAt = modifiedAt;
     }
 }
