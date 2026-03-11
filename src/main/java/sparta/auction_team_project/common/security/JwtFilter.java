@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import sparta.auction_team_project.common.dto.AuthUser;
@@ -18,14 +17,12 @@ import sparta.auction_team_project.common.jwt.JwtUtil;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 
 import java.io.IOException;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final CustomUserDetailsService cuds;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -41,9 +38,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String bearerJwt = httpRequest.getHeader("Authorization");
 
-        if (bearerJwt == null) {
-            // 토큰이 없는 경우 400을 반환합니다.
-            httpResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "JWT 토큰이 필요합니다.");
+        //토큰이 없거나 bearer로 시작하지 않는 경우
+        if (bearerJwt == null || !bearerJwt.startsWith("Bearer ")) {
+            // 401을 반환합니다.
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT 토큰이 필요합니다.");
             return;
         }
 
@@ -52,11 +50,6 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             // JWT 유효성 검사와 claims 추출
             Claims claims = jwtUtil.extractClaims(jwt);
-            if (claims == null) {
-                httpResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 JWT 토큰입니다.");
-                return;
-            }
-            String email = claims.get("email", String.class);
 
             AuthUser authUser = new AuthUser(
                     Long.parseLong(claims.getSubject()),
@@ -68,7 +61,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(
                             authUser,          // ← AuthUser를 principal로 넣음
                             null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + authUser.getUserRole().name()))
+                            authUser.getAuthorities()
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);

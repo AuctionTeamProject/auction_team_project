@@ -14,7 +14,7 @@ public class AuthUser {
     private final Long id;
     private final String email;
     private final UserRole userRole;
-    private final Collection<? extends GrantedAuthority> authorities;
+    private final Collection<? extends GrantedAuthority> authorities; // 시큐리티의 인증 객체에 반드시 필요
 
     public AuthUser(Long id, String email, UserRole userRole) {
         this.id = id;
