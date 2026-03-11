@@ -15,8 +15,12 @@ public enum ErrorEnum {
     ERR_INVALID_PASSWORD(HttpStatus.BAD_REQUEST, MSG_INVALID_PASSWORD),
     ERR_NOT_MATCH_LOGIN(HttpStatus.UNAUTHORIZED, MSG_NOT_MATCH_LOGIN),
     ERR_NOT_MATCH_ENUM(HttpStatus.BAD_REQUEST, MSG_NOT_MATCH_ENUM),
-    ERR_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, MSG_INVALID_TOKEN);
+    ERR_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, MSG_INVALID_TOKEN),
 
+    // endregion
+
+    // region 채팅 관련
+    ERR_NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, MSG_NOT_FOUND_CHATROOM);
     // endregion
 
     private final HttpStatus status;

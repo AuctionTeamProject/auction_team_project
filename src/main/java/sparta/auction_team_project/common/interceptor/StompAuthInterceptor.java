@@ -8,6 +8,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
+import sparta.auction_team_project.common.exception.ErrorEnum;
+import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.jwt.JwtUtil;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
@@ -29,7 +31,8 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
             Long userId = jwtUtil.getUserId(token);
 
-            User user = userRepository.findById(userId).orElseThrow();
+            User user = userRepository.findById(userId).orElseThrow(
+                    () ->  new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
 
             accessor.setUser(new AuthenticatedUser(user));
         }
