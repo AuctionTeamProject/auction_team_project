@@ -3,7 +3,6 @@ package sparta.auction_team_project.domain.bidlog.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.annotation.Id;
 import sparta.auction_team_project.domain.bid.entity.BidStatus;
 
 @Getter
