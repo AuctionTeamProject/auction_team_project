@@ -22,10 +22,6 @@ public class Coupon {
     private CouponStatus status;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private RewardType rewardType;
-
-    @Column(nullable = false)
     private LocalDateTime issuedAt;
 
     private LocalDateTime usedAt;
@@ -35,4 +31,9 @@ public class Coupon {
 
     @Column(nullable = false)
     private Long eventId;
+
+    public void use() {
+        this.status = CouponStatus.USED;
+        this.usedAt = LocalDateTime.now();
+    }
 }
