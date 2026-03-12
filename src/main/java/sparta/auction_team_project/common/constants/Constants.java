@@ -44,5 +44,8 @@ public class Constants {
     public static final String MSG_CONCURRENCY_OCCURRED = "동시에 처리 중인 요청이 있어 작업을 수행할 수 없습니다. 잠시 후 다시 시도해주세요";
 
     // 이벤트 관련 메세지
-    public static final String MSG_INVALID_EVENT_PERIOD = "이벤트 종료 시간은 시작 시간보다 늦어야 합니다.";
+    public static final String MSG_INVALID_EVENT_PERIOD = "이벤트 종료 시간은 시작 시간보다 늦어야 합니다";
+    public static final String MSG_EVENT_NOT_FOUND = "해당 일벤트를 찾을 수 없습니다";
+    public static final String MSG_FORBIDDEN = "권한이 없는 사용자입니다";
+    public static final String MSG_INVALID_EVENT_QUANTITY = "허용할 수 있는 수량이 아닙니다";
 }
