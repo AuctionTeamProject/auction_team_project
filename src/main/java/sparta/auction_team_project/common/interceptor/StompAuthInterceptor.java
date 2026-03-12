@@ -12,7 +12,10 @@ import org.springframework.stereotype.Component;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.jwt.JwtUtil;
+import sparta.auction_team_project.domain.chatroom.entity.ChatRoom;
+import sparta.auction_team_project.domain.chatroom.repository.ChatRoomRepository;
 import sparta.auction_team_project.domain.user.entity.User;
+import sparta.auction_team_project.domain.user.enums.UserRole;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
 import java.security.Principal;
@@ -24,6 +27,7 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -66,9 +70,19 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                 }
 
                 User user = AuthenticatedUser.fromPrincipal(principal);
-                
-                log.info("채팅방 구독 검증 - user: {}, roomId: {}", user.getId(), roomId);
 
+                ChatRoom room = chatRoomRepository.findById(roomId)
+                        .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_CHATROOM));
+
+                if (!room.getUserId().equals(user.getId()) &&
+                        user.getUserRole() != UserRole.ROLE_ADMIN) {
+
+                    log.warn("채팅방 구독 권한 없음 - user: {}, roomId: {}", user.getId(), roomId);
+
+                    return null;
+                }
+
+                log.info("채팅방 구독 검증 성공 - user: {}, roomId: {}", user.getId(), roomId);
             }
         }
 

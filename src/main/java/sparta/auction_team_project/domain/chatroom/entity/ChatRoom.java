@@ -15,10 +15,13 @@ public class ChatRoom extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long userId;
+
     @Column(nullable = false, length = 50)
     private String name;
 
-    public ChatRoom(String name) {
+    public ChatRoom(Long userId, String name) {
+        this.userId = userId;
         this.name = name;
     }
 }

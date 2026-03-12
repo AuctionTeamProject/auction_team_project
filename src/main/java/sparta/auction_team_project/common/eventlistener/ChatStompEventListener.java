@@ -71,6 +71,9 @@ public class ChatStompEventListener {
         User user = AuthenticatedUser.fromPrincipal(principal);
 
         Long roomId = (Long) accessor.getSessionAttributes().get("roomId");
+        if (roomId == null) {
+            return;
+        }
 
         RedisChat systemMessage = new RedisChat(
                 roomId,
