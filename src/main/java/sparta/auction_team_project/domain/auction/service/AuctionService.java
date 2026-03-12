@@ -9,6 +9,7 @@ import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateReque
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionApproveResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
+import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
@@ -121,6 +122,32 @@ public class AuctionService {
         );
 
         return new AuctionUpdateResponse(auction.getId());
+    }
+
+    // 경매 삭제
+    @Transactional
+    public AuctionDeleteResponse deleteAuction(Long auctionId, String email) {
+
+        // 유저 조회
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
+        // 경매 조회
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND));
+        // 판매자 본인 확인
+        if (!auction.getSellerId().equals(user.getId())) {
+            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_DELETE_AUCTION);
+        }
+
+        // PENDING 상태에서만 삭제 가능
+        if (auction.getStatus() != AuctionStatus.PENDING) {
+            throw new ServiceErrorException(ErrorEnum.ERR_INVALID_AUCTION_STATUS);
+        }
+
+        // 상태 변경 (소프트 삭제 - 상태를 취소처리하기로 결정)
+        auction.cancel();
+
+        return new AuctionDeleteResponse(auction.getId());
     }
 
     // 관리자 승인
