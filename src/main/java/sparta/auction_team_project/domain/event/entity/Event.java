@@ -5,6 +5,7 @@ import lombok.*;
 import sparta.auction_team_project.common.entity.BaseEntity;
 import sparta.auction_team_project.domain.coupon.entity.RewardType;
 import sparta.auction_team_project.domain.event.dto.request.EventCreateRequest;
+import sparta.auction_team_project.domain.event.dto.request.EventUpdateRequest;
 
 import java.time.LocalDateTime;
 
@@ -61,5 +62,15 @@ public class Event extends BaseEntity {
                 .status(EventStatus.OPEN)
                 .adminId(adminId)
                 .build();
+    }
+
+    public void update(EventUpdateRequest eventUpdateRequest) {
+        this.eventName = eventUpdateRequest.getEventName();
+        this.eventDescription = eventUpdateRequest.getEventDescription();
+        this.totalQuantity = eventUpdateRequest.getTotalQuantity();
+        this.rewardType = eventUpdateRequest.getRewardType();
+        this.startAt = eventUpdateRequest.getStartAt();
+        this.endAt = eventUpdateRequest.getEndAt();
+        this.status = eventUpdateRequest.getStatus();
     }
 }
