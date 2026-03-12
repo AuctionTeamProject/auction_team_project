@@ -2,6 +2,7 @@ package sparta.auction_team_project.common.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -13,6 +14,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ChatRedisSubscriber implements MessageListener {
 
     private final SimpMessagingTemplate template;
@@ -26,10 +28,9 @@ public class ChatRedisSubscriber implements MessageListener {
                     message.getBody(),
                     RedisChat.class
             );
-        template.convertAndSend("/sub/chat/" + redisChat.getRoomId(), redisChat);
-        } catch (Exception e) {
-            throw new ServiceErrorException(ErrorEnum.ERR_NOT_MATCH_ENUM);
+            template.convertAndSend("/sub/chat/" + redisChat.getRoomId(), redisChat);
+        }catch (IOException e){
+            log.error("Redis message parse error", e);
         }
     }
-
 }

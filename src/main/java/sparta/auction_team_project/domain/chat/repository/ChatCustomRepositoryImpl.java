@@ -24,10 +24,10 @@ public class ChatCustomRepositoryImpl implements ChatCustomRepository {
                         ChatResponse.class,
                         chat.id,
                         chat.message,
+                        chat.chatRoomId,
                         chat.userId,
                         user.nickname,
-                        chat.createdAt,
-                        chat.modifiedAt
+                        chat.createdAt
                 ))
                 .from(chat)
                 .leftJoin(user).on(chat.userId.eq(user.id))
@@ -45,10 +45,10 @@ public class ChatCustomRepositoryImpl implements ChatCustomRepository {
                         ChatResponse.class,
                         chat.id,
                         chat.message,
+                        chat.chatRoomId,
                         chat.userId,
                         user.nickname,
-                        chat.createdAt,
-                        chat.modifiedAt
+                        chat.createdAt
                 ))
                 .from(chat)
                 .leftJoin(user).on(chat.userId.eq(user.id))

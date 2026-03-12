@@ -1,10 +1,7 @@
 package sparta.auction_team_project.domain.chat.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.domain.chat.dto.response.ChatResponse;
 import sparta.auction_team_project.domain.chat.service.ChatService;
 
@@ -12,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class ChatQueryController {
 
     private final ChatService chatService;
