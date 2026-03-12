@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -54,7 +56,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(BaseResponse.fail(String.valueOf(HttpStatus.UNAUTHORIZED), e.getMessage(), null));
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<BaseResponse<Void>> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        log.error("인가 실패 : ", e);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(BaseResponse.fail(String.valueOf(HttpStatus.FORBIDDEN), e.getMessage(), null));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<BaseResponse<Void>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+        log.error("지원하지 않는 메소드 에러 발생 : ", e);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.fail(String.valueOf(HttpStatus.BAD_REQUEST), e.getMessage(), null));
+    }
+
+        @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Void>> handleCriticalErrorException(Exception e) {
         log.error("서버 에러 발생", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.fail(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), MSG_SERVER_ERROR_OCCUR, null));

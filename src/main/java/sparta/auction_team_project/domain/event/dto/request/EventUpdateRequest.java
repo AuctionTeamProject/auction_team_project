@@ -5,11 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import sparta.auction_team_project.domain.coupon.entity.RewardType;
+import sparta.auction_team_project.domain.event.entity.EventStatus;
 
 import java.time.LocalDateTime;
 
 @Getter
-public class EventCreateRequest {
+public class EventUpdateRequest {
 
     @NotBlank(message = "이벤트 이름은 필수입니다.")
     private String eventName;
@@ -29,4 +30,7 @@ public class EventCreateRequest {
 
     @NotNull(message = "이벤트 종료 시간은 필수입니다.")
     private LocalDateTime endAt;
+
+    @NotNull(message = "이벤트 상태는 필수입니다.")
+    private EventStatus status;
 }

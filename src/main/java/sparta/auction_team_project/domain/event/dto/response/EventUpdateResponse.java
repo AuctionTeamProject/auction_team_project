@@ -3,7 +3,6 @@ package sparta.auction_team_project.domain.event.dto.response;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import sparta.auction_team_project.domain.coupon.entity.RewardType;
 import sparta.auction_team_project.domain.event.entity.Event;
 import sparta.auction_team_project.domain.event.entity.EventStatus;
@@ -11,9 +10,8 @@ import sparta.auction_team_project.domain.event.entity.EventStatus;
 import java.time.LocalDateTime;
 
 @Getter
-@RequiredArgsConstructor
 @Builder(access = AccessLevel.PROTECTED)
-public class EventCreateResponse {
+public class EventUpdateResponse {
 
     private final Long id;
 
@@ -35,8 +33,8 @@ public class EventCreateResponse {
 
     private final Long adminId;
 
-    public static EventCreateResponse from(Event event) {
-        return EventCreateResponse.builder()
+    public static EventUpdateResponse from(Event event) {
+        return EventUpdateResponse.builder()
                 .id(event.getId())
                 .eventName(event.getEventName())
                 .eventDescription(event.getEventDescription())
