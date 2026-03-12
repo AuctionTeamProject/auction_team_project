@@ -5,6 +5,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sparta.auction_team_project.common.entity.BaseEntity;
+import sparta.auction_team_project.common.exception.ErrorEnum;
+import sparta.auction_team_project.common.exception.ServiceErrorException;
 
 import java.time.LocalDateTime;
 
@@ -94,5 +96,44 @@ public class Auction extends BaseEntity {
         auction.viewCount = 0L; // 조회수 0
 
         return auction;
+    }
+
+    // 수정 기능
+    public void update(
+            String productName,
+            String imageUrl,
+            AuctionCategory category,
+            Long startPrice,
+            Long minimumBid,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        // 검증 (수정은 승인대기 전에만 가능)
+        if (this.status != AuctionStatus.PENDING) {
+            throw new ServiceErrorException(ErrorEnum.ERR_INVALID_AUCTION_STATUS);
+        }
+
+        this.productName = productName;
+        this.imageUrl = imageUrl;
+        this.category = category;
+        this.startPrice = startPrice;
+        this.minimumBid = minimumBid;
+        this.startAt = startAt;
+        this.endAt = endAt;
+    }
+
+    // 관리자 승인
+    public void approve() {
+        this.status = AuctionStatus.READY;
+    }
+
+    // 자동 취소 (시작 10분전까지 미승인시 자동 취소)
+    public void cancel() {
+        this.status = AuctionStatus.CANCEL;
+    }
+
+    // 경매 시작 (준비중 상태에서 시작시간 도달 시)
+    public void startAuction() {
+        this.status = AuctionStatus.ACTIVE;
     }
 }
