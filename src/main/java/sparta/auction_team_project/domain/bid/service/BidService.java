@@ -111,7 +111,35 @@ public class BidService {
         return BidResponse.of(bid, getNickname(userId));
     }
 
+    // 내 입찰 내역 조회
+    @Transactional(readOnly = true)
+    public List<BidListResponse> getMyBids(AuthUser authUser) {
+        return bidRepository.findAllByUserIdOrderByCreatedAtDesc(authUser.getId())
+                .stream().map(BidListResponse::from).collect(Collectors.toList());
+    }
 
+    // 경매별 입찰 내역 조회 (종료 5분 전 최고가 숨김)
+    @Transactional(readOnly = true)
+    public List<BidListResponse> getBidsByAuction(Long auctionId) {
+        Auction auction = getAuction(auctionId);
+        boolean hideTopPrice = isWithin5MinutesOfEnd(auction);
+
+        return bidRepository.findAllByAuctionIdOrderByCreatedAtDesc(auctionId)
+                .stream()
+                .map(bid -> {
+                    if (hideTopPrice && bid.getStatus() == BidStatus.SUCCEEDED) {
+                        return BidListResponse.builder()
+                                .bidId(bid.getId())
+                                .auctionId(bid.getAuctionId())
+                                .price(null)
+                                .status(bid.getStatus())
+                                .createdAt(bid.getCreatedAt())
+                                .build();
+                    }
+                    return BidListResponse.from(bid);
+                })
+                .collect(Collectors.toList());
+    }
 
     // 경매 유효성 검사
     private Auction getAuction(Long auctionId) {

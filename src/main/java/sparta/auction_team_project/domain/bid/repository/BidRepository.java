@@ -14,5 +14,9 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     @Query("SELECT b FROM Bid b WHERE b.auctionId = :auctionId AND b.status = 'SUCCEEDED' ORDER BY b.price DESC")
     Optional<Bid> findTopBidByAuctionId(@Param("auctionId") Long auctionId);
 
+    // 특정 경매의 모든 입찰 최신 순 내역
+    List<Bid> findAllByAuctionIdOrderByCreatedAtDesc(Long auctionId);
 
+    // 특정 유저의 입찰 최신 순 내역
+    List<Bid> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 }

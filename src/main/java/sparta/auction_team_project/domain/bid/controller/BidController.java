@@ -45,5 +45,21 @@ public class BidController {
                 .body(BaseResponse.success(String.valueOf(HttpStatus.CREATED.value()), "자동 입찰이 완료되었습니다.", data));
     }
 
+    //내 입찰 내역 조회
+    @GetMapping("/me")
+    public ResponseEntity<BaseResponse<List<BidListResponse>>> getMyBids(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        List<BidListResponse> data = bidService.getMyBids(authUser);
+        return ResponseEntity.ok(BaseResponse.success(String.valueOf(HttpStatus.OK.value()), "내 입찰 내역 조회 성공", data));
+    }
 
+    //경매별 입찰 내역 조회 (종료 5분 전 최고가 숨김)
+    @GetMapping("/{auctionId}")
+    public ResponseEntity<BaseResponse<List<BidListResponse>>> getBidsByAuction(
+            @PathVariable Long auctionId
+    ) {
+        List<BidListResponse> data = bidService.getBidsByAuction(auctionId);
+        return ResponseEntity.ok(BaseResponse.success(String.valueOf(HttpStatus.OK.value()), "경매 입찰 내역 조회 성공", data));
+    }
 }
