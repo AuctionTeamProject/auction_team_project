@@ -53,6 +53,13 @@ public class Constants {
     public static final String MSG_FORBIDDEN = "권한이 없는 사용자입니다";
     public static final String MSG_INVALID_EVENT_QUANTITY = "허용할 수 있는 수량이 아닙니다";
     public static final String MSG_EVENT_DELETE_NOT_ALLOWED = "삭제를 허용할 수 없습니다";
+
+    // region 채팅 관련 메세지
+    public static final String MSG_NOT_FOUND_CHATROOM = "채팅방을 찾을 수 없습니다.";
+    public static final String MSG_NOT_FOUND_MESSAGE = "메세지를 찾을 수 없습니다.";
+    public static final String MSG_INVALID_CURSOR = "유효하지 않은 커서 값입니다.";
+    public static final String MSG_CHATROOM_FORBIDDEN = "채팅방 권한이 없습니다.";
+    // endregion
     public static final String MSG_COUPON_NOT_FOUND = "해당 쿠폰을 찾을 수 없습니다";
     public static final String MSG_COUPON_ALREADY_UESD = "이미 사용된 쿠폰입니다";
 
