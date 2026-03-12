@@ -46,7 +46,8 @@ class AuthControllerTest {
                 "email@test.com",
                 "password123!",
                 "01012345678",
-                "ROLE_USER"
+                "ROLE_USER",
+                "NORMAL"
 
         );
 
@@ -76,7 +77,8 @@ class AuthControllerTest {
                 "email": "email@test.com",
                 "password": "password123!",
                 "phone": "01012345678",
-                "userRole": "ROLE_USER"
+                "userRole": "ROLE_USER",
+                "membershipGrade": "NORMAL"
             }
             """;
 
