@@ -15,6 +15,8 @@ import sparta.auction_team_project.common.jwt.JwtUtil;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
+import java.security.Principal;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -41,6 +43,24 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                     () ->  new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
 
             accessor.setUser(new AuthenticatedUser(user));
+        }
+
+        //채팅방 구독 권한 검증
+        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+
+            String destination = accessor.getDestination();
+
+            if (destination != null && destination.startsWith("/sub/chat/")) {
+
+                Long roomId = Long.parseLong(destination.split("/")[3]);
+
+                Principal principal = accessor.getUser();
+
+                User user = AuthenticatedUser.fromPrincipal(principal);
+                
+                log.info("채팅방 구독 검증 - user: {}, roomId: {}", user.getId(), roomId);
+
+            }
         }
 
         return message;

@@ -13,6 +13,7 @@ import sparta.auction_team_project.domain.chat.service.ChatService;
 import sparta.auction_team_project.domain.user.entity.User;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
@@ -38,6 +39,5 @@ public class ChatController {
         );
 
         chatRedisPublisher.publish(redisChat.getRoomId(), redisChat);
-
     }
 }
