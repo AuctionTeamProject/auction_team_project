@@ -100,4 +100,14 @@ public class Auction extends BaseEntity {
     public void approve() {
         this.status = AuctionStatus.READY;
     }
+
+    // 자동 취소 (시작 10분전까지 미승인시 자동 취소)
+    public void cancel() {
+        this.status = AuctionStatus.CANCEL;
+    }
+
+    // 경매 시작 (준비중 상태에서 시작시간 도달 시)
+    public void startAuction() {
+        this.status = AuctionStatus.ACTIVE;
+    }
 }

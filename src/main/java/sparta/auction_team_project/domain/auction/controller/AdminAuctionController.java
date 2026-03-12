@@ -2,6 +2,7 @@ package sparta.auction_team_project.domain.auction.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ public class AdminAuctionController {
      - 경매 상품 승인 기능
      - 정은식
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{auctionId}/approve")
     public ResponseEntity<BaseResponse<AuctionApproveResponse>> approveAuction(
             @PathVariable Long auctionId) {
