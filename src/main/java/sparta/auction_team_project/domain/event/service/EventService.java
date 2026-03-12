@@ -49,6 +49,19 @@ public class EventService {
         return EventUpdateResponse.from(event);
     }
 
+    @Transactional
+    public void delete(Long eventId, AuthUser authUser) {
+        Event event = findById(eventId);
+
+        // 삭제하려는 사람이 생성한 admin인지 판별
+        validateEventOwner(event, authUser);
+
+        // 이미 발급된 쿠폰이 있는 이벤트는 삭제할 수 없습니다
+        validateDeletable(event);
+
+        eventRepository.delete(event);
+    }
+
     private Event findById(Long eventId) {
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_EVENT_NOT_FOUND));
@@ -75,6 +88,12 @@ public class EventService {
     private void validateTotalQuantity(Event event, EventUpdateRequest request) {
         if (request.getTotalQuantity() < event.getIssuedQuantity()) {
             throw new ServiceErrorException(ErrorEnum.ERR_INVALID_EVENT_QUANTITY);
+        }
+    }
+
+    private void validateDeletable(Event event) {
+        if (event.getIssuedQuantity() > 0) {
+            throw new ServiceErrorException(ErrorEnum.ERR_EVENT_DELETE_NOT_ALLOWED);
         }
     }
 }

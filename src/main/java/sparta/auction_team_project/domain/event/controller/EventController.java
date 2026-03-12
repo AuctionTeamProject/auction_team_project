@@ -35,4 +35,11 @@ public class EventController {
         EventUpdateResponse response = eventService.update(authUser, eventId, eventUpdateRequest);
         return ResponseEntity.ok(BaseResponse.success("200", "이벤트 수정 성공", response));
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{eventId}")
+    public ResponseEntity<BaseResponse<Void>> deleteEvent(@AuthenticationPrincipal AuthUser authUser, @PathVariable Long eventId) {
+        eventService.delete(eventId, authUser);
+        return ResponseEntity.ok(BaseResponse.success("200", "이벤트 삭제 성공", null));
+    }
 }

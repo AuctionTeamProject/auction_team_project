@@ -48,4 +48,5 @@ public class Constants {
     public static final String MSG_EVENT_NOT_FOUND = "해당 일벤트를 찾을 수 없습니다";
     public static final String MSG_FORBIDDEN = "권한이 없는 사용자입니다";
     public static final String MSG_INVALID_EVENT_QUANTITY = "허용할 수 있는 수량이 아닙니다";
+    public static final String MSG_EVENT_DELETE_NOT_ALLOWED = "삭제를 허용할 수 없습니다";
 }
