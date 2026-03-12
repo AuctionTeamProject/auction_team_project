@@ -11,9 +11,15 @@ import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
+import sparta.auction_team_project.domain.memberShip.controller.MembershipController;
+import sparta.auction_team_project.domain.memberShip.entity.Membership;
+import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
+import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +29,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final MembershipRepository membershipRepository;
 
     @Transactional
     public SignupResponse signup(SignupRequest signupRequest) {
@@ -44,11 +51,18 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
         UserRole userRole = UserRole.of(signupRequest.getUserRole());
 
-        //String nickname, String email, String password, String phone, UserRole userRole
         User newUser = new User(
                 signupRequest.getNickname(), signupRequest.getName(), signupRequest.getEmail(), encodedPassword, signupRequest.getPhone(), userRole
         );
         User savedUser = userRepository.save(newUser);
+
+        Membership membership = new Membership(Membership.of(signupRequest.getMembershipGrade()), null, savedUser.getId());
+
+        if(signupRequest.getMembershipGrade().equals("SELLER")) { // 셀러로 입력했을 때 만료일이 null로 들어가는 것을 막기 위해 +7일 세팅
+            membership.extendPeriod(7);
+        }
+
+        membershipRepository.save(membership);
 
         return new SignupResponse(savedUser.getNickname(), savedUser.getName(), savedUser.getEmail());
     }

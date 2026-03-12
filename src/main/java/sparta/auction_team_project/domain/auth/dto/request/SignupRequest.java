@@ -36,4 +36,7 @@ public class SignupRequest {
 
     @NotBlank(message = "역할을/를 입력해주세요.")
     private String userRole;
+
+    @NotBlank(message = "멤버십 등급을/를 입력해주세요.")
+    private String membershipGrade;
 }

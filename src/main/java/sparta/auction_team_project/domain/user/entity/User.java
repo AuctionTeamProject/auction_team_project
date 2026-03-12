@@ -37,8 +37,6 @@ public class User extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private UserRole userRole;
 
-    @Enumerated(value = EnumType.STRING)
-    private MembershipEnum grade;
 
     public User(String nickname, String name, String email, String password, String phone, UserRole userRole) {
         this.nickname = nickname;
@@ -48,7 +46,6 @@ public class User extends BaseEntity {
         this.phone = phone;
         this.point = 0L;
         this.userRole = userRole;
-        this.grade = MembershipEnum.NORMAL;
     }
 
     public void changePassword(String password) {

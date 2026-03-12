@@ -12,10 +12,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.config.WithAuthUser;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
+import sparta.auction_team_project.domain.user.dto.response.MembershipResponse;
 import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 import sparta.auction_team_project.domain.user.service.UserService;
 import java.util.List;
+
+import static org.mockito.Mockito.reset;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -38,6 +41,7 @@ class UserControllerTest {
     void 내정보조회_성공() throws Exception {
 
         //given
+        MembershipResponse membershipResponse = new MembershipResponse(MembershipEnum.NORMAL, null);
         UserGetResponse response =
                 new UserGetResponse(
                         "닉네임",
@@ -45,7 +49,7 @@ class UserControllerTest {
                         "email@test.com",
                         "01012345678",
                         0L,
-                        MembershipEnum.NORMAL
+                        membershipResponse
                 );
 
         given(userService.getUser(any())).willReturn(response);

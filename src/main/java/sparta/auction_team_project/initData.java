@@ -6,9 +6,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import sparta.auction_team_project.domain.memberShip.entity.Membership;
+import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
+import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
+
+import java.time.LocalDateTime;
 
 @Component
 @ConditionalOnProperty(
@@ -21,6 +26,7 @@ public class initData {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
 
     @PostConstruct
     @Transactional
@@ -30,5 +36,11 @@ public class initData {
 
         userRepository.save(admin);
         userRepository.save(alice);
+
+        Membership adminMembership = new Membership(MembershipEnum.SELLER, LocalDateTime.of(9999, 12, 31, 23, 59, 59), admin.getId());
+        Membership aliceMembership = new Membership(MembershipEnum.NORMAL, null, alice.getId());
+
+        membershipRepository.save(adminMembership);
+        membershipRepository.save(aliceMembership);
     }
 }
