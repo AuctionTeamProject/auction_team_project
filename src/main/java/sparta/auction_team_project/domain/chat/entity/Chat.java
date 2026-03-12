@@ -8,7 +8,7 @@ import sparta.auction_team_project.common.entity.BaseEntity;
 
 @Getter
 @Entity
-@Table(name = "chat")
+@Table(name = "chat", indexes = {@Index(name = "idx_chat_room_id_id", columnList = "chat_room_id, id")})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Chat extends BaseEntity {
 
