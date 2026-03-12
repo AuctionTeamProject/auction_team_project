@@ -22,7 +22,7 @@ public class ChatService {
 
     @Transactional
     public ChatResponse save(Long senderId, String nickname, ChatRequest request) {
-        ChatRoom chatRoom = chatRoomRepository.findById(request.getChatRoomId())
+        ChatRoom chatRoom = chatRoomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_CHATROOM));
         Chat chat = new Chat(chatRoom.getId(), senderId, request.getMessage());
         Chat savedChat = chatRepository.save(chat);

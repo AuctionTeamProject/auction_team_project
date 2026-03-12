@@ -1,5 +1,6 @@
 package sparta.auction_team_project.domain.chat.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
@@ -24,7 +25,7 @@ public class ChatController {
     private final ChatService chatService;
 
     @MessageMapping("/chat.send")
-    public void sendMessage(ChatRequest request, Principal principal) {
+    public void sendMessage(@Valid ChatRequest request, Principal principal) {
 
         User sender = AuthenticatedUser.fromPrincipal(principal);
 

@@ -2,6 +2,8 @@ package sparta.auction_team_project.domain.chat.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import sparta.auction_team_project.common.exception.ErrorEnum;
+import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.chat.dto.response.ChatResponse;
 import sparta.auction_team_project.domain.chat.service.ChatService;
 
@@ -20,6 +22,9 @@ public class ChatQueryController {
             @RequestParam Long cursor,
             @RequestParam(defaultValue = "50") int size
     ) {
+        if (cursor <= 0) {
+            throw new ServiceErrorException(ErrorEnum.ERR_INVALID_CURSOR);
+        }
         return chatService.getMessagesBefore(roomId, cursor, size);
     }
 

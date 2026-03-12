@@ -32,8 +32,13 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             log.info("STOMP CONNECT 인터셉터 실행");
 
-            String token = accessor.getFirstNativeHeader("Authorization")
-                    .replace("Bearer ", "");
+            String authHeader = accessor.getFirstNativeHeader("Authorization");
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                throw new ServiceErrorException(ErrorEnum.ERR_INVALID_TOKEN);
+            }
+
+            String token = authHeader.substring(7);
 
             Long userId = jwtUtil.getUserId(token);
 
@@ -55,6 +60,10 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                 Long roomId = Long.parseLong(destination.split("/")[3]);
 
                 Principal principal = accessor.getUser();
+
+                if (principal == null) {
+                    throw new ServiceErrorException(ErrorEnum.ERR_INVALID_TOKEN);
+                }
 
                 User user = AuthenticatedUser.fromPrincipal(principal);
                 

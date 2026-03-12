@@ -57,5 +57,6 @@ public class Constants {
     // region 채팅 관련 메세지
     public static final String MSG_NOT_FOUND_CHATROOM = "채팅방을 찾을 수 없습니다.";
     public static final String MSG_NOT_FOUND_MESSAGE = "메세지를 찾을 수 없습니다.";
+    public static final String MSG_INVALID_CURSOR = "유효하지 않은 커서 값입니다.";
     // endregion
 }
