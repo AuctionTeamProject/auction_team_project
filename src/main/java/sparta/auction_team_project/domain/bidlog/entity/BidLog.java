@@ -16,7 +16,8 @@ public class BidLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    // 입찰 실패 시 Bid가 생성되지 않을 수 있으므로 nullable
+    @Column(nullable = true)
     private Long bidId;
 
     @Column(nullable = false)
@@ -40,5 +41,4 @@ public class BidLog extends BaseEntity {
         this.price = price;
         this.status = status;
     }
-
 }

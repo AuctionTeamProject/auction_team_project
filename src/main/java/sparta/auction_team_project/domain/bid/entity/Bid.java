@@ -36,4 +36,8 @@ public class Bid extends BaseEntity {
         this.price = price;
         this.status = status;
     }
+
+    public void updateStatus(BidStatus status) {
+        this.status = status;
+    }
 }
