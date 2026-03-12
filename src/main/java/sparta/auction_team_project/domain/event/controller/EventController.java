@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
 import sparta.auction_team_project.domain.event.dto.request.EventUpdateRequest;
+import sparta.auction_team_project.domain.event.dto.response.EventDetailResponse;
 import sparta.auction_team_project.domain.event.dto.response.EventUpdateResponse;
 import sparta.auction_team_project.domain.event.dto.request.EventCreateRequest;
 import sparta.auction_team_project.domain.event.dto.response.EventCreateResponse;
@@ -27,6 +28,12 @@ public class EventController {
     public ResponseEntity<BaseResponse<EventCreateResponse>> createEvent(@AuthenticationPrincipal AuthUser authUser, @Valid @RequestBody EventCreateRequest eventCreateRequest) {
         EventCreateResponse response = eventService.save(authUser, eventCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success("201", "이벤트 생성 성공", response));
+    }
+
+    @GetMapping("/{eventId}")
+    public ResponseEntity<BaseResponse<EventDetailResponse>> getEvent(@PathVariable Long eventId) {
+        EventDetailResponse response = eventService.findEvent(eventId);
+        return ResponseEntity.ok(BaseResponse.success("200", "이벤트 상세 조회 성공", response));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -9,6 +9,7 @@ import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.event.dto.request.EventCreateRequest;
 import sparta.auction_team_project.domain.event.dto.request.EventUpdateRequest;
 import sparta.auction_team_project.domain.event.dto.response.EventCreateResponse;
+import sparta.auction_team_project.domain.event.dto.response.EventDetailResponse;
 import sparta.auction_team_project.domain.event.dto.response.EventUpdateResponse;
 import sparta.auction_team_project.domain.event.entity.Event;
 import sparta.auction_team_project.domain.event.repository.EventRepository;
@@ -29,6 +30,13 @@ public class EventService {
         Event savedEvent = eventRepository.save(event);
 
         return EventCreateResponse.from(savedEvent);
+    }
+
+    @Transactional(readOnly = true)
+    public EventDetailResponse findEvent(Long eventId) {
+        Event event = findById(eventId);
+
+        return EventDetailResponse.from(event);
     }
 
     @Transactional
