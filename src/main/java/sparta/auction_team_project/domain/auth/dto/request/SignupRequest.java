@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class SignupRequest {
 
     @NotBlank(message = "닉네임을/를 입력해주세요.")
-    @Size(max = 8, message = "이름은 최대 8글자까지 가능합니다.")
+    @Size(max = 8, message = "닉네임은 최대 8글자까지 가능합니다.")
     private String nickname;
 
     @NotBlank(message = "이름을/를 입력해주세요.")
@@ -34,9 +34,9 @@ public class SignupRequest {
     @Pattern(regexp = "^\\d{11}$", message = "전화번호는 - 없이 숫자 11자리로 입력해주세요.")
     private String phone;
 
-    @NotBlank(message = "역할을/를 입력해주세요.")
+    @NotBlank(message = "역할을/를 ROLE_USER 와 같이 입력해주세요.")
     private String userRole;
 
-    @NotBlank(message = "멤버십 등급을/를 입력해주세요.")
+    @NotBlank(message = "멤버십 등급을/를 NORMAL 과 같이 입력해주세요.")
     private String membershipGrade;
 }

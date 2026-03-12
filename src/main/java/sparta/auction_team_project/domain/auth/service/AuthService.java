@@ -11,7 +11,6 @@ import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
-import sparta.auction_team_project.domain.memberShip.controller.MembershipController;
 import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
 import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
@@ -56,9 +55,10 @@ public class AuthService {
         );
         User savedUser = userRepository.save(newUser);
 
-        Membership membership = new Membership(Membership.of(signupRequest.getMembershipGrade()), null, savedUser.getId());
+        MembershipEnum grade = MembershipEnum.of(signupRequest.getMembershipGrade());
+        Membership membership = new Membership(grade, null, savedUser.getId());
 
-        if(signupRequest.getMembershipGrade().equals("SELLER")) { // 셀러로 입력했을 때 만료일이 null로 들어가는 것을 막기 위해 +7일 세팅
+        if(grade == MembershipEnum.SELLER) { // 셀러로 입력했을 때 만료일이 null로 들어가는 것을 막기 위해 +7일 세팅
             membership.extendPeriod(7);
         }
 

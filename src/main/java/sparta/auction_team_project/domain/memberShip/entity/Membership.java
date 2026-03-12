@@ -36,13 +36,6 @@ public class Membership {
         this.userId = userId;
     }
 
-    //String을 enum 로 바꿈
-    public static MembershipEnum of(String grade) {
-        return Arrays.stream(MembershipEnum.values())
-                .filter(r -> r.name().equalsIgnoreCase(grade))
-                .findFirst()
-                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_MATCH_ENUM));
-    }
 
     public void updateGrade(MembershipEnum grade) {
         this.grade = grade;

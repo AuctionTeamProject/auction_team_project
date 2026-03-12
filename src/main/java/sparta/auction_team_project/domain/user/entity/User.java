@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sparta.auction_team_project.common.entity.BaseEntity;
-import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 
 @Getter
