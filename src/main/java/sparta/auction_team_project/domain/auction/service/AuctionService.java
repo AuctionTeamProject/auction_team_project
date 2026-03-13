@@ -36,9 +36,9 @@ public class AuctionService {
         Long sellerId = user.getId();
 
         // 유저 등급 검증
-        if (user.getGrade() != MembershipEnum.SELLER) {
-            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_CREATE_AUCTION);
-        }
+//        if (user.getGrade() != MembershipEnum.SELLER) {
+//            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_CREATE_AUCTION);
+//        }
         // 최소 입찰 단위 검증
         if (request.getMinimumBid() < 1000) {
             throw new ServiceErrorException(ErrorEnum.INVALID_MINIMUM_BID);
