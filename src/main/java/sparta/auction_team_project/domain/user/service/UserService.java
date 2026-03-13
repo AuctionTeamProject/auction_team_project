@@ -4,16 +4,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
+import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.bid.dto.response.BidListResponse;
+import sparta.auction_team_project.domain.bid.repository.BidRepository;
 import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.dto.request.UserChangeNicknameRequest;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
+import sparta.auction_team_project.domain.user.dto.response.AuctionListResponse;
 import sparta.auction_team_project.domain.user.dto.response.MembershipResponse;
 import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +31,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final MembershipRepository membershipRepository;
+    private final AuctionRepository auctionRepository;
+    private final BidRepository bidRepository;
 
     @Transactional
     public void changePassword(Long userId, UserChangePasswordRequest userChangePasswordRequest) {
@@ -63,5 +73,16 @@ public class UserService {
         }
 
         user.changeNickname(userChangeNicknameRequest.getNewNickname());
+    }
+
+
+    public List<AuctionListResponse> getMyAuctions(AuthUser authUser) {
+        return auctionRepository.findAllBySellerIdOrderByCreatedAtDesc(authUser.getId())
+                .stream().map(AuctionListResponse::from).collect(Collectors.toList());
+    }
+
+    public List<BidListResponse> getMyBids(AuthUser authUser) {
+        return bidRepository.findAllByUserIdOrderByCreatedAtDesc(authUser.getId())
+                .stream().map(BidListResponse::from).collect(Collectors.toList());
     }
 }
