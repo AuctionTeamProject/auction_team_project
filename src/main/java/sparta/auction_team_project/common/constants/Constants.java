@@ -11,6 +11,7 @@ public class Constants {
     public static final String MSG_NOT_MATCH_LOGIN = "아이디 또는 비밀번호가 일치하지 않습니다";
     public static final String MSG_NOT_MATCH_ENUM = "Enum 가 일치하지 않습니다";
     public static final String MSG_INVALID_TOKEN = "토큰이 유효하지 않습니다.";
+    public static final String MST_NOT_FOUND_MEMBERSHIP = "멤버십을 찾을 수 없습니다";
     // endregion
 
     // 경매 관련 메세지
@@ -18,9 +19,13 @@ public class Constants {
     public static final String MSG_INVALID_START_PRICE = "시작 가격은 최소 입찰 단위보다 크거나 같아야 합니다";
     public static final String MSG_INVALID_AUCTION_TIME = "경매 종료 시간은 시작 시간보다 최소 1시간 이후여야 합니다";
     public static final String MSG_ONLY_SELLER_CAN_CREATE_AUCTION = "SELLER 회원만 경매를 등록할 수 있습니다";
+    public static final String MSG_ONLY_SELLER_CAN_UPDATE_AUCTION = "본인의 경매만 수정할 수 있습니다.";
+    public static final String MSG_ONLY_SELLER_CAN_DELETE_AUCTION = "본인의 경매만 삭제할 수 있습니다.";
     public static final String MSG_INVALID_AUCTION_START_TIME = "경매 시작 시간은 현재 시간 이후여야 합니다";
     public static final String MSG_FILE_UPLOAD_FAILED = "파일 업로드에 실패했습니다.";
     public static final String MSG_FILE_DOWNLOAD_FAILED = "파일 다운로드 URL 생성에 실패했습니다.";
+    public static final String MSG_AUCTION_NOT_FOUND = "경매를 찾을 수 없습니다.";
+    public static final String MSG_INVALID_AUCTION_STATUS = "경매 상태가 올바르지 않습니다.";
 
 
 
@@ -44,6 +49,22 @@ public class Constants {
     //동시성 관련 메시지
     public static final String MSG_CONCURRENCY_OCCURRED = "동시에 처리 중인 요청이 있어 작업을 수행할 수 없습니다. 잠시 후 다시 시도해주세요";
 
-    // 이벤트 관련 메세지
-    public static final String MSG_INVALID_EVENT_PERIOD = "이벤트 종료 시간은 시작 시간보다 늦어야 합니다.";
+    // 이벤트, 쿠폰 관련 메세지
+    public static final String MSG_INVALID_EVENT_PERIOD = "이벤트 종료 시간은 시작 시간보다 늦어야 합니다";
+    public static final String MSG_EVENT_NOT_FOUND = "해당 일벤트를 찾을 수 없습니다";
+    public static final String MSG_FORBIDDEN = "권한이 없는 사용자입니다";
+    public static final String MSG_INVALID_EVENT_QUANTITY = "허용할 수 있는 수량이 아닙니다";
+    public static final String MSG_EVENT_DELETE_NOT_ALLOWED = "삭제를 허용할 수 없습니다";
+
+    // region 채팅 관련 메세지
+    public static final String MSG_NOT_FOUND_CHATROOM = "채팅방을 찾을 수 없습니다.";
+    public static final String MSG_NOT_FOUND_MESSAGE = "메세지를 찾을 수 없습니다.";
+    public static final String MSG_INVALID_CURSOR = "유효하지 않은 커서 값입니다.";
+    public static final String MSG_CHATROOM_FORBIDDEN = "채팅방 권한이 없습니다.";
+    // endregion
+    public static final String MSG_COUPON_NOT_FOUND = "해당 쿠폰을 찾을 수 없습니다";
+    public static final String MSG_COUPON_ALREADY_UESD = "이미 사용된 쿠폰입니다";
+
+    // 멤버십 관련 메세지
+    public static final String MSG_MEMBERSHIP_NOT_FOUND = "해당 멤버십을 찾을 수 없습니다";
 }

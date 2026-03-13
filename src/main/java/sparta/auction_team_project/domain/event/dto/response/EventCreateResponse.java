@@ -35,18 +35,18 @@ public class EventCreateResponse {
 
     private final Long adminId;
 
-    public static EventCreateResponse from(Event savedEvent) {
+    public static EventCreateResponse from(Event event) {
         return EventCreateResponse.builder()
-                .id(savedEvent.getId())
-                .eventName(savedEvent.getEventName())
-                .eventDescription(savedEvent.getEventDescription())
-                .totalQuantity(savedEvent.getTotalQuantity())
-                .issuedQuantity(savedEvent.getIssuedQuantity())
-                .rewardType(savedEvent.getRewardType())
-                .startAt(savedEvent.getStartAt())
-                .endAt(savedEvent.getEndAt())
-                .status(savedEvent.getStatus())
-                .adminId(savedEvent.getAdminId())
+                .id(event.getId())
+                .eventName(event.getEventName())
+                .eventDescription(event.getEventDescription())
+                .totalQuantity(event.getTotalQuantity())
+                .issuedQuantity(event.getIssuedQuantity())
+                .rewardType(event.getRewardType())
+                .startAt(event.getStartAt())
+                .endAt(event.getEndAt())
+                .status(event.getStatus())
+                .adminId(event.getAdminId())
                 .build();
     }
 }

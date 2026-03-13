@@ -5,14 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
+import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
+import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
+import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
 import sparta.auction_team_project.domain.auction.service.AuctionService;
 
 @RestController
@@ -38,5 +38,42 @@ public class AuctionController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success("201", "경매 상품 등록 성공", response));
+    }
+
+    /**
+     - 경매 상품 수정 기능
+     - 정은식
+     */
+    @PatchMapping("/{auctionId}")
+    public ResponseEntity<BaseResponse<AuctionUpdateResponse>> updateAuction(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody AuctionUpdateRequest request
+    ) {
+
+        AuctionUpdateResponse response =
+                auctionService.updateAuction(auctionId, authUser.getEmail(), request);
+
+        return ResponseEntity.ok(
+                BaseResponse.success("200", "경매 상품 수정 성공", response)
+        );
+    }
+
+    /**
+     - 경매 상품 삭제 기능
+     - 정은식
+     */
+    @DeleteMapping("/{auctionId}")
+    public ResponseEntity<BaseResponse<AuctionDeleteResponse>> deleteAuction(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long auctionId
+    ) {
+
+        AuctionDeleteResponse response =
+                auctionService.deleteAuction(auctionId, authUser.getEmail());
+
+        return ResponseEntity.ok(
+                BaseResponse.success("200", "경매 상품 삭제 성공", response)
+        );
     }
 }
