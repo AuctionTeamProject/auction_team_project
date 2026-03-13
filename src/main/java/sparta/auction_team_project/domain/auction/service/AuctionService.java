@@ -14,7 +14,9 @@ import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResp
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
+import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
@@ -26,6 +28,7 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
 
     // 경매 상품 등록
     @Transactional
@@ -35,10 +38,14 @@ public class AuctionService {
 
         Long sellerId = user.getId();
 
-        // 유저 등급 검증
-//        if (user.getGrade() != MembershipEnum.SELLER) {
-//            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_CREATE_AUCTION);
-//        }
+        // Membership 조회
+        Membership membership = membershipRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBERSHIP));
+
+        // 판매자 권한 검증
+        if (membership.getGrade() != MembershipEnum.SELLER) {
+            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_CREATE_AUCTION);
+        }
         // 최소 입찰 단위 검증
         if (request.getMinimumBid() < 1000) {
             throw new ServiceErrorException(ErrorEnum.INVALID_MINIMUM_BID);
