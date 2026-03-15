@@ -7,10 +7,7 @@ import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionApproveResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
+import sparta.auction_team_project.domain.auction.dto.response.*;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
@@ -173,5 +170,19 @@ public class AuctionService {
         auction.approve();
 
         return new AuctionApproveResponse(auction.getId(), auction.getStatus());
+    }
+
+    // 경매 상품 상세조회
+    @Transactional(readOnly = true)
+    public AuctionDetailResponse getAuctionDetail(Long auctionId) {
+
+        AuctionDetailResponse response =
+                auctionRepository.findAuctionDetail(auctionId);
+
+        if (response == null) {
+            throw new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND);
+        }
+
+        return response;
     }
 }

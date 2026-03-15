@@ -12,6 +12,7 @@ import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateReque
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
+import sparta.auction_team_project.domain.auction.dto.response.AuctionDetailResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
 import sparta.auction_team_project.domain.auction.service.AuctionService;
 
@@ -74,6 +75,23 @@ public class AuctionController {
 
         return ResponseEntity.ok(
                 BaseResponse.success("200", "경매 상품 삭제 성공", response)
+        );
+    }
+
+    /**
+     - 경매 상품 상세 조회
+     - 정은식
+     */
+    @GetMapping("/{auctionId}")
+    public ResponseEntity<BaseResponse<AuctionDetailResponse>> getAuctionDetail(
+            @PathVariable Long auctionId
+    ) {
+
+        AuctionDetailResponse response =
+                auctionService.getAuctionDetail(auctionId);
+
+        return ResponseEntity.ok(
+                BaseResponse.success("200", "경매 상세 조회 성공", response)
         );
     }
 }
