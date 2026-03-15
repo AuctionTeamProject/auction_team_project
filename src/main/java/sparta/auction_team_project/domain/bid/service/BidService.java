@@ -2,10 +2,12 @@ package sparta.auction_team_project.domain.bid.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.dto.AuthUser;
+import sparta.auction_team_project.common.dto.BidPlacedEvent;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.redis.RedisLock;
@@ -39,6 +41,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Redis 키 구조
     //   user:point:{userId}         → 유저 잔액
@@ -107,6 +110,14 @@ public class BidService {
         Bid bid = saveBid(userId, auctionId, price, BidStatus.SUCCEEDED);
         saveBidLog(bid.getId(), userId, auctionId, price, BidLogStatus.SUCCESS);
         updateTopBid(auctionId, userId, price);
+
+        eventPublisher.publishEvent(
+                new BidPlacedEvent(
+                        auctionId,
+                        userId,
+                        currentTopBidderId
+                )
+        );
 
         return BidResponse.of(bid, getNickname(userId));
     }

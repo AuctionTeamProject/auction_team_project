@@ -1,11 +1,126 @@
 package sparta.auction_team_project.domain.alert.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import sparta.auction_team_project.domain.alert.dto.response.AlertResponse;
+import sparta.auction_team_project.domain.alert.entity.Alert;
+import sparta.auction_team_project.domain.alert.entity.AlertType;
 import sparta.auction_team_project.domain.alert.repository.AlertRepository;
+import sparta.auction_team_project.domain.auction.entity.Auction;
+import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.bid.repository.BidRepository;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AlertService {
+
     private final AlertRepository alertRepository;
+    private final BidRepository bidRepository;
+    private final AuctionRepository auctionRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final StringRedisTemplate redisTemplate;
+
+    /**
+     * 새로운 최고 입찰 발생 알림
+     */
+    @Transactional
+    public void notifyNewBid(Long auctionId, Long bidderId){
+
+        Auction auction = getAuction(auctionId);
+
+        // 종료 5분 전에는 NEW_BID 알림 차단
+        if(isWithin5MinutesOfEnd(auction)){
+            return;
+        }
+
+        // 경매 참여자 조회
+        List<Long> users =
+                bidRepository.findParticipantUserIds(auctionId);
+
+        for(Long userId : users){
+
+            // 본인 제외
+            if(userId.equals(bidderId)) continue;
+
+            createAndSend(auctionId, userId, AlertType.NEW_BID);
+        }
+    }
+
+    /**
+     * 최고 입찰자 탈락 알림
+     */
+    @Transactional
+    public void notifyOutBid(Long auctionId, Long previousTopBidderId){
+
+        if(previousTopBidderId == null) return;
+
+        Auction auction = getAuction(auctionId);
+
+        // 종료 5분 전 알림 차단
+        if(isWithin5MinutesOfEnd(auction)){
+            return;
+        }
+
+        createAndSend(
+                auctionId,
+                previousTopBidderId,
+                AlertType.OUT_BID
+        );
+    }
+
+    /**
+     * 알림 생성 + WebSocket 전송
+     */
+    private void createAndSend(Long auctionId, Long userId, AlertType type){
+
+        String key = "alert:" + auctionId + ":" + userId + ":" + type;
+
+        // Redis 중복 방지
+        Boolean isNew = redisTemplate.opsForValue()
+                .setIfAbsent(key, "1", Duration.ofSeconds(10));
+
+        if (Boolean.FALSE.equals(isNew)) {
+            return; // 이미 보낸 알림이면 종료
+        }
+
+        // 알림 DB 저장
+        Alert alert = alertRepository.save(
+                new Alert(
+                        auctionId,
+                        userId,
+                        type,
+                        type.getDescription(),
+                        false
+                )
+        );
+
+        // WebSocket 알림 전송
+        messagingTemplate.convertAndSend(
+                "/sub/alert/" + userId,
+                AlertResponse.from(alert)
+        );
+    }
+
+    /**
+     * 경매 조회
+     */
+    private Auction getAuction(Long auctionId){
+        return auctionRepository.findById(auctionId)
+                .orElseThrow();
+    }
+
+    /**
+     * 경매 종료 5분 전 여부 체크
+     */
+    private boolean isWithin5MinutesOfEnd(Auction auction){
+        return LocalDateTime.now()
+                .isAfter(auction.getEndAt().minusMinutes(5));
+    }
 }
