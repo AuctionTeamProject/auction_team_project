@@ -66,4 +66,7 @@ public class Constants {
 
     // 멤버십 관련 메세지
     public static final String MSG_MEMBERSHIP_NOT_FOUND = "해당 멤버십을 찾을 수 없습니다";
+
+    //알림 관련 메세지
+    public static final String MSG_NOT_FOUND_ALERT = "알림이 없습니다.";
 }

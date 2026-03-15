@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sparta.auction_team_project.common.exception.ErrorEnum;
+import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.alert.dto.response.AlertResponse;
 import sparta.auction_team_project.domain.alert.entity.Alert;
 import sparta.auction_team_project.domain.alert.entity.AlertType;
@@ -84,7 +86,7 @@ public class AlertService {
 
         // Redis 중복 방지
         Boolean isNew = redisTemplate.opsForValue()
-                .setIfAbsent(key, "1", Duration.ofSeconds(10));
+                .setIfAbsent(key, "1", Duration.ofSeconds(2));
 
         if (Boolean.FALSE.equals(isNew)) {
             return; // 이미 보낸 알림이면 종료
@@ -122,5 +124,38 @@ public class AlertService {
     private boolean isWithin5MinutesOfEnd(Auction auction){
         return LocalDateTime.now()
                 .isAfter(auction.getEndAt().minusMinutes(5));
+    }
+
+    /**
+     * 알림 읽음 처리
+     */
+    @Transactional
+    public AlertResponse alertRead(Long userId, Long alertId) {
+
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_ALERT));
+
+        // 본인 알림만 읽을 수 있도록 검증
+        if (!alert.getUserId().equals(userId)) {
+            throw new ServiceErrorException(ErrorEnum.ERR_ALERT_FORBIDDEN);
+        }
+
+        alert.markAsRead();
+
+        return  AlertResponse.from(alert);
+    }
+
+    /**
+     * 알림 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<AlertResponse> getAlerts(Long userId){
+
+        List<Alert> alerts =
+                alertRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+
+        return alerts.stream()
+                .map(AlertResponse::from)
+                .toList();
     }
 }
