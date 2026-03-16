@@ -24,9 +24,11 @@ public class BidAlertEventListener {
         );
 
         // 이전 최고 입찰자 탈락 알림
-        alertService.notifyOutBid(
-                event.getAuctionId(),
-                event.getPreviousTopBidderId()
-        );
+        if (event.getPreviousTopBidderId() != null) {
+            alertService.notifyOutBid(
+                    event.getAuctionId(),
+                    event.getPreviousTopBidderId()
+            );
+        }
     }
 }

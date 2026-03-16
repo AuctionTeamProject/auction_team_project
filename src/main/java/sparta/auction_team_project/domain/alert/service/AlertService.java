@@ -80,7 +80,7 @@ public class AlertService {
     /**
      * 알림 생성 + WebSocket 전송
      */
-    private void createAndSend(Long auctionId, Long userId, AlertType type){
+    public void createAndSend(Long auctionId, Long userId, AlertType type){
 
         String key = "alert:" + auctionId + ":" + userId + ":" + type;
 
@@ -113,7 +113,7 @@ public class AlertService {
     /**
      * 경매 조회
      */
-    private Auction getAuction(Long auctionId){
+    public Auction getAuction(Long auctionId){
         return auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND));
     }
@@ -121,7 +121,7 @@ public class AlertService {
     /**
      * 경매 종료 5분 전 여부 체크
      */
-    private boolean isWithin5MinutesOfEnd(Auction auction){
+    public boolean isWithin5MinutesOfEnd(Auction auction){
         return LocalDateTime.now()
                 .isAfter(auction.getEndAt().minusMinutes(5));
     }
