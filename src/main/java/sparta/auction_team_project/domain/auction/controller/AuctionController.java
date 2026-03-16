@@ -84,11 +84,12 @@ public class AuctionController {
      */
     @GetMapping("/{auctionId}")
     public ResponseEntity<BaseResponse<AuctionDetailResponse>> getAuctionDetail(
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long auctionId
     ) {
 
         AuctionDetailResponse response =
-                auctionService.getAuctionDetail(auctionId);
+                auctionService.getAuctionDetail(auctionId, authUser.getId());
 
         return ResponseEntity.ok(
                 BaseResponse.success("200", "경매 상세 조회 성공", response)

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
+import sparta.auction_team_project.common.redis.RedisViewService;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.*;
@@ -26,6 +27,7 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
+    private final RedisViewService redisViewService;
 
     // 경매 상품 등록
     @Transactional
@@ -174,7 +176,7 @@ public class AuctionService {
 
     // 경매 상품 상세조회
     @Transactional(readOnly = true)
-    public AuctionDetailResponse getAuctionDetail(Long auctionId) {
+    public AuctionDetailResponse getAuctionDetail(Long auctionId, Long userId) {
 
         AuctionDetailResponse response =
                 auctionRepository.findAuctionDetail(auctionId);
@@ -182,6 +184,15 @@ public class AuctionService {
         if (response == null) {
             throw new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND);
         }
+
+        // 레디스 조회수 증가
+        redisViewService.increaseView(auctionId, userId);
+
+        // Redis 조회수 가져오기
+        Long redisView = redisViewService.getViewCount(auctionId);
+
+        // DB 조회수 + Redis 조회수
+        response.setViewCount(response.getViewCount() + redisView);
 
         return response;
     }

@@ -1,6 +1,7 @@
 package sparta.auction_team_project.domain.auction.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 
@@ -26,4 +27,13 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
         AND a.startAt <= :now
     """)
     List<Auction> findReadyAuctionsToStart(LocalDateTime now);
+
+    // 스케쥴러 적용 DB에 조회수 처리
+    @Modifying
+    @Query("""
+        update Auction a
+        set a.viewCount = a.viewCount + :count
+        where a.id = :auctionId
+    """)
+    void incrementViewCount(Long auctionId, Long count);
 }
