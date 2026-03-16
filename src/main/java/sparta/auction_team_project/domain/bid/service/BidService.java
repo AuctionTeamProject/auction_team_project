@@ -96,6 +96,14 @@ public class BidService {
             throw new ServiceErrorException(ErrorEnum.ERR_BID_PRICE_TOO_LOW);
         }
 
+        //한 사용자가 여러 경매에 기존 포인트 이상의 값 쓰는 것 방지
+        //차감 후 음수면 즉시 환불 후 예외
+        long balanceAfterDeduct = deductBalanceAtomically(userId, price);
+        if (balanceAfterDeduct < 0) {
+            refundBalance(userId, price); // 롤백
+            saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            throw new ServiceErrorException(ErrorEnum.ERR_BID_INSUFFICIENT_BALANCE);
+        }
 
         // 이전 최고 입찰자 FAILED 처리 + 잔액 환불
         handlePreviousTopBidder(auctionId, currentTopBidderId, currentTopPrice);
@@ -244,6 +252,14 @@ public class BidService {
     //자동 입찰일 때 5분 전인지 확인
     private boolean isWithin5MinutesOfEnd(Auction auction) {
         return LocalDateTime.now().isAfter(auction.getEndAt().minusMinutes(5));
+    }
+
+    //반환값이 음수면 호출자가 refundBalance로 롤백 후 예외 처리
+    private long deductBalanceAtomically(Long userId, Long amount) {
+        // Redis에 잔액 없으면 먼저 MySQL에서 로드
+        getBalance(userId);
+        Long result = redisTemplate.opsForValue().decrement(BALANCE_KEY_PREFIX + userId, amount);
+        return result == null ? -1L : result;
     }
 
     // 유저 nickname 조회
