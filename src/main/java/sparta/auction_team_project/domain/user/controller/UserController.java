@@ -8,11 +8,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
-import sparta.auction_team_project.domain.auction.service.AuctionService;
 import sparta.auction_team_project.domain.bid.dto.response.BidListResponse;
 import sparta.auction_team_project.domain.user.dto.request.UserChangeNicknameRequest;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
-import sparta.auction_team_project.domain.user.dto.response.AuctionListResponse;
+import sparta.auction_team_project.domain.user.dto.response.UserAuctionListResponse;
 import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
 import sparta.auction_team_project.domain.user.service.UserService;
 
@@ -47,10 +46,10 @@ public class UserController {
 
     // 내가 등록한 경매 조회
     @GetMapping("/me/auctions")
-    public ResponseEntity<BaseResponse<List<AuctionListResponse>>> getMyAuctions(
+    public ResponseEntity<BaseResponse<List<UserAuctionListResponse>>> getMyAuctions(
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        List<AuctionListResponse> data = userService.getMyAuctions(authUser);
+        List<UserAuctionListResponse> data = userService.getMyAuctions(authUser);
         return ResponseEntity.ok(BaseResponse.success(String.valueOf(HttpStatus.OK.value()), "내 경매 상품 내역 조회 성공", data));
     }
 

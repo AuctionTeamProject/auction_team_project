@@ -14,7 +14,7 @@ import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.dto.request.UserChangeNicknameRequest;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
-import sparta.auction_team_project.domain.user.dto.response.AuctionListResponse;
+import sparta.auction_team_project.domain.user.dto.response.UserAuctionListResponse;
 import sparta.auction_team_project.domain.user.dto.response.MembershipResponse;
 import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
 import sparta.auction_team_project.domain.user.entity.User;
@@ -76,9 +76,9 @@ public class UserService {
     }
 
 
-    public List<AuctionListResponse> getMyAuctions(AuthUser authUser) {
+    public List<UserAuctionListResponse> getMyAuctions(AuthUser authUser) {
         return auctionRepository.findAllBySellerIdOrderByCreatedAtDesc(authUser.getId())
-                .stream().map(AuctionListResponse::from).collect(Collectors.toList());
+                .stream().map(UserAuctionListResponse::from).collect(Collectors.toList());
     }
 
     public List<BidListResponse> getMyBids(AuthUser authUser) {

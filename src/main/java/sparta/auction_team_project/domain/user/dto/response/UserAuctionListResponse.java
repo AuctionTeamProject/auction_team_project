@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class AuctionListResponse {
+public class UserAuctionListResponse {
 
     private Long auctionId;
     private String productName;
@@ -18,8 +18,8 @@ public class AuctionListResponse {
     private AuctionStatus status;
     private LocalDateTime createdAt;
 
-    public static AuctionListResponse from(Auction auction) {
-        return AuctionListResponse.builder()
+    public static UserAuctionListResponse from(Auction auction) {
+        return UserAuctionListResponse.builder()
                 .auctionId(auction.getId())
                 .productName(auction.getProductName())
                 .startPrice(auction.getStartPrice())

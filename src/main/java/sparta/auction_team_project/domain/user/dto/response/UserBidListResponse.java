@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class BidListResponse {
+public class UserBidListResponse {
 
     private Long bidId;
     private Long auctionId;
@@ -18,8 +18,8 @@ public class BidListResponse {
     private LocalDateTime createdAt;
 
 
-    public static BidListResponse from(Bid bid) {
-        return BidListResponse.builder()
+    public static UserBidListResponse from(Bid bid) {
+        return UserBidListResponse.builder()
                 .bidId(bid.getId())
                 .auctionId(bid.getAuctionId())
                 .price(bid.getPrice())
