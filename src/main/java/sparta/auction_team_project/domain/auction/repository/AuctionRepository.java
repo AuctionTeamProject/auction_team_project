@@ -3,11 +3,8 @@ package sparta.auction_team_project.domain.auction.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import sparta.auction_team_project.domain.auction.entity.Auction;
-import sparta.auction_team_project.domain.bid.entity.Bid;
-import sparta.auction_team_project.domain.user.dto.response.AuctionListResponse;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 public interface AuctionRepository extends JpaRepository<Auction, Long> {

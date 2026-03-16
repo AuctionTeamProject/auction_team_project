@@ -8,10 +8,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
-import sparta.auction_team_project.domain.bid.dto.response.BidListResponse;
 import sparta.auction_team_project.domain.user.dto.request.UserChangeNicknameRequest;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
 import sparta.auction_team_project.domain.user.dto.response.UserAuctionListResponse;
+import sparta.auction_team_project.domain.user.dto.response.UserBidListResponse;
 import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
 import sparta.auction_team_project.domain.user.service.UserService;
 
@@ -55,10 +55,10 @@ public class UserController {
 
     // 내가 참여한 경매(입찰) 조회
     @GetMapping("/me/bids")
-    public ResponseEntity<BaseResponse<List<BidListResponse>>> getMyBids(
+    public ResponseEntity<BaseResponse<List<UserBidListResponse>>> getMyBids(
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        List<BidListResponse> data = userService.getMyBids(authUser);
+        List<UserBidListResponse> data = userService.getMyBids(authUser);
         return ResponseEntity.ok(BaseResponse.success(String.valueOf(HttpStatus.OK.value()), "내 입찰 내역 조회 성공", data));
     }
 
