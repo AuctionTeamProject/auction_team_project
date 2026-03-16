@@ -111,6 +111,7 @@ public class BidService {
         saveBidLog(bid.getId(), userId, auctionId, price, BidLogStatus.SUCCESS);
         updateTopBid(auctionId, userId, price);
 
+        //입찰 알림
         eventPublisher.publishEvent(
                 new BidPlacedEvent(
                         auctionId,

@@ -2,12 +2,6 @@ package sparta.auction_team_project.common.dto;
 
 import lombok.Getter;
 
-/**
- * 입찰 성공 이벤트
- *
- * BidService에서 입찰 성공 후 발행된다.
- * EventListener가 이를 받아 알림을 생성한다.
- */
 @Getter
 public class BidPlacedEvent {
 

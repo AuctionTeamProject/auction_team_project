@@ -115,7 +115,7 @@ public class AlertService {
      */
     private Auction getAuction(Long auctionId){
         return auctionRepository.findById(auctionId)
-                .orElseThrow();
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND));
     }
 
     /**
@@ -157,5 +157,34 @@ public class AlertService {
         return alerts.stream()
                 .map(AlertResponse::from)
                 .toList();
+    }
+
+    /**
+     * 경매 종료 알림
+     */
+    @Transactional
+    public void notifyAuctionEnd(Long auctionId){
+
+        List<Long> users =
+                bidRepository.findParticipantUserIds(auctionId);
+
+        for(Long userId : users){
+            createAndSend(auctionId, userId, AlertType.AUCTION_END);
+        }
+    }
+
+    /**
+     * 낙찰 알림
+     */
+    @Transactional
+    public void notifyAuctionWin(Long auctionId, Long winnerId){
+
+        if(winnerId == null) return;
+
+        createAndSend(
+                auctionId,
+                winnerId,
+                AlertType.AUCTION_WIN
+        );
     }
 }
