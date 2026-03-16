@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.redis.RedisViewService;
+import sparta.auction_team_project.common.response.PageResponse;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.*;
@@ -202,12 +203,15 @@ public class AuctionService {
 
     // 경매 목록 조회 v1
     @Transactional(readOnly = true)
-    public Page<AuctionListResponse> searchAuctions(
+    public PageResponse<AuctionListResponse> searchAuctions(
             String keyword,
             AuctionCategory category,
             AuctionStatus status,
             Pageable pageable
     ) {
-        return auctionRepository.searchAuctions(keyword, category, status, pageable);
+        Page<AuctionListResponse> page =
+                auctionRepository.searchAuctions(keyword, category, status, pageable);
+
+        return new PageResponse<>(page);
     }
 }

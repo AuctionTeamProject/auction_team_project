@@ -44,33 +44,24 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
     void incrementViewCount(Long auctionId, Long count);
 
     // V1 경매 목록 조회
-    @Query(value = """
-    SELECT new sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse(
-        a.id,
-        u.nickname,
-        a.productName,
-        a.imageUrl,
-        a.category,
-        a.startPrice,
-        a.status,
-        a.startAt,
-        a.endAt
-    )
-    FROM Auction a
-    JOIN User u ON a.sellerId = u.id
-    WHERE (:keyword IS NULL OR a.productName LIKE %:keyword%)
-    AND (:category IS NULL OR a.category = :category)
-    AND (:status IS NULL OR a.status = :status)
-""",
-            countQuery = """
-SELECT COUNT(a)
-FROM Auction a
-JOIN User u ON a.sellerId = u.id
-WHERE (:keyword IS NULL OR a.productName LIKE %:keyword%)
-AND (:category IS NULL OR a.category = :category)
-AND (:status IS NULL OR a.status = :status)
-"""
-    )
+    @Query("""
+            SELECT new sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse(
+                a.id,
+                u.nickname,
+                a.productName,
+                a.imageUrl,
+                a.category,
+                a.startPrice,
+                a.status,
+                a.startAt,
+                a.endAt
+            )
+            FROM Auction a
+            JOIN User u ON a.sellerId = u.id
+            WHERE (:keyword IS NULL OR a.productName LIKE %:keyword%)
+            AND (:category IS NULL OR a.category = :category)
+            AND (:status IS NULL OR a.status = :status)
+            """)
     Page<AuctionListResponse> searchAuctions(
             @Param("keyword") String keyword,
             @Param("category") AuctionCategory category,

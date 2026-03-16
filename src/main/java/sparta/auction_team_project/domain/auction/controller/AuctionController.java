@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
+import sparta.auction_team_project.common.response.PageResponse;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.*;
@@ -102,14 +103,14 @@ public class AuctionController {
      - 정은식
      */
     @GetMapping("/v1")
-    public ResponseEntity<BaseResponse<Page<AuctionListResponse>>> searchAuctions(
+    public ResponseEntity<BaseResponse<PageResponse<AuctionListResponse>>> searchAuctions(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) AuctionCategory category,
             @RequestParam(required = false) AuctionStatus status,
             Pageable pageable
     ) {
 
-        Page<AuctionListResponse> response =
+        PageResponse<AuctionListResponse> response =
                 auctionService.searchAuctions(keyword, category, status, pageable);
 
         return ResponseEntity.ok(
