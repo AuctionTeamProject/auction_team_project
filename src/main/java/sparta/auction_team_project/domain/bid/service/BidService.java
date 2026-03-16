@@ -111,6 +111,91 @@ public class BidService {
         return BidResponse.of(bid, getNickname(userId));
     }
 
+
+
+    //경매 종료 정산
+    @Transactional
+    public void settleAuction(Auction auction) {
+        Long auctionId = auction.getId();
+
+        Long topBidderId  = getCurrentTopBidderId(auctionId);
+        Long topBidPrice  = getCurrentTopPrice(auctionId);
+
+        if (topBidderId == null || topBidPrice == 0L) {
+            // 입찰자 없음 -> 유찰
+            auction.closeWithNoWinner();
+        } else {
+            // 낙찰 처리
+            auction.closeWithWinner(topBidderId, topBidPrice);
+
+            // 낙찰자 Redis point -> MySQL 차감 반영
+            syncPointToMySQL(topBidderId);
+        }
+
+        // 경매에 참여한 모든 FAILED 입찰자의 Redis point → MySQL 동기화 (환불 반영)
+        syncFailedBiddersPointToMySQL(auctionId, topBidderId);
+
+        // Redis 경매 키 정리
+        cleanupAuctionRedisKeys(auctionId);
+    }
+
+    // 낙찰자 Redis point를 MySQL에 반영 (실제 차감된 포인트 기준)
+    private void syncPointToMySQL(Long userId) {
+        String key = BALANCE_KEY_PREFIX + userId;
+        String cached = redisTemplate.opsForValue().get(key);
+
+        if (cached == null) {
+            return;
+        }
+
+        Long redisPoint = Long.parseLong(cached);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
+
+        // Redis 값으로 MySQL point를 직접 갱신
+        long diff = redisPoint - user.getPoint();
+        if (diff > 0) {
+            user.plusPoint(diff);
+        } else if (diff < 0) {
+            user.minusPoint(-diff);
+        }
+    }
+
+    // FAILED 상태 입찰자(환불된 유저)의 Redis point -> MySQL 동기화
+    private void syncFailedBiddersPointToMySQL(Long auctionId, Long excludeUserId) {
+        List<Bid> failedBids = bidRepository.findAllByAuctionIdOrderByCreatedAtDesc(auctionId)
+                .stream()
+                .filter(b -> b.getStatus() == BidStatus.FAILED)
+                .collect(Collectors.toList());
+
+        // userId 중복 제거
+        failedBids.stream()
+                .map(Bid::getUserId)
+                .distinct()
+                .filter(uid -> !uid.equals(excludeUserId))
+                .forEach(uid -> {
+                    String key = BALANCE_KEY_PREFIX + uid;
+                    String cached = redisTemplate.opsForValue().get(key);
+                    if (cached == null) return;
+
+                    Long redisPoint = Long.parseLong(cached);
+                    userRepository.findById(uid).ifPresent(user -> {
+                        long diff = redisPoint - user.getPoint();
+                        if (diff > 0) {
+                            user.plusPoint(diff);
+                        } else if (diff < 0) {
+                            user.minusPoint(-diff);
+                        }
+                    });
+                });
+    }
+
+    // Redis 경매 관련 키 삭제
+    private void cleanupAuctionRedisKeys(Long auctionId) {
+        redisTemplate.delete(TOP_BID_KEY_PREFIX + auctionId);
+        redisTemplate.delete(TOP_BIDDER_KEY_PREFIX + auctionId);
+    }
+
     // 내 입찰 내역 조회
     @Transactional(readOnly = true)
     public List<BidListResponse> getMyBids(AuthUser authUser) {
