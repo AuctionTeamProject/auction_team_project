@@ -2,6 +2,8 @@ package sparta.auction_team_project.domain.auction.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -10,10 +12,9 @@ import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionDetailResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
+import sparta.auction_team_project.domain.auction.dto.response.*;
+import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
+import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.service.AuctionService;
 
 @RestController
@@ -93,6 +94,26 @@ public class AuctionController {
 
         return ResponseEntity.ok(
                 BaseResponse.success("200", "경매 상세 조회 성공", response)
+        );
+    }
+
+    /**
+     - 경매 목록 조회 v1
+     - 정은식
+     */
+    @GetMapping("/v1")
+    public ResponseEntity<BaseResponse<Page<AuctionListResponse>>> searchAuctions(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) AuctionCategory category,
+            @RequestParam(required = false) AuctionStatus status,
+            Pageable pageable
+    ) {
+
+        Page<AuctionListResponse> response =
+                auctionService.searchAuctions(keyword, category, status, pageable);
+
+        return ResponseEntity.ok(
+                BaseResponse.success("200", "경매 목록 조회 성공", response)
         );
     }
 }

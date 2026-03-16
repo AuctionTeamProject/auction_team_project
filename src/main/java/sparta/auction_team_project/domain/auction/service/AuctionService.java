@@ -1,6 +1,8 @@
 package sparta.auction_team_project.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
@@ -10,6 +12,7 @@ import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateReque
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
 import sparta.auction_team_project.domain.auction.dto.response.*;
 import sparta.auction_team_project.domain.auction.entity.Auction;
+import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
 import sparta.auction_team_project.domain.memberShip.entity.Membership;
@@ -195,5 +198,16 @@ public class AuctionService {
         response.setViewCount(response.getViewCount() + redisView);
 
         return response;
+    }
+
+    // 경매 목록 조회 v1
+    @Transactional(readOnly = true)
+    public Page<AuctionListResponse> searchAuctions(
+            String keyword,
+            AuctionCategory category,
+            AuctionStatus status,
+            Pageable pageable
+    ) {
+        return auctionRepository.searchAuctions(keyword, category, status, pageable);
     }
 }

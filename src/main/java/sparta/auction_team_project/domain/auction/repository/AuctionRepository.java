@@ -1,9 +1,15 @@
 package sparta.auction_team_project.domain.auction.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse;
 import sparta.auction_team_project.domain.auction.entity.Auction;
+import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
+import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,4 +42,39 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
         where a.id = :auctionId
     """)
     void incrementViewCount(Long auctionId, Long count);
+
+    // V1 경매 목록 조회
+    @Query(value = """
+    SELECT new sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse(
+        a.id,
+        u.nickname,
+        a.productName,
+        a.imageUrl,
+        a.category,
+        a.startPrice,
+        a.status,
+        a.startAt,
+        a.endAt
+    )
+    FROM Auction a
+    JOIN User u ON a.sellerId = u.id
+    WHERE (:keyword IS NULL OR a.productName LIKE %:keyword%)
+    AND (:category IS NULL OR a.category = :category)
+    AND (:status IS NULL OR a.status = :status)
+""",
+            countQuery = """
+SELECT COUNT(a)
+FROM Auction a
+JOIN User u ON a.sellerId = u.id
+WHERE (:keyword IS NULL OR a.productName LIKE %:keyword%)
+AND (:category IS NULL OR a.category = :category)
+AND (:status IS NULL OR a.status = :status)
+"""
+    )
+    Page<AuctionListResponse> searchAuctions(
+            @Param("keyword") String keyword,
+            @Param("category") AuctionCategory category,
+            @Param("status") AuctionStatus status,
+            Pageable pageable
+    );
 }
