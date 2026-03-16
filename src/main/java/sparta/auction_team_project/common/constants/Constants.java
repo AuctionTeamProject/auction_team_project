@@ -50,10 +50,16 @@ public class Constants {
 
     // 이벤트, 쿠폰 관련 메세지
     public static final String MSG_INVALID_EVENT_PERIOD = "이벤트 종료 시간은 시작 시간보다 늦어야 합니다";
-    public static final String MSG_EVENT_NOT_FOUND = "해당 일벤트를 찾을 수 없습니다";
+    public static final String MSG_EVENT_NOT_FOUND = "해당 이벤트를 찾을 수 없습니다";
     public static final String MSG_FORBIDDEN = "권한이 없는 사용자입니다";
     public static final String MSG_INVALID_EVENT_QUANTITY = "허용할 수 있는 수량이 아닙니다";
     public static final String MSG_EVENT_DELETE_NOT_ALLOWED = "삭제를 허용할 수 없습니다";
+    public static final String MSG_COUPON_NOT_FOUND = "해당 쿠폰을 찾을 수 없습니다";
+    public static final String MSG_COUPON_ALREADY_USED = "이미 사용된 쿠폰입니다";
+    public static final String MSG_EVENT_CLOSED = "이미 종료된 이벤트입니다";
+    public static final String MSG_EVENT_NOT_IN_PROGRESS = "현재 발급 가능한 이벤트가 아닙니다";
+    public static final String MSG_COUPON_SOLD_OUT = "쿠폰이 모두 소진되었습니다";
+    public static final String MSG_COUPON_ALREADY_ISSUED = "이미 발급받은 쿠폰입니다";
 
     // region 채팅 관련 메세지
     public static final String MSG_NOT_FOUND_CHATROOM = "채팅방을 찾을 수 없습니다.";
@@ -61,8 +67,6 @@ public class Constants {
     public static final String MSG_INVALID_CURSOR = "유효하지 않은 커서 값입니다.";
     public static final String MSG_CHATROOM_FORBIDDEN = "채팅방 권한이 없습니다.";
     // endregion
-    public static final String MSG_COUPON_NOT_FOUND = "해당 쿠폰을 찾을 수 없습니다";
-    public static final String MSG_COUPON_ALREADY_UESD = "이미 사용된 쿠폰입니다";
 
     // 멤버십 관련 메세지
     public static final String MSG_MEMBERSHIP_NOT_FOUND = "해당 멤버십을 찾을 수 없습니다";
