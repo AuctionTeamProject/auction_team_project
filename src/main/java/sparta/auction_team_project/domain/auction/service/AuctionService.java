@@ -5,16 +5,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
+import sparta.auction_team_project.common.redis.RedisViewService;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionApproveResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
+import sparta.auction_team_project.domain.auction.dto.response.*;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
+import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
@@ -26,6 +26,8 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
+    private final RedisViewService redisViewService;
 
     // 경매 상품 등록
     @Transactional
@@ -35,10 +37,14 @@ public class AuctionService {
 
         Long sellerId = user.getId();
 
-        // 유저 등급 검증
-//        if (user.getGrade() != MembershipEnum.SELLER) {
-//            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_CREATE_AUCTION);
-//        }
+        // Membership 조회
+        Membership membership = membershipRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBERSHIP));
+
+        // 판매자 권한 검증
+        if (membership.getGrade() != MembershipEnum.SELLER) {
+            throw new ServiceErrorException(ErrorEnum.ERR_ONLY_SELLER_CAN_CREATE_AUCTION);
+        }
         // 최소 입찰 단위 검증
         if (request.getMinimumBid() < 1000) {
             throw new ServiceErrorException(ErrorEnum.INVALID_MINIMUM_BID);
@@ -166,5 +172,28 @@ public class AuctionService {
         auction.approve();
 
         return new AuctionApproveResponse(auction.getId(), auction.getStatus());
+    }
+
+    // 경매 상품 상세조회
+    @Transactional(readOnly = true)
+    public AuctionDetailResponse getAuctionDetail(Long auctionId, Long userId) {
+
+        AuctionDetailResponse response =
+                auctionRepository.findAuctionDetail(auctionId);
+
+        if (response == null) {
+            throw new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND);
+        }
+
+        // 레디스 조회수 증가
+        redisViewService.increaseView(auctionId, userId);
+
+        // Redis 조회수 가져오기
+        Long redisView = redisViewService.getViewCount(auctionId);
+
+        // DB 조회수 + Redis 조회수
+        response.setViewCount(response.getViewCount() + redisView);
+
+        return response;
     }
 }
