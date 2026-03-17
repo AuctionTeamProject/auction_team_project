@@ -98,4 +98,14 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
     WHERE a.id IN :ids
     """)
     List<AuctionListResponse> findTopAuctionsByIds(@Param("ids") List<Long> ids);
+
+    // 종료 시간이 지난 ACTIVE 경매 조회 (낙찰/유찰 정산용)
+    @Query("""
+        SELECT a
+        FROM Auction a
+        WHERE a.status = 'ACTIVE'
+        AND a.endAt <= :now
+    """)
+    List<Auction> findActiveAuctionsToClose(LocalDateTime now);
+
 }

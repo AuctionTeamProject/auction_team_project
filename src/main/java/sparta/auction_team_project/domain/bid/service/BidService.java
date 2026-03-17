@@ -41,10 +41,10 @@ public class BidService {
     private final StringRedisTemplate redisTemplate;
 
     // Redis 키 구조
-    //   user:point:{userId}         → 유저 잔액
-    //   auction:topBid:{auctionId}    → 현재 최고 입찰가
-    //   auction:topBidder:{auctionId} → 현재 최고 입찰자 userId
-    //   lock:auction:{auctionId}      → 분산 락 키 (@RedisLock AOP가 관리)
+    //   user:point:{userId}         -> 유저 잔액
+    //   auction:topBid:{auctionId}    -> 현재 최고 입찰가
+    //   auction:topBidder:{auctionId} -> 현재 최고 입찰자 userId
+    //   lock:auction:{auctionId}      -> 분산 락 키 (@RedisLock AOP가 관리)
     private static final String BALANCE_KEY_PREFIX    = "user:point:";
     private static final String TOP_BID_KEY_PREFIX    = "auction:topBid:";
     private static final String TOP_BIDDER_KEY_PREFIX = "auction:topBidder:";
@@ -71,7 +71,9 @@ public class BidService {
 
         // 현재 최고가 + minimumBid = 자동 입찰가
         Long currentTopPrice = getCurrentTopPrice(auctionId);
-        Long bidPrice = currentTopPrice + auction.getMinimumBid();
+        Long bidPrice = (currentTopPrice == 0L)
+                ? auction.getStartPrice()                        // 첫 입찰 시 시작가로
+                : currentTopPrice + auction.getMinimumBid();     // 이후 최고가 + 최소입찰단위
 
         return processBid(userId, auctionId, bidPrice);
     }
@@ -96,19 +98,85 @@ public class BidService {
             throw new ServiceErrorException(ErrorEnum.ERR_BID_PRICE_TOO_LOW);
         }
 
-        validateBalance(userId, price);
+        //한 사용자가 여러 경매에 기존 포인트 이상의 값 쓰는 것 방지
+        //차감 후 음수면 즉시 환불 후 예외
+        long balanceAfterDeduct = deductBalanceAtomically(userId, price);
+        if (balanceAfterDeduct < 0) {
+            refundBalance(userId, price); // 롤백
+            saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            throw new ServiceErrorException(ErrorEnum.ERR_BID_INSUFFICIENT_BALANCE);
+        }
 
         // 이전 최고 입찰자 FAILED 처리 + 잔액 환불
         handlePreviousTopBidder(auctionId, currentTopBidderId, currentTopPrice);
-
-        // 입찰 포인트 차감
-        deductBalance(userId, price);
 
         Bid bid = saveBid(userId, auctionId, price, BidStatus.SUCCEEDED);
         saveBidLog(bid.getId(), userId, auctionId, price, BidLogStatus.SUCCESS);
         updateTopBid(auctionId, userId, price);
 
         return BidResponse.of(bid, getNickname(userId));
+    }
+
+    // 낙찰자 Redis point를 MySQL에 반영 (실제 차감된 포인트 기준)
+    private void syncPointToMySQL(Long userId) {
+        String key = BALANCE_KEY_PREFIX + userId;
+        String cached = redisTemplate.opsForValue().get(key);
+
+        if (cached == null) {
+            log.warn("[정산] userId={} Redis 잔액 없음, MySQL 그대로 유지", userId);
+            return;
+        }
+
+        Long redisPoint = Long.parseLong(cached);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
+
+        // Redis 값으로 MySQL point를 직접 갱신
+        long diff = redisPoint - user.getPoint();
+        if (diff > 0) {
+            user.plusPoint(diff);
+        } else if (diff < 0) {
+            user.minusPoint(-diff);
+        }
+
+        log.info("[정산] userId={} MySQL point 동기화 완료: {} → {}", userId, user.getPoint() - diff, redisPoint);
+    }
+
+    // FAILED 상태 입찰자(환불된 유저)의 Redis point → MySQL 동기화
+    private void syncFailedBiddersPointToMySQL(Long auctionId, Long excludeUserId) {
+        List<Bid> failedBids = bidRepository.findAllByAuctionIdOrderByCreatedAtDesc(auctionId)
+                .stream()
+                .filter(b -> b.getStatus() == BidStatus.FAILED)
+                .collect(Collectors.toList());
+
+        // userId 중복 제거
+        failedBids.stream()
+                .map(Bid::getUserId)
+                .distinct()
+                .filter(uid -> !uid.equals(excludeUserId))
+                .forEach(uid -> {
+                    String key = BALANCE_KEY_PREFIX + uid;
+                    String cached = redisTemplate.opsForValue().get(key);
+                    if (cached == null) return;
+
+                    Long redisPoint = Long.parseLong(cached);
+                    userRepository.findById(uid).ifPresent(user -> {
+                        long diff = redisPoint - user.getPoint();
+                        if (diff > 0) {
+                            user.plusPoint(diff);
+                        } else if (diff < 0) {
+                            user.minusPoint(-diff);
+                        }
+                        log.info("[정산] 환불 유저 userId={} MySQL point 동기화: {}", uid, redisPoint);
+                    });
+                });
+    }
+
+    // Redis 경매 관련 키 삭제
+    private void cleanupAuctionRedisKeys(Long auctionId) {
+        redisTemplate.delete(TOP_BID_KEY_PREFIX + auctionId);
+        redisTemplate.delete(TOP_BIDDER_KEY_PREFIX + auctionId);
+        log.info("[정산] auctionId={} Redis 경매 키 정리 완료", auctionId);
     }
 
     // 내 입찰 내역 조회
@@ -160,10 +228,12 @@ public class BidService {
         return LocalDateTime.now().isAfter(auction.getEndAt().minusMinutes(5));
     }
 
-    //포인트 잔액 검증
-    private void validateBalance(Long userId, Long price) {
-        if (getBalance(userId) < price)
-            throw new ServiceErrorException(ErrorEnum.ERR_BID_INSUFFICIENT_BALANCE);
+    //반환값이 음수면 호출자가 refundBalance로 롤백 후 예외 처리
+    private long deductBalanceAtomically(Long userId, Long amount) {
+        // Redis에 잔액 없으면 먼저 MySQL에서 로드
+        getBalance(userId);
+        Long result = redisTemplate.opsForValue().decrement(BALANCE_KEY_PREFIX + userId, amount);
+        return result == null ? -1L : result;
     }
 
     // 유저 nickname 조회
@@ -187,11 +257,6 @@ public class BidService {
             return point;
         }
         return Long.parseLong(cached);
-    }
-
-    //입찰 포인트 차감(redis에서만)
-    private void deductBalance(Long userId, Long amount) {
-        redisTemplate.opsForValue().decrement(BALANCE_KEY_PREFIX + userId, amount);
     }
 
     //포인트 환불(redis에서만)
@@ -244,5 +309,43 @@ public class BidService {
     protected void saveBidLog(Long bidId, Long userId, Long auctionId, Long price, BidLogStatus status) {
         bidLogRepository.save(BidLog.builder()
                 .bidId(bidId).userId(userId).auctionId(auctionId).price(price).status(status).build());
+    }
+
+    // 낙찰 후 정산
+    @Transactional
+    public void settleAuction(Auction auction) {
+        Long auctionId = auction.getId();
+
+        //영속성
+        Auction managedAuction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND));
+
+        // 이미 정산된 경매 재처리 방지 (스케줄러 중복 실행 방어)
+        if (managedAuction.getStatus() != AuctionStatus.ACTIVE) {
+            log.warn("[정산] auctionId={} 이미 정산된 경매 (status={}), 스킵", auctionId, managedAuction.getStatus());
+            return;
+        }
+
+        Long topBidderId = getCurrentTopBidderId(auctionId);
+        Long topBidPrice = getCurrentTopPrice(auctionId);
+
+        if (topBidderId == null || topBidPrice == 0L) {
+            // 입찰자 없음 -> 유찰
+            managedAuction.closeWithNoWinner();
+            log.info("[유찰] auctionId={} 유찰 처리", auctionId);
+        } else {
+            // 낙찰 처리
+            managedAuction.closeWithWinner(topBidderId, topBidPrice);
+            log.info("[낙찰] auctionId={} 낙찰 처리 winnerId={} finalPrice={}", auctionId, topBidderId, topBidPrice);
+
+            // 낙찰자 Redis point -> MySQL 차감 반영
+            syncPointToMySQL(topBidderId);
+        }
+
+        // 경매에 참여한 모든 FAILED 입찰자의 Redis point -> MySQL 동기화 (환불 반영)
+        syncFailedBiddersPointToMySQL(auctionId, topBidderId);
+
+        // Redis 경매 키 정리
+        cleanupAuctionRedisKeys(auctionId);
     }
 }
