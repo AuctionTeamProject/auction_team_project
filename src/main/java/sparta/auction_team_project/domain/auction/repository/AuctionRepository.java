@@ -76,4 +76,23 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
             @Param("status") AuctionStatus status,
             Pageable pageable
     );
+
+    // TOP5 경매 상품 관련 정보
+    @Query("""
+    SELECT new sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse(
+        a.id,
+        u.nickname,
+        a.productName,
+        a.imageUrl,
+        a.category,
+        a.startPrice,
+        a.status,
+        a.startAt,
+        a.endAt
+    )
+    FROM Auction a
+    JOIN User u ON a.sellerId = u.id
+    WHERE a.id IN :ids
+    """)
+    List<AuctionListResponse> findTopAuctionsByIds(@Param("ids") List<Long> ids);
 }

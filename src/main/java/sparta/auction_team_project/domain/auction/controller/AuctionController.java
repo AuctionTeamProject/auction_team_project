@@ -2,7 +2,6 @@ package sparta.auction_team_project.domain.auction.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,8 @@ import sparta.auction_team_project.domain.auction.dto.response.*;
 import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.service.AuctionService;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -135,6 +136,21 @@ public class AuctionController {
 
         return ResponseEntity.ok(
                 BaseResponse.success("200", "경매 목록 조회 성공(V2)", response)
+        );
+    }
+
+    /**
+     - 인기 경매 TOP5 조회
+     - 정은식
+     */
+    @GetMapping("/top5")
+    public ResponseEntity<BaseResponse<List<AuctionListResponse>>> getTop5Auctions() {
+
+        List<AuctionListResponse> response =
+                auctionService.getTop5Auctions();
+
+        return ResponseEntity.ok(
+                BaseResponse.success("200", "인기 경매 TOP5 조회 성공", response)
         );
     }
 }
