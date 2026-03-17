@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +53,24 @@ public class RedisViewService {
             return 0L;
         }
         return Long.valueOf(value.toString());
+    }
+
+    public List<Long> getTopRankedAuctions(int limit) {
+
+        Set<Object> ids = redisTemplate.opsForZSet()
+                .reverseRange("auction:ranking", 0, limit - 1);
+
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        return ids.stream()
+                .map(id -> Long.valueOf(id.toString().replace("\"", "")))
+                .toList();
+    }
+
+    // 추후 유찰되면 랭킹에서 삭제되는 방식 추가해주기
+    public void removeFromRanking(Long auctionId) {
+        redisTemplate.opsForZSet().remove("auction:ranking", auctionId.toString());
     }
 }
