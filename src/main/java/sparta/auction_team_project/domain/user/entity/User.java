@@ -70,10 +70,13 @@ public class User extends BaseEntity {
         this.userRole = userRole;
     }
 
-    //소셜 로그인용
+    //소셜 로그인용(구글, 카카오)
     public void updatePhone(String phone) {
         this.phone = phone;
     }
+
+    // 소셜 로그인용(카카오)
+    public void updateEmail(String email) { this.email = email; }
 
     public void plusPoint(Long point) {
         this.point += point;

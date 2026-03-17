@@ -87,9 +87,20 @@ public class AuthService {
         if (userRepository.existsByPhone(request.getPhone())) {
             throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE);
         }
-
-
+        //폰번호는 모두 빈칸으로 오지만 이메일은 카카오만 빈값으로 옴
         user.updatePhone(request.getPhone());
+
+        if (user.getEmail() == null || user.getEmail().startsWith("needsEmail")) {
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                throw new ServiceErrorException(ErrorEnum.ERR_INVALID_EMAIL);
+            }
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_EMAIL);
+            }
+            user.updateEmail(request.getEmail());
+        }
+
+
         return new OAuth2AddInfoResponse(
                 jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()),
                 user.getNickname(),

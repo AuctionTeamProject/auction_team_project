@@ -33,7 +33,7 @@ import java.util.*;
 //Kakao: GET /oauth2/authorization/kakao
 //Naver: GET /oauth2/authorization/naver
 //구글로그인 http://localhost:8080/oauth2/authorization/google -> 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111"}
-//카카오로그인 http://localhost:8080/oauth2/authorization/kakao
+//카카오로그인 http://localhost:8080/oauth2/authorization/kakao -> 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111", "email": "abc@abc.com"}
 @Service
 @RequiredArgsConstructor
 //소셜로그인시 스프링 시큐리티가 자동으로 loadUser를 호출해서 구글한테서 유저정보 받아옴
