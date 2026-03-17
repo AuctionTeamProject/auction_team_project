@@ -163,6 +163,7 @@ public class AuctionService {
     }
 
     // 관리자 승인
+    @CacheEvict(value = "auctionSearch", allEntries = true)
     @Transactional
     public AuctionApproveResponse approveAuction(Long auctionId) {
 
