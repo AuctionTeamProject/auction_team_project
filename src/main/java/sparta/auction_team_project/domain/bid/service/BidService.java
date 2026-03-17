@@ -71,7 +71,9 @@ public class BidService {
 
         // 현재 최고가 + minimumBid = 자동 입찰가
         Long currentTopPrice = getCurrentTopPrice(auctionId);
-        Long bidPrice = currentTopPrice + auction.getMinimumBid();
+        Long bidPrice = (currentTopPrice == 0L)
+                ? auction.getStartPrice()                        // 첫 입찰 시 시작가로
+                : currentTopPrice + auction.getMinimumBid();     // 이후 최고가 + 최소입찰단위
 
         return processBid(userId, auctionId, bidPrice);
     }
