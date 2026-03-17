@@ -117,4 +117,24 @@ public class AuctionController {
                 BaseResponse.success("200", "경매 목록 조회 성공", response)
         );
     }
+
+    /**
+     - 경매 목록 조회 v2 (캐시 적용)
+     - 정은식
+     */
+    @GetMapping("/v2")
+    public ResponseEntity<BaseResponse<PageResponse<AuctionListResponse>>> searchAuctionsV2(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) AuctionCategory category,
+            @RequestParam(required = false) AuctionStatus status,
+            Pageable pageable
+    ) {
+
+        PageResponse<AuctionListResponse> response =
+                auctionService.searchAuctionsV2(keyword, category, status, pageable);
+
+        return ResponseEntity.ok(
+                BaseResponse.success("200", "경매 목록 조회 성공(V2)", response)
+        );
+    }
 }

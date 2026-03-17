@@ -1,6 +1,7 @@
 package sparta.auction_team_project.domain.auction.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -211,6 +212,24 @@ public class AuctionService {
     ) {
         Page<AuctionListResponse> page =
                 auctionRepository.searchAuctions(keyword, category, status, pageable);
+
+        return new PageResponse<>(page);
+    }
+
+    // 경매 목록 조회 v2
+    @Transactional(readOnly = true)
+    @Cacheable(
+            value = "auctionSearch",
+            key = "'auction:' + #keyword + '-' + #category + '-' + #status + '-' + #pageable.pageNumber"
+    )
+    public PageResponse<AuctionListResponse> searchAuctionsV2(
+            String keyword,
+            AuctionCategory category,
+            AuctionStatus status,
+            Pageable pageable
+    ) {
+        Page<AuctionListResponse> page =
+                auctionRepository.searchAuctionsV2(keyword, category, status, pageable);
 
         return new PageResponse<>(page);
     }
