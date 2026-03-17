@@ -7,21 +7,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.coupon.entity.RewardType;
 import sparta.auction_team_project.domain.event.dto.request.EventCreateRequest;
 import sparta.auction_team_project.domain.event.dto.request.EventUpdateRequest;
-import sparta.auction_team_project.domain.event.dto.response.EventCreateResponse;
-import sparta.auction_team_project.domain.event.dto.response.EventDetailResponse;
-import sparta.auction_team_project.domain.event.dto.response.EventUpdateResponse;
+import sparta.auction_team_project.domain.event.dto.response.*;
 import sparta.auction_team_project.domain.event.entity.Event;
 import sparta.auction_team_project.domain.event.entity.EventStatus;
 import sparta.auction_team_project.domain.event.repository.EventRepository;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -44,6 +47,12 @@ class EventServiceTest {
 
     @InjectMocks
     private EventService eventService;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
 
     @Nested
     @DisplayName("이벤트 생성")
@@ -128,6 +137,123 @@ class EventServiceTest {
         }
     }
 
+
+
+
+
+
+
+
+
+
+    @Nested
+    @DisplayName("이벤트 목록 조회")
+    class GetEventsTest {
+
+        @Test
+        @DisplayName("캐시에 데이터가 없으면 DB에서 조회 후 Redis에 저장한다")
+        void getEvents_cacheMiss() {
+            // given
+            int page = 0;
+            int size = 10;
+            String cacheKey = "events:page:0:size:10";
+
+            Event event1 = createEvent(
+                    ADMIN_ID,
+                    1L,
+                    "이벤트1",
+                    "이벤트1 설명",
+                    100,
+                    10,
+                    RewardType.POINT,
+                    START_AT,
+                    END_AT
+            );
+
+            Event event2 = createEvent(
+                    ADMIN_ID,
+                    2L,
+                    "이벤트2",
+                    "이벤트2 설명",
+                    50,
+                    5,
+                    RewardType.POINT,
+                    START_AT,
+                    END_AT
+            );
+
+            Page<Event> eventPage = new PageImpl<>(
+                    List.of(event1, event2),
+                    PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")),
+                    2
+            );
+
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            given(valueOperations.get(cacheKey)).willReturn(null);
+            given(eventRepository.findAll(any(Pageable.class))).willReturn(eventPage);
+
+            // when
+            EventGetResponse response = eventService.getEvents(page, size);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getEvents()).hasSize(2);
+            assertThat(response.getCurrentPage()).isEqualTo(0);
+            assertThat(response.getSize()).isEqualTo(10);
+            assertThat(response.getTotalPages()).isEqualTo(1);
+            assertThat(response.getTotalElements()).isEqualTo(2);
+            assertThat(response.isLast()).isTrue();
+
+            then(valueOperations).should(times(1)).get(cacheKey);
+            then(eventRepository).should(times(1)).findAll(any(Pageable.class));
+            then(valueOperations).should(times(1))
+                    .set(eq(cacheKey), any(EventGetResponse.class), eq(Duration.ofMinutes(5)));
+        }
+
+        @Test
+        @DisplayName("캐시에 데이터가 있으면 DB를 조회하지 않고 캐시 데이터를 반환한다")
+        void getEvents_cacheHit() {
+            // given
+            int page = 0;
+            int size = 10;
+            String cacheKey = "events:page:0:size:10";
+
+            Event event = createEvent(
+                    ADMIN_ID,
+                    1L,
+                    "캐시된 이벤트",
+                    "캐시된 설명",
+                    100,
+                    20,
+                    RewardType.POINT,
+                    START_AT,
+                    END_AT
+            );
+
+            Page<Event> eventPage = new PageImpl<>(
+                    List.of(event),
+                    PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")),
+                    1
+            );
+
+            EventGetResponse cachedResponse = EventGetResponse.from(eventPage);
+
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            given(valueOperations.get(cacheKey)).willReturn(cachedResponse);
+
+            // when
+            EventGetResponse response = eventService.getEvents(page, size);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.getEvents()).hasSize(1);
+            assertThat(response.getEvents().get(0).getEventName()).isEqualTo("캐시된 이벤트");
+
+            then(valueOperations).should(times(1)).get(cacheKey);
+            then(eventRepository).should(never()).findAll(any(Pageable.class));
+            then(valueOperations).should(never()).set(anyString(), any(), any(Duration.class));
+        }
+    }
 
 
 
