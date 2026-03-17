@@ -41,10 +41,10 @@ public class BidService {
     private final StringRedisTemplate redisTemplate;
 
     // Redis 키 구조
-    //   user:point:{userId}         → 유저 잔액
-    //   auction:topBid:{auctionId}    → 현재 최고 입찰가
-    //   auction:topBidder:{auctionId} → 현재 최고 입찰자 userId
-    //   lock:auction:{auctionId}      → 분산 락 키 (@RedisLock AOP가 관리)
+    //   user:point:{userId}         -> 유저 잔액
+    //   auction:topBid:{auctionId}    -> 현재 최고 입찰가
+    //   auction:topBidder:{auctionId} -> 현재 최고 입찰자 userId
+    //   lock:auction:{auctionId}      -> 분산 락 키 (@RedisLock AOP가 관리)
     private static final String BALANCE_KEY_PREFIX    = "user:point:";
     private static final String TOP_BID_KEY_PREFIX    = "auction:topBid:";
     private static final String TOP_BIDDER_KEY_PREFIX = "auction:topBidder:";
@@ -115,28 +115,37 @@ public class BidService {
         return BidResponse.of(bid, getNickname(userId));
     }
 
-    //경매 종료 정산
     @Transactional
     public void settleAuction(Auction auction) {
         Long auctionId = auction.getId();
 
-        Long topBidderId  = getCurrentTopBidderId(auctionId);
-        Long topBidPrice  = getCurrentTopPrice(auctionId);
+        //영속성
+        Auction managedAuction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_AUCTION_NOT_FOUND));
+
+        // 이미 정산된 경매 재처리 방지 (스케줄러 중복 실행 방어)
+        if (managedAuction.getStatus() != AuctionStatus.ACTIVE) {
+            log.warn("[정산] auctionId={} 이미 정산된 경매 (status={}), 스킵", auctionId, managedAuction.getStatus());
+            return;
+        }
+
+        Long topBidderId = getCurrentTopBidderId(auctionId);
+        Long topBidPrice = getCurrentTopPrice(auctionId);
 
         if (topBidderId == null || topBidPrice == 0L) {
             // 입찰자 없음 -> 유찰
-            auction.closeWithNoWinner();
+            managedAuction.closeWithNoWinner();
             log.info("[유찰] auctionId={} 유찰 처리", auctionId);
         } else {
             // 낙찰 처리
-            auction.closeWithWinner(topBidderId, topBidPrice);
+            managedAuction.closeWithWinner(topBidderId, topBidPrice);
             log.info("[낙찰] auctionId={} 낙찰 처리 winnerId={} finalPrice={}", auctionId, topBidderId, topBidPrice);
 
             // 낙찰자 Redis point -> MySQL 차감 반영
             syncPointToMySQL(topBidderId);
         }
 
-        // 경매에 참여한 모든 FAILED 입찰자의 Redis point → MySQL 동기화 (환불 반영)
+        // 경매에 참여한 모든 FAILED 입찰자의 Redis point -> MySQL 동기화 (환불 반영)
         syncFailedBiddersPointToMySQL(auctionId, topBidderId);
 
         // Redis 경매 키 정리
