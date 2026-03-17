@@ -14,4 +14,5 @@ public class GoogleOAuth2UserInfo implements OAuth2UserInfo {
     @Override public String getProviderId() { return (String) attributes.get("sub"); }
     @Override public String getEmail() { return (String) attributes.get("email"); }
     @Override public String getName() { return (String) attributes.get("name"); }
+    @Override public String getNickname() { return (String) attributes.get("nickname"); }
 }

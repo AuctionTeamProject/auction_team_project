@@ -11,7 +11,8 @@ public class Constants {
     public static final String MSG_NOT_MATCH_LOGIN = "아이디 또는 비밀번호가 일치하지 않습니다";
     public static final String MSG_NOT_MATCH_ENUM = "Enum 가 일치하지 않습니다";
     public static final String MSG_INVALID_TOKEN = "토큰이 유효하지 않습니다.";
-    public static final String MST_NOT_FOUND_MEMBERSHIP = "멤버십을 찾을 수 없습니다";
+    public static final String MSG_NOT_FOUND_MEMBERSHIP = "멤버십을 찾을 수 없습니다";
+    public static final String MSG_UNSUPPORTED_SOCIAL_LOGIN = "지원하지 않는 소셜 로그인입니다";
     // endregion
 
     // 경매 관련 메세지

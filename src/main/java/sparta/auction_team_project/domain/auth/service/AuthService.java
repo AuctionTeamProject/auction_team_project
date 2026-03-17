@@ -15,8 +15,10 @@ import sparta.auction_team_project.common.jwt.JwtUtil;
 import sparta.auction_team_project.common.jwt.RefreshTokenService;
 import sparta.auction_team_project.common.jwt.TokenBlackListService;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
+import sparta.auction_team_project.domain.auth.dto.request.OAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
+import sparta.auction_team_project.domain.auth.dto.response.OAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
 import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
@@ -75,6 +77,24 @@ public class AuthService {
         membershipRepository.save(membership);
 
         return new SignupResponse(savedUser.getNickname(), savedUser.getName(), savedUser.getEmail());
+    }
+
+    // 소셜로그인 신규유저의 전화번호 입력 처리
+    @Transactional
+    public OAuth2AddInfoResponse addInfo(Long userId, OAuth2AddInfoRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE);
+        }
+
+
+        user.updatePhone(request.getPhone());
+        return new OAuth2AddInfoResponse(
+                jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()),
+                user.getNickname(),
+                user.getPhone()
+        );
     }
 
     public LoginResponse signin(LoginRequest signinRequest, HttpServletResponse response) {

@@ -1,10 +1,9 @@
-/*package sparta.auction_team_project.domain.user.entity;
+package sparta.auction_team_project.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// UserSocialAccount.java - User를 바라보는 단방향만
 @Entity
 @Getter
 @NoArgsConstructor
@@ -15,9 +14,7 @@ public class UserSocialAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    private Long userId;
 
     @Column(nullable = false)
     private String provider;
@@ -25,10 +22,9 @@ public class UserSocialAccount {
     @Column(nullable = false)
     private String providerId;
 
-    public UserSocialAccount(User user, String provider, String providerId) {
-        this.user = user;
+    public UserSocialAccount(Long userId, String provider, String providerId) {
+        this.userId = userId;
         this.provider = provider;
         this.providerId = providerId;
     }
 }
-*/
