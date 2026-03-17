@@ -60,7 +60,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
             JOIN User u ON a.sellerId = u.id
             WHERE (:keyword IS NULL OR a.productName LIKE %:keyword%)
             AND (:category IS NULL OR a.category = :category)
-            AND (:status IS NULL OR a.status = :status)
+            AND (
+            (:status IS NOT NULL AND a.status = :status)
+            OR
+            (:status IS NULL AND a.status IN (
+                sparta.auction_team_project.domain.auction.entity.AuctionStatus.READY,
+                sparta.auction_team_project.domain.auction.entity.AuctionStatus.ACTIVE,
+                sparta.auction_team_project.domain.auction.entity.AuctionStatus.DONE
+                ))
+            )
             """)
     Page<AuctionListResponse> searchAuctions(
             @Param("keyword") String keyword,

@@ -64,7 +64,13 @@ public class CustomAuctionRepositoryImpl implements CustomAuctionRepository {
         BooleanExpression categoryCond =
                 category != null ? auction.category.eq(category) : null;
         BooleanExpression statusCond =
-                status != null ? auction.status.eq(status) : null;
+                status != null
+                        ? auction.status.eq(status)
+                        : auction.status.in(
+                        AuctionStatus.READY,
+                        AuctionStatus.ACTIVE,
+                        AuctionStatus.DONE
+                );
 
 
         List<AuctionListResponse> content = queryFactory
