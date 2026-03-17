@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.bid.service.BidService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,11 +25,12 @@ class AuctionSchedulerTest {
     private Auction auction;
 
     private AuctionScheduler auctionScheduler;
+    private BidService bidService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        auctionScheduler = new AuctionScheduler(auctionRepository);
+        auctionScheduler = new AuctionScheduler(auctionRepository, bidService);
     }
 
     @Test
