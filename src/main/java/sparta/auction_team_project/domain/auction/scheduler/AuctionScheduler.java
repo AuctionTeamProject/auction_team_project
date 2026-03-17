@@ -51,9 +51,9 @@ public class AuctionScheduler {
     }
 
 
-//  종료 시간이 지난 ACTIVE 경매 자동 정산 (1분마다 실행)
-//  - 낙찰자 있으면 → DONE + 낙찰자 Redis point → MySQL 반영
-//  - 낙찰자 없으면 → NO_BID
+    // 종료 시간이 지난 ACTIVE 경매 자동 정산 (1분마다 실행)
+    // 낙찰자 있으면 -> DONE + 낙찰자 Redis point → MySQL 반영
+    // 낙찰자 없으면 -> NO_BID
     @Scheduled(fixedRate = 60000)
     public void closeExpiredAuctions() {
 
