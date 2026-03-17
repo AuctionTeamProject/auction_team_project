@@ -136,4 +136,16 @@ public class Auction extends BaseEntity {
     public void startAuction() {
         this.status = AuctionStatus.ACTIVE;
     }
+
+    // 낙찰 처리 (경매 종료 시 입찰자가 있을 경우)
+    public void closeWithWinner(Long winnerId, Long finalPrice) {
+        this.status = AuctionStatus.DONE;
+        this.winnerId = winnerId;
+        this.finalPrice = finalPrice;
+    }
+
+    // 유찰 처리 (경매 종료 시 입찰자가 없을 경우)
+    public void closeWithNoWinner() {
+        this.status = AuctionStatus.NO_BID;
+    }
 }
