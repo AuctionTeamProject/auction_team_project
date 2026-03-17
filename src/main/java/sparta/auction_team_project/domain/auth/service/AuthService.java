@@ -79,9 +79,9 @@ public class AuthService {
         return new SignupResponse(savedUser.getNickname(), savedUser.getName(), savedUser.getEmail());
     }
 
-    // 소셜로그인 신규유저의 전화번호 입력 처리
+    // 소셜로그인 신규유저의 전화번호 입력 처리 및 리프레시 토큰 발급
     @Transactional
-    public OAuth2AddInfoResponse addInfo(Long userId, OAuth2AddInfoRequest request) {
+    public OAuth2AddInfoResponse addInfo(Long userId, OAuth2AddInfoRequest request, HttpServletResponse response) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
         if (userRepository.existsByPhone(request.getPhone())) {
@@ -100,6 +100,20 @@ public class AuthService {
             user.updateEmail(request.getEmail());
         }
 
+        //리프레시토큰 생성
+        String refreshToken = jwtUtil.createRefreshToken(user.getId());
+        refreshService.save(user.getId(), refreshToken);
+
+        //http only 쿠키에 토큰 세팅
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false) // https할때 true로 바꿔야함
+                .path("/")
+                .maxAge(REFRESH_TOKEN_TIME/100)//ms 단위라서 s로 바꿈
+                .sameSite("Strict") // csrf 방지
+                .build();
+
+        response.addHeader("Set-Cookie", cookie.toString());
 
         return new OAuth2AddInfoResponse(
                 jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()),

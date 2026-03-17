@@ -26,7 +26,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<BaseResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<BaseResponse<SignupResponse>> signup(
+            @Valid @RequestBody SignupRequest signupRequest
+    ) {
         return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "회원가입 성공", authService.signup(signupRequest)));
 
     }
@@ -35,13 +37,17 @@ public class AuthController {
     @PatchMapping("/oauth2/me")
     public ResponseEntity<BaseResponse<OAuth2AddInfoResponse>> addInfo(
             @AuthenticationPrincipal AuthUser authUser,
-            @Valid @RequestBody OAuth2AddInfoRequest request) {
+            @Valid @RequestBody OAuth2AddInfoRequest request,
+            HttpServletResponse response
+    ) {
         return ResponseEntity.ok(BaseResponse.success("200", "추가정보 입력 완료",
-                authService.addInfo(authUser.getId(), request)));
+                authService.addInfo(authUser.getId(), request, response)));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+    public ResponseEntity<BaseResponse<LoginResponse>> login(
+            @Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response
+    ) {
         return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "로그인 성공", authService.signin(loginRequest, response)));
     }
 
@@ -49,14 +55,17 @@ public class AuthController {
     public ResponseEntity<BaseResponse<Void>> logout(
             @AuthenticationPrincipal AuthUser authUser,
             HttpServletRequest request,
-            HttpServletResponse response) {
+            HttpServletResponse response
+    ) {
         String bearerToken = request.getHeader("Authorization");
         authService.logout(bearerToken, authUser.getId(), response);
         return ResponseEntity.ok(BaseResponse.success("200", "로그아웃 성공", null));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<BaseResponse<LoginResponse>> refresh(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<BaseResponse<LoginResponse>> refresh(
+            HttpServletRequest request, HttpServletResponse response
+    ) {
         LoginResponse loginResponse = authService.refresh(request, response);
         return ResponseEntity.ok(BaseResponse.success("200", "토큰 갱신 성공", loginResponse));
     }
