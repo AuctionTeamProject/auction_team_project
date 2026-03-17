@@ -1,15 +1,18 @@
 package sparta.auction_team_project.domain.coupon.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(name = "coupons")
+@Table(
+        name = "coupons",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_coupon_event_user", columnNames = {"eventId", "userId"})
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Coupon {
 
@@ -31,6 +34,17 @@ public class Coupon {
 
     @Column(nullable = false)
     private Long eventId;
+
+    private Coupon(Long userId, Long eventId) {
+        this.status = CouponStatus.UNUSED;
+        this.issuedAt = LocalDateTime.now();
+        this.userId = userId;
+        this.eventId = eventId;
+    }
+
+    public static Coupon issue(Long userId, Long eventId) {
+        return new Coupon(userId, eventId);
+    }
 
     public void use() {
         this.status = CouponStatus.USED;
