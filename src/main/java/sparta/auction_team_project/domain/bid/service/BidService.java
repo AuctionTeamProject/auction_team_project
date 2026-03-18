@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sparta.auction_team_project.common.dto.AuctionEndedEvent;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.dto.BidPlacedEvent;
 import sparta.auction_team_project.common.exception.ErrorEnum;
@@ -359,5 +360,12 @@ public class BidService {
 
         // Redis 경매 키 정리
         cleanupAuctionRedisKeys(auctionId);
+
+        //이벤트 종료, 낙찰 알림
+        eventPublisher.publishEvent(
+                new AuctionEndedEvent(
+                        auctionId,
+                        topBidderId // winnerId (없으면 null)
+                ));
     }
 }

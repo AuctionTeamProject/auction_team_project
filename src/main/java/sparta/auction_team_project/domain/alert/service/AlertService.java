@@ -187,4 +187,19 @@ public class AlertService {
                 AlertType.AUCTION_WIN
         );
     }
+
+    @Transactional
+    public void notifyAuctionEndSoon(Long auctionId){
+
+        List<Long> users =
+                bidRepository.findParticipantUserIds(auctionId);
+
+        for(Long userId : users){
+            createAndSend(
+                    auctionId,
+                    userId,
+                    AlertType.AUCTION_END_SOON
+            );
+        }
+    }
 }

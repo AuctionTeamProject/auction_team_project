@@ -15,8 +15,8 @@ public class BidAlertEventListener {
     private final AlertService alertService;
 
     @EventListener
-    public void handle(BidPlacedEvent event) {
-        log.info("EVENT LISTENER 실행됨");
+    public void bidHandle(BidPlacedEvent event) {
+        log.info("입찰 EVENT LISTENER 실행됨");
         // 새 입찰 알림
         alertService.notifyNewBid(
                 event.getAuctionId(),
