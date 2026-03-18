@@ -14,11 +14,13 @@ import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.jwt.JwtUtil;
 import sparta.auction_team_project.common.jwt.RefreshTokenService;
 import sparta.auction_team_project.common.jwt.TokenBlackListService;
+import sparta.auction_team_project.domain.auth.dto.request.GoogleOAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
-import sparta.auction_team_project.domain.auth.dto.request.OAuth2AddInfoRequest;
+import sparta.auction_team_project.domain.auth.dto.request.KakaoOAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
+import sparta.auction_team_project.domain.auth.dto.response.GoogleOAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
-import sparta.auction_team_project.domain.auth.dto.response.OAuth2AddInfoResponse;
+import sparta.auction_team_project.domain.auth.dto.response.KakaoOAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
 import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
@@ -79,9 +81,43 @@ public class AuthService {
         return new SignupResponse(savedUser.getNickname(), savedUser.getName(), savedUser.getEmail());
     }
 
+    // 구글 소셜로그인 신규유저의 전화번호 입력 처리 및 리프레시 토큰 발급
+    @Transactional
+    public GoogleOAuth2AddInfoResponse addInfoGoogle(Long userId, GoogleOAuth2AddInfoRequest request, HttpServletResponse response) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE);
+        }
+        //폰번호는 모두 빈칸으로 오지만 이메일은 카카오만 빈값으로 옴
+        user.updatePhone(request.getPhone());
+
+        //리프레시토큰 생성
+        String refreshToken = jwtUtil.createRefreshToken(user.getId());
+        refreshService.save(user.getId(), refreshToken);
+
+        //http only 쿠키에 토큰 세팅
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false) // https할때 true로 바꿔야함
+                .path("/")
+                .maxAge(REFRESH_TOKEN_TIME/1000)//ms 단위라서 s로 바꿈
+                .sameSite("Strict") // csrf 방지
+                .build();
+
+        response.addHeader("Set-Cookie", cookie.toString());
+
+        return new GoogleOAuth2AddInfoResponse(
+                jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()),
+                user.getNickname(),
+                user.getPhone(),
+                user.getEmail()
+        );
+    }
+
     // 소셜로그인 신규유저의 전화번호 입력 처리 및 리프레시 토큰 발급
     @Transactional
-    public OAuth2AddInfoResponse addInfo(Long userId, OAuth2AddInfoRequest request, HttpServletResponse response) {
+    public KakaoOAuth2AddInfoResponse addInfoKakao(Long userId, KakaoOAuth2AddInfoRequest request, HttpServletResponse response) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
         if (userRepository.existsByPhone(request.getPhone())) {
@@ -115,7 +151,7 @@ public class AuthService {
 
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return new OAuth2AddInfoResponse(
+        return new KakaoOAuth2AddInfoResponse(
                 jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()),
                 user.getNickname(),
                 user.getPhone(),
@@ -202,12 +238,13 @@ public class AuthService {
             throw new ServiceErrorException(ErrorEnum.ERR_INVALID_TOKEN);
         }
 
+        // 기존 액세스토큰은 일정시간 후 사라지므로 별도 블랙리스트 처리하지 않음
         // 새 액세스토큰 발급
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
         String newAccessToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole());
 
-        // 새 리프레시 토큰 발급
+        // 새 리프레시 토큰 발급(기존 리프레시 토큰 덮어쓰기)
         String newRefreshToken = jwtUtil.createRefreshToken(user.getId());
         refreshService.save(user.getId(), newRefreshToken);
 

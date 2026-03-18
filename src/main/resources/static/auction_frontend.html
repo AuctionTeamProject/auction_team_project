@@ -87,8 +87,8 @@
         .card-img img { width: 100%; height: 100%; object-fit: cover; }
         .card-badge { position: absolute; top: 8px; right: 8px; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .b-ACTIVE { background: var(--green); color: #000; }
-        .b-PENDING { background: var(--accent); color: #000; }
-        .b-ENDED { background: #333; color: var(--text2); }
+        .b-READY { background: var(--accent); color: #000; }
+        .b-DONE { background: #333; color: var(--text2); }
         .rank-badge { position: absolute; top: 8px; left: 8px; font-family: 'Bebas Neue'; font-size: 28px; color: rgba(255,255,255,0.15); line-height: 1; }
         .card-body { padding: 12px; }
         .card-cat { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
@@ -152,32 +152,151 @@
         .search-bar input:focus, .search-bar select:focus { outline: none; border-color: var(--accent); }
         .search-bar select option { background: var(--surface2); }
 
-        /* CHAT */
-        .chat-layout { display: grid; grid-template-columns: 240px 1fr; height: calc(100vh - 200px); min-height: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .room-list { border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-        .room-list-hd { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-        .room-item { padding: 12px 16px; cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border); }
-        .room-item:hover { background: var(--surface2); }
-        .room-item.active { background: var(--surface2); border-left: 3px solid var(--accent); }
-        .room-item .rn { font-size: 13px; font-weight: 500; }
-        .room-item .rd { font-size: 11px; color: var(--text2); margin-top: 2px; }
-        .chat-main { display: flex; flex-direction: column; }
-        .chat-hd { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-        .chat-hd h3 { font-size: 14px; font-weight: 700; }
-        .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; margin-right: 6px; }
-        .ws-dot.on { background: var(--green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-        .cmsg { display: flex; flex-direction: column; max-width: 72%; }
-        .cmsg.mine { align-self: flex-end; align-items: flex-end; }
-        .cmsg .cs { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
-        .cmsg .cb { background: var(--surface2); border-radius: 12px 12px 12px 3px; padding: 8px 14px; font-size: 13px; line-height: 1.5; word-break: break-all; }
-        .cmsg.mine .cb { background: var(--accent); color: #000; border-radius: 12px 12px 3px 12px; }
-        .cmsg .ct { font-size: 10px; color: var(--text2); margin-top: 3px; }
-        .chat-in-area { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
-        .chat-in-area input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; border-radius: 8px; font-size: 13px; font-family: inherit; }
-        .chat-in-area input:focus { outline: none; border-color: var(--accent); }
-        .chat-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text2); font-size: 13px; }
+        // ── CHAT ──
+           async function loadChatPage() {
+            if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        // myNickname이 없으면 반드시 서버에서 가져오기 (좌우 구분의 핵심)
+        if (!myNickname) await fetchMe();
+        document.getElementById('room-spin').style.display = 'inline-block';
+            const r = await api('GET', '/api/chat/rooms');
+        document.getElementById('room-spin').style.display = 'none';
+            const el = document.getElementById('room-items');
+            if (r.ok && r.d?.data?.length) {
+        el.innerHTML = r.d.data.map(rm => `
+        <div class="room-item" id="ri-${rm.id}" onclick="joinRoom(${rm.id},'${esc(rm.name)}')">
+        <div class="rn">💬 ${esc(rm.name)}</div><div class="rd">${fDate(rm.createdAt)}</div>
+        </div>`).join('');
+        } else el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">채팅방이 없습니다.</div>`;
+        }
+
+        async function createRoom() {
+            const name = document.getElementById('cr-name').value.trim();
+            if (!name) { toast('채팅방 이름을 입력하세요.', 'er'); return; }
+            const r = await api('POST', '/api/chat/rooms', { name });
+        if (r.ok) { closeM('m-room'); toast('채팅방 생성 완료!', 'ok'); document.getElementById('cr-name').value = ''; loadChatPage(); }
+        else toast(r.d?.message || '생성 실패', 'er');
+        }
+
+        async function joinRoom(roomId, roomName) {
+            curRoomId = roomId;
+        // myNickname이 없으면 반드시 가져오기
+        if (!myNickname && token) await fetchMe();
+        pendingEchoSet.clear(); // 방 전환 시 에코 추적 초기화
+        document.getElementById('cur-room-name').textContent = roomName;
+        document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('ri-' + roomId)?.classList.add('active');
+        document.getElementById('chat-in').disabled = false;
+            const msgs = document.getElementById('chat-msgs');
+        msgs.innerHTML = `<div class="chat-empty"><div class="spin"></div></div>`;
+            const r = await api('GET', `/api/rooms/${roomId}/messages?size=50`);
+        msgs.innerHTML = '';
+            if (r.ok && Array.isArray(r.d) && r.d.length) r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
+        else msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
+        // 초기 로드 후 무조건 맨 아래로 스크롤
+        msgs.scrollTop = msgs.scrollHeight;
+        // 스크롤 이벤트로 "최신 메시지" 버튼 표시/숨김
+        msgs.onscroll = () => updateScrollBtn(msgs);
+        connectWs(roomId);
+        }
+
+        function connectWs(roomId) {
+            if (stompClient && stompClient.connected) stompClient.disconnect();
+            const sock = new SockJS(BASE + '/ws');
+            stompClient = Stomp.over(sock);
+        stompClient.debug = null;
+        stompClient.connect(
+        { Authorization: 'Bearer ' + token },
+        () => {
+        document.getElementById('ws-dot').classList.add('on');
+        document.getElementById('ws-txt').textContent = '연결됨';
+        stompClient.subscribe(`/sub/chat/rooms/${roomId}`, msg => {
+            const b = JSON.parse(msg.body);
+            const el = document.getElementById('chat-msgs');
+            if (el.querySelector('.chat-empty')) el.innerHTML = '';
+
+        // 내가 보낸 메시지 에코는 이미 로컬에서 표시했으므로 무시
+        const sender = b.userName || b.nickname || b.sender || b.username || '';
+            const message = b.message || b.content || b.text || '';
+            if (myNickname && sender === myNickname && pendingEchoSet.has(message)) {
+        pendingEchoSet.delete(message);
+            return;
+        }
+        appendMsg(sender, message, b.createdAt || b.timestamp);
+        });
+        },
+        () => {
+        document.getElementById('ws-dot').classList.remove('on');
+        document.getElementById('ws-txt').textContent = '연결 끊김';
+        }
+        );
+        }
+
+        function sendChat() {
+            if (!stompClient || !stompClient.connected) { toast('채팅 연결이 끊겼습니다.', 'er'); return; }
+            const inp = document.getElementById('chat-in');
+            const msg = inp.value.trim(); if (!msg) return;
+
+        // 내 메시지를 즉시 내 쪽(오른쪽)에 표시 — 서버 에코를 기다리지 않음
+        appendMsgMine(msg);
+        // 서버 에코가 왔을 때 중복 표시 방지용 추적
+        pendingEchoSet.add(msg);
+
+        stompClient.send('/pub/chat.send', {}, JSON.stringify({ roomId: curRoomId, message: msg }));
+        inp.value = '';
+        }
+
+        // 내가 보낸 메시지를 즉시 오른쪽에 표시
+           function appendMsgMine(message) {
+            const msgs = document.getElementById('chat-msgs');
+            if (msgs.querySelector('.chat-empty')) msgs.innerHTML = '';
+            const div = document.createElement('div');
+        div.className = 'cmsg mine';
+        div.innerHTML = `<div class="cb">${esc(message)}</div>
+        <div class="ct">${new Date().toLocaleTimeString('ko', {hour:'2-digit', minute:'2-digit'})}</div>`;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function appendMsg(sender, message, time) {
+            const msgs = document.getElementById('chat-msgs');
+        // myNickname이 없을 때 최후 수단으로 me에서 재시도
+        if (!myNickname) {
+            if (!me) me = JSON.parse(localStorage.getItem('me') || 'null');
+            myNickname = me?.nickname || null;
+        }
+            const isMine = myNickname && sender === myNickname;
+
+        // 사용자가 스크롤을 위로 올렸는지 확인 (100px 여유)
+        const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
+
+            const div = document.createElement('div');
+        div.className = 'cmsg' + (isMine ? ' mine' : '');
+        div.innerHTML = `${!isMine ? `<div class="cs">${esc(sender)}</div>` : ''}
+        <div class="cb">${esc(message)}</div>
+        <div class="ct">${time ? new Date(time).toLocaleTimeString('ko',{hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
+        msgs.appendChild(div);
+
+        // 내 메시지이거나 이미 하단에 있을 때만 자동 스크롤
+           if (isMine || isNearBottom) {
+        msgs.scrollTop = msgs.scrollHeight;
+        } else {
+          // 위로 스크롤 중이면 "최신 메시지" 버튼 표시
+          updateScrollBtn(msgs);
+          }
+        }
+
+        function updateScrollBtn(msgs) {
+            const btn = document.getElementById('scroll-btn');
+            if (!btn) return;
+            const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
+        btn.classList.toggle('visible', !isNearBottom);
+        }
+
+        function scrollToBottom() {
+            const msgs = document.getElementById('chat-msgs');
+        msgs.scrollTop = msgs.scrollHeight;
+        document.getElementById('scroll-btn')?.classList.remove('visible');
+        }
 
         /* MYPAGE */
         .mypage-grid { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
@@ -302,7 +421,7 @@
         <div class="search-bar">
             <input id="s-kw" placeholder="🔍 상품명 검색..." />
             <select id="s-cat"><option value="">전체 카테고리</option><option value="CLOTHES">👗 의류</option><option value="ELECTRONICS">📱 가전제품</option><option value="FOOD">🍱 식품</option></select>
-            <select id="s-st"><option value="">전체 상태</option><option value="PENDING">대기중</option><option value="ACTIVE">진행중</option><option value="ENDED">종료</option></select>
+            <select id="s-st"><option value="">전체 상태</option><option value="READY">진행전</option><option value="ACTIVE">진행중</option><option value="DONE">종료</option></select>
             <button class="btn btn-p btn-sm" onclick="searchAuctions(0)">검색</button>
         </div>
         <div class="auction-grid" id="g-list"><div class="loading-block"><div class="spin"></div></div></div>
@@ -585,7 +704,7 @@
         } else g5.innerHTML = empty('인기 경매가 없습니다.');
 
         // ACTIVE
-        const ra = await api('GET', '/api/auctions/v1?status=ACTIVE&page=0&size=8');
+        const ra = await api('GET', '/api/auctions/v2?status=ACTIVE&page=0&size=8');
         const ga = document.getElementById('g-active');
         if (ra.ok && ra.d?.data?.content?.length) ga.innerHTML = ra.d.data.content.map(a => card(a)).join('');
         else ga.innerHTML = empty('진행중인 경매가 없습니다.');
@@ -598,7 +717,7 @@
         if (kw) q += `&keyword=${encodeURIComponent(kw)}`;
         if (cat) q += `&category=${cat}`;
         if (st) q += `&status=${st}`;
-        const r = await api('GET', '/api/auctions/v1' + q);
+        const r = await api('GET', '/api/auctions/v2' + q);
         const grid = document.getElementById('g-list');
         const pag = document.getElementById('pag');
         if (r.ok && r.d?.data) {
@@ -615,7 +734,7 @@
     // ── CARD HTML ──
     const CE = { CLOTHES:'👗', ELECTRONICS:'📱', FOOD:'🍱' };
     const CL = { CLOTHES:'의류', ELECTRONICS:'가전제품', FOOD:'식품' };
-    const SL = { ACTIVE:'진행중', PENDING:'대기', ENDED:'종료' };
+    const SL = { ACTIVE:'진행중', READY:'진행전', DONE:'종료' };
 
     function card(a, rank) {
         const img = a.imageUrl ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />` : (CE[a.category]||'📦');
@@ -663,12 +782,12 @@
     </div>
         <div style="display:flex;gap:8px">
       <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})"
-        ${a.status === 'ENDED' ? 'disabled style="flex:1;opacity:0.4;cursor:not-allowed;background:var(--surface2);color:var(--text2)"' : ''}>
-        ${a.status === 'ENDED' ? '경매 종료' : '입찰하기'}
+        ${a.status === 'DONE' ? 'disabled style="flex:1;opacity:0.4;cursor:not-allowed;background:var(--surface2);color:var(--text2)"' : ''}>
+        ${a.status === 'DONE' ? '경매 종료' : '입찰하기'}
       </button>
       <button class="btn btn-s btn-sm" onclick="goPage('chat')">💬 채팅</button>
     </div>
-    ${a.status === 'ENDED' && a.finalPrice ? `
+    ${a.status === 'DONE' && a.finalPrice ? `
     <div style="background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:16px;">
       <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🏆 최종 낙찰가</div>
       <div style="font-family:'Bebas Neue';font-size:42px;color:var(--accent);letter-spacing:2px">${Number(a.finalPrice).toLocaleString()}<small style="font-family:'Noto Sans KR';font-size:14px;color:var(--text2)"> 원</small></div>

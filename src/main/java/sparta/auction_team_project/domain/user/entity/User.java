@@ -2,6 +2,7 @@ package sparta.auction_team_project.domain.user.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import sparta.auction_team_project.common.entity.BaseEntity;
@@ -9,7 +10,7 @@ import sparta.auction_team_project.domain.user.enums.UserRole;
 
 @Getter
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "users")
 public class User extends BaseEntity {
 
@@ -47,13 +48,13 @@ public class User extends BaseEntity {
         this.userRole = userRole;
     }
 
-    // 소셜 로그인용 생성자 (password, phone 없음)
-    public User(String nickname, String name, String email, UserRole userRole) {
+    // 소셜 로그인용 생성자 (password 없음, 이메일/폰/닉네임은 있을수도 없을수도 있다)
+    public User(String nickname, String name, String email, String phone, UserRole userRole) {
         this.nickname = nickname;
         this.name = name;
         this.email = email;
         this.password = null;
-        this.phone = null;
+        this.phone = phone;
         this.point = 0L;
         this.userRole = userRole;
     }

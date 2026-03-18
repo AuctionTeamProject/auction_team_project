@@ -21,7 +21,7 @@ public class KakaoOAuth2UserInfo implements OAuth2UserInfo {
     }
 
     @Override
-    public String getEmail() {
+    public String getEmail() {// 카카오는 비즈니스여야 이메일을준다
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
         if(kakaoAccount == null) {
             return null;
@@ -39,5 +39,10 @@ public class KakaoOAuth2UserInfo implements OAuth2UserInfo {
     public String getNickname() {
         Map<String, Object> profile = (Map<String, Object>) attributes.get("properties");
         return (String) profile.get("nickname");
+    }
+
+    @Override // 카카오는 폰이 없음
+    public String getPhone() {
+        return null;
     }
 }
