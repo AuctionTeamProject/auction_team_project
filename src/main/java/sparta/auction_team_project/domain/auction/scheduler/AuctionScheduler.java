@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import sparta.auction_team_project.domain.alert.service.AlertService;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
 import sparta.auction_team_project.domain.bid.service.BidService;
@@ -19,6 +20,7 @@ public class AuctionScheduler {
 
     private final AuctionRepository auctionRepository;
     private final BidService bidService;
+    private final AlertService alertService;
 
     // 시작 10분 전까지 승인되지 않은 경매 자동 취소
     @Scheduled(fixedRate = 60000) // 1분마다 실행
@@ -71,4 +73,22 @@ public class AuctionScheduler {
             }
         }
     }
+
+    //경매 종료 10분전 알림 boolen notifiedEndSoon true 재전송 방지
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void notifyAuctionEndSoon() {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime target = now.plusMinutes(10);
+
+        List<Auction> auctions =
+                auctionRepository.findEndingSoon(now, target);
+
+        for (Auction auction : auctions) {
+            alertService.notifyAuctionEndSoon(auction.getId());
+            auction.markEndSoonNotified();
+        }
+    }
+
 }

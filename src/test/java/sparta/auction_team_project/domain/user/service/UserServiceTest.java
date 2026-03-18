@@ -8,12 +8,24 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
+import sparta.auction_team_project.domain.auction.entity.Auction;
+import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
+import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.bid.entity.Bid;
+import sparta.auction_team_project.domain.bid.entity.BidStatus;
+import sparta.auction_team_project.domain.bid.repository.BidRepository;
 import sparta.auction_team_project.domain.user.dto.request.UserChangeNicknameRequest;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
+import sparta.auction_team_project.domain.user.dto.response.UserAuctionListResponse;
+import sparta.auction_team_project.domain.user.dto.response.UserBidListResponse;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,6 +37,12 @@ class UserServiceTest {
 
     @Mock
     UserRepository userRepository;
+
+    @Mock
+    AuctionRepository auctionRepository;
+
+    @Mock
+    BidRepository bidRepository;
 
     @Spy
     PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -142,11 +160,56 @@ class UserServiceTest {
         given(userRepository.findById(any())).willReturn(Optional.of(user));
         given(userRepository.existsByNickname("test")).willReturn(true);
 
-        //when
         UserChangeNicknameRequest request = new UserChangeNicknameRequest("test");
 
-        //then
+        //when&then
         assertThrows(ServiceErrorException.class, () -> userService.changeNickname(1L, request));
     }
 
+    @Test
+    void 내가주최한경매조회_성공() {
+        //given
+        AuthUser authUser = new AuthUser(1L, "email@test.com", UserRole.ROLE_USER);
+
+        Auction auction = Auction.createAuction(
+                1L, "경매상품", "", AuctionCategory.FOOD,
+                1000L, 10L,
+                LocalDateTime.now(),
+                LocalDateTime.of(9999, 12, 31, 23, 59, 59)
+        );
+
+        given(auctionRepository.findAllBySellerIdOrderByCreatedAtDesc(authUser.getId()))
+                .willReturn(List.of(auction));
+
+        //when
+        List<UserAuctionListResponse> result = userService.getMyAuctions(authUser);
+
+        //then
+        assertEquals(1, result.size()); // 경매 1개 조회 확인
+        assertEquals("경매상품", result.get(0).getProductName()); // 상품명 확인
+
+    }
+    @Test
+    void 나의입찰조회_성공() {
+
+        //given
+        AuthUser authUser = new AuthUser(1L, "email@test.com", UserRole.ROLE_USER);
+
+        Bid bid = Bid.builder()
+                .userId(1L)
+                .auctionId(1L)
+                .price(1010L)
+                .status(BidStatus.SUCCEEDED)
+                .build();
+
+        given(bidRepository.findAllByUserIdOrderByCreatedAtDesc(authUser.getId()))
+                .willReturn(List.of(bid));
+
+        //when
+        List<UserBidListResponse> result = userService.getMyBids(authUser);
+
+        //then
+        assertEquals(1, result.size()); // 입찰 1개 조회 확인
+        assertEquals(1010L, result.get(0).getPrice()); // 입찰 금액 확인
+    }
 }

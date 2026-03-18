@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
+import sparta.auction_team_project.config.WithAuthUser;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
@@ -19,6 +20,7 @@ import sparta.auction_team_project.domain.user.enums.UserRole;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -105,7 +107,7 @@ class AuthControllerTest {
         LoginResponse response =
                 new LoginResponse("Bearer test.jwt.token");
 
-        given(authService.signin(any())).willReturn(response);
+        given(authService.signin(any(), any())).willReturn(response);
 
         //when&then
         mockMvc.perform(post("/api/auth/login")
@@ -130,5 +132,38 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false)) // baseResponse의 success 필드 검증
                 .andExpect(jsonPath("$.message").value("이메일 형식이 올바르지 않습니다.")); // baseResponse의 data 의 accessToken 필드 확인
+    }
+
+    @Test
+    @WithAuthUser(userId = 1L, email = "email@test.com", userRole = UserRole.ROLE_USER)
+    void 로그아웃이_성공한다() throws Exception {
+
+        //given
+        willDoNothing().given(authService).logout(any(), any(), any());
+
+        //when
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer test.jwt.token"))
+                //then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true)) // baseResponse의 success 필드 검증
+                .andExpect(jsonPath("$.message").value("로그아웃 성공")); // 로그아웃 성공 메시지 확인
+    }
+
+    @Test
+    void 리프레시가_성공한다() throws Exception {
+
+
+        //given
+        LoginResponse response = new LoginResponse("Bearer test.jwt.token");
+
+        given(authService.refresh(any(), any())).willReturn(response);
+
+        //when
+        mockMvc.perform(post("/api/auth/refresh"))
+                //then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true)) // baseResponse의 success 필드 검증
+                .andExpect(jsonPath("$.data.accessToken").exists()); // 새 액세스 토큰 존재 여부 확인
     }
 }

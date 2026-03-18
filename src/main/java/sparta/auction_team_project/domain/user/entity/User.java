@@ -17,7 +17,7 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 8, unique = true)
+    @Column(length = 16, unique = true)
     private String nickname;
 
     @Column(length = 8)
@@ -28,7 +28,7 @@ public class User extends BaseEntity {
 
     private String password;
 
-    @Column(unique = true, length = 11)
+    @Column(unique = true, length = 11, nullable = true)
     private String phone;
 
     private Long point;
@@ -47,6 +47,17 @@ public class User extends BaseEntity {
         this.userRole = userRole;
     }
 
+    // 소셜 로그인용 생성자 (password, phone 없음)
+    public User(String nickname, String name, String email, UserRole userRole) {
+        this.nickname = nickname;
+        this.name = name;
+        this.email = email;
+        this.password = null;
+        this.phone = null;
+        this.point = 0L;
+        this.userRole = userRole;
+    }
+
     public void changePassword(String password) {
         this.password = password;
     }
@@ -58,6 +69,14 @@ public class User extends BaseEntity {
     public void updateRole(UserRole userRole) {
         this.userRole = userRole;
     }
+
+    //소셜 로그인용(구글, 카카오)
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
+
+    // 소셜 로그인용(카카오)
+    public void updateEmail(String email) { this.email = email; }
 
     public void plusPoint(Long point) {
         this.point += point;
