@@ -34,6 +34,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
     """)
     List<Auction> findReadyAuctionsToStart(LocalDateTime now);
 
+    List<Auction> findAllBySellerIdOrderByCreatedAtDesc(Long userId);
+
+
     // 스케쥴러 적용 DB에 조회수 처리
     @Modifying
     @Query("""

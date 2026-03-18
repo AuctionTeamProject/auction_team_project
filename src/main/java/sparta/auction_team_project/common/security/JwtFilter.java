@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.jwt.JwtUtil;
+import sparta.auction_team_project.common.jwt.TokenBlackListService;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlackListService blacklistService;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -31,7 +33,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String url = httpRequest.getRequestURI();
 
-        if (url.startsWith("/api/auth") || url.startsWith("/ws")){
+        if (url.startsWith("/api/auth/login") || url.startsWith("/api/auth/signup") || url.startsWith("/api/auth/refresh") || url.startsWith("/ws")){
             chain.doFilter(request, response);
             return;
         }
@@ -46,6 +48,12 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String jwt = jwtUtil.substringToken(bearerJwt);
+
+        // 블랙리스트 확인
+        if (blacklistService.isBlacklisted(jwt)) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그아웃된 토큰입니다.");
+            return;
+        }
 
         try {
             // JWT 유효성 검사와 claims 추출

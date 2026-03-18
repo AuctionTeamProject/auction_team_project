@@ -24,10 +24,16 @@ import static sparta.auction_team_project.common.exception.ErrorEnum.ERR_INVALID
 public class JwtUtil {
 
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final long TOKEN_TIME = 60 * 60 * 1000L; // 60분
+
+    @Value("${jwt.access-token-expiration}")
+    private long ACCESS_TOKEN_TIME;
+
+    @Value("${jwt.refresh-token-expiration-ms}")
+    private long REFRESH_TOKEN_TIME;
 
     @Value("${jwt.secret.key}")
     private String secretKey;
+
     private Key key;
     private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
@@ -45,7 +51,7 @@ public class JwtUtil {
                         .setSubject(String.valueOf(userId))
                         .claim("email", email)
                         .claim("userRole", userRole.name())
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME))
+                        .setExpiration(new Date(date.getTime() + ACCESS_TOKEN_TIME))
                         .setIssuedAt(date) // 발급일
                         .signWith(key, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
@@ -69,5 +75,21 @@ public class JwtUtil {
     public Long getUserId(String token) {
         Claims claims = extractClaims(token);
         return Long.parseLong(claims.getSubject());
+    }
+
+    public String createRefreshToken(Long userId) {
+        Date date = new Date();
+        return Jwts.builder()
+                .setSubject(String.valueOf(userId))
+                .setExpiration(new Date(date.getTime() + REFRESH_TOKEN_TIME))
+                .setIssuedAt(date)
+                .signWith(key, signatureAlgorithm)
+                .compact();
+    }
+
+    // 토큰 남은 만료 시간(ms) 반환 - 블랙리스트 TTL에 사용
+    public long getExpiration(String token) {
+        Claims claims = extractClaims(token);
+        return claims.getExpiration().getTime() - new Date().getTime();
     }
 }

@@ -8,10 +8,12 @@ public class Constants {
     public static final String MSG_DUPLICATE_NICKNAME = "중복된 닉네임 입니다";
     public static final String MSG_DUPLICATE_PHONE = "중복된 번호 입니다";
     public static final String MSG_INVALID_PASSWORD = "비밀번호가 잘못되었습니다";
+    public static final String MSG_INVALID_EMAIL = "이메일이 잘못되었습니다";
     public static final String MSG_NOT_MATCH_LOGIN = "아이디 또는 비밀번호가 일치하지 않습니다";
     public static final String MSG_NOT_MATCH_ENUM = "Enum 가 일치하지 않습니다";
     public static final String MSG_INVALID_TOKEN = "토큰이 유효하지 않습니다.";
-    public static final String MST_NOT_FOUND_MEMBERSHIP = "멤버십을 찾을 수 없습니다";
+    public static final String MSG_NOT_FOUND_MEMBERSHIP = "멤버십을 찾을 수 없습니다";
+    public static final String MSG_UNSUPPORTED_SOCIAL_LOGIN = "지원하지 않는 소셜 로그인입니다";
     // endregion
 
     // 경매 관련 메세지
@@ -34,6 +36,7 @@ public class Constants {
     public static final String MSG_DATA_INSERT_FAIL = "데이터 등록에 실패하였습니다";
     public static final String MSG_SERVER_ERROR_OCCUR = "서버 오류가 발생하였습니다, 잠시 후 다시 시도 바랍니다";
     // endregion
+
 
     // 입찰 관련 메시지
     public static final String MSG_BID_ALREADY_TOP_BIDDER = "현재 최고 입찰자는 추가 입찰이 불가합니다.";
