@@ -39,6 +39,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         boolean isNewUser = Boolean.TRUE.equals(attrs.get("isNewUser"));
         boolean needsPhone =  Boolean.TRUE.equals(attrs.get("needsPhone"));
         boolean needsEmail =  Boolean.TRUE.equals(attrs.get("needsEmail"));
+        String provider = (String) attrs.get("provider");
 
         // 이메일 없는경우 임시 토큰 발급
         String tempEmail = needsEmail? "needsEmail" + userId : email;
@@ -50,20 +51,27 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         if (isNewUser) {
             // 신규 유저는 추가정보 입력 필요
             // 프론트 연동 시 원래거 지우고 아래 내용으로 수정해야 함
+            // 프론트 연동시 provider 변수 확인하여 google인경우 닉네임만 추가로 받고, kakao인 경우 닉네임과 이메일을 추가로 받아아 함
             // getRedirectStrategy().sendRedirect(request, response,
-            //                   ADDITIONAL_INFO_URL + "?token=" + rawToken);
+            // ADDITIONAL_INFO_URL + "?token=" + rawToken
+            //    + "&needsEmail=" + needsEmail
+            //    + "&needsPhone=" + needsPhone
+            //    + "&provider=" + provider);
             response.getWriter().write(String.format(
-                    "{\"isNewUser\":true,\"needsEmail\":%b,\"needsPhone\":%b,\"accessToken\":\"%s\",\"message\":\"PATCH http://localhost:8080/api/auth/oauth2/me 로 추가 정보를 입력해주세요.\"}",
-                    needsEmail, needsPhone, rawToken
+                    "{\"isNewUser\":true,\"needsEmail\":%b,\"needsPhone\":%b,\"accessToken\":\"%s\", \"provider\":%s," +
+                            "\"message\":\"PATCH http://localhost:8080/api/auth/oauth2/me 로 추가 정보를 입력해주세요.\"}",
+                    needsEmail, needsPhone, provider, rawToken
             ));
         } else {
             // 기존 유저는 바로 토큰 발급
             // 프론트 연동 시 원래거 지우고 아래 내용으로 수정해야 함
             // getRedirectStrategy().sendRedirect(request, response,
-            //                   LOGIN_SUCCESS_URL + "?token=" + rawToken);
+            //      LOGIN_SUCCESS_URL + "?token=" + rawToken
+            //    + "&needsEmail=" + needsEmail
+            //    + "&needsPhone=" + needsPhone);
             response.getWriter().write(String.format(
-                    "{\"isNewUser\":false,\"needsEmail\":%b,\"needsPhone\":%b,\"accessToken\":\"%s\"}",
-                    needsEmail, needsPhone, rawToken
+                    "{\"isNewUser\":false,\"needsEmail\":%b,\"needsPhone\":%b,\"accessToken\":\"%s\", \"provider\":%s}",
+                    needsEmail, needsPhone, rawToken, provider
             ));
         }
     }

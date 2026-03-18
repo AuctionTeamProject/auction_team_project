@@ -90,7 +90,7 @@ public class AuthService {
         //폰번호는 모두 빈칸으로 오지만 이메일은 카카오만 빈값으로 옴
         user.updatePhone(request.getPhone());
 
-        if (user.getEmail() == null || user.getEmail().startsWith("needsEmail")) {
+        if (user.getEmail() == null) {
             if (request.getEmail() == null || request.getEmail().isBlank()) {
                 throw new ServiceErrorException(ErrorEnum.ERR_INVALID_EMAIL);
             }
@@ -109,7 +109,7 @@ public class AuthService {
                 .httpOnly(true)
                 .secure(false) // https할때 true로 바꿔야함
                 .path("/")
-                .maxAge(REFRESH_TOKEN_TIME/100)//ms 단위라서 s로 바꿈
+                .maxAge(REFRESH_TOKEN_TIME/1000)//ms 단위라서 s로 바꿈
                 .sameSite("Strict") // csrf 방지
                 .build();
 
@@ -118,7 +118,8 @@ public class AuthService {
         return new OAuth2AddInfoResponse(
                 jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()),
                 user.getNickname(),
-                user.getPhone()
+                user.getPhone(),
+                user.getEmail()
         );
     }
 
@@ -142,7 +143,7 @@ public class AuthService {
                 .httpOnly(true)
                 .secure(false) // https할때 true로 바꿔야함
                 .path("/")
-                .maxAge(REFRESH_TOKEN_TIME/100)//ms 단위라서 s로 바꿈
+                .maxAge(REFRESH_TOKEN_TIME/1000)//ms 단위라서 s로 바꿈
                 .sameSite("Strict") // csrf 방지
                 .build();
 
@@ -214,7 +215,7 @@ public class AuthService {
                 .httpOnly(true)
                 .secure(false) // https할때 true로 바꿔야함
                 .path("/")
-                .maxAge(REFRESH_TOKEN_TIME)//7일
+                .maxAge(REFRESH_TOKEN_TIME/1000)//7일
                 .sameSite("Strict") // csrf 방지
                 .build();
 

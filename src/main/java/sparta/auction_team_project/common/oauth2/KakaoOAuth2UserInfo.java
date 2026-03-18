@@ -10,12 +10,22 @@ public class KakaoOAuth2UserInfo implements OAuth2UserInfo {
         this.attributes = attributes;
     }
 
-    @Override public String getProvider() { return "kakao"; }
-    @Override public String getProviderId() { return String.valueOf(attributes.get("id")); }
+    @Override
+    public String getProvider() {
+        return "kakao";
+    }
+
+    @Override
+    public String getProviderId() {
+        return String.valueOf(attributes.get("id"));
+    }
 
     @Override
     public String getEmail() {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        if(kakaoAccount == null) {
+            return null;
+        }
         return (String) kakaoAccount.get("email");
     }
 

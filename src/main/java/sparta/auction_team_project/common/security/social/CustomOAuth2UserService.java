@@ -32,8 +32,8 @@ import java.util.*;
 //Google: GET /oauth2/authorization/google
 //Kakao: GET /oauth2/authorization/kakao
 //Naver: GET /oauth2/authorization/naver
-//구글로그인 http://localhost:8080/oauth2/authorization/google -> 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111"}
-//카카오로그인 http://localhost:8080/oauth2/authorization/kakao -> 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111", "email": "abc@abc.com"}
+//구글로그인 http://localhost:8080/oauth2/authorization/google -> 토큰 복붙해서 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111"}
+//카카오로그인 http://localhost:8080/oauth2/authorization/kakao -> 토큰 복붙해서 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111", "email": "abc@abc.com"}
 @Service
 @RequiredArgsConstructor
 //소셜로그인시 스프링 시큐리티가 자동으로 loadUser를 호출해서 구글한테서 유저정보 받아옴
@@ -76,6 +76,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         } else {
             //이 소셜로 로그인한 적 없으면
             // 이메일이 이미 있는지 확인하고 없으면 생성
+            // 기존 이메일 유저가 소셜로그인하면 소셜로 처리됨
             boolean existsByEmail = userRepository.existsByEmail(userInfo.getEmail());
             user = userRepository.findByEmail(userInfo.getEmail()).orElseGet(() -> createNewSocialUser(userInfo));
             isNewUser = !existsByEmail;
@@ -92,6 +93,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         modifiedAttributes.put("userRole", user.getUserRole().name());
         modifiedAttributes.put("needsPhone", user.getPhone() == null);
         modifiedAttributes.put("needsEmail", user.getEmail() == null);
+        modifiedAttributes.put("provider", provider);
 
 
         return new DefaultOAuth2User(
