@@ -10,11 +10,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
+import sparta.auction_team_project.domain.auth.dto.request.GoogleOAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
-import sparta.auction_team_project.domain.auth.dto.request.OAuth2AddInfoRequest;
+import sparta.auction_team_project.domain.auth.dto.request.KakaoOAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
+import sparta.auction_team_project.domain.auth.dto.response.GoogleOAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
-import sparta.auction_team_project.domain.auth.dto.response.OAuth2AddInfoResponse;
+import sparta.auction_team_project.domain.auth.dto.response.KakaoOAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
 import sparta.auction_team_project.domain.auth.service.AuthService;
 
@@ -33,15 +35,26 @@ public class AuthController {
 
     }
 
-    //소셜로그인 신규유저의 전화번호 입력 처리
-    @PatchMapping("/oauth2/me")
-    public ResponseEntity<BaseResponse<OAuth2AddInfoResponse>> addInfo(
+    //구글 소셜로그인 신규유저의 전화번호 입력 처리
+    @PatchMapping("/oauth2/me/google")
+    public ResponseEntity<BaseResponse<GoogleOAuth2AddInfoResponse>> addInfoGoogle(
             @AuthenticationPrincipal AuthUser authUser,
-            @Valid @RequestBody OAuth2AddInfoRequest request,
+            @Valid @RequestBody GoogleOAuth2AddInfoRequest request,
             HttpServletResponse response
     ) {
         return ResponseEntity.ok(BaseResponse.success("200", "추가정보 입력 완료",
-                authService.addInfo(authUser.getId(), request, response)));
+                authService.addInfoGoogle(authUser.getId(), request, response)));
+    }
+
+    //카카오 소셜로그인 신규유저의 전화번호 입력 처리
+    @PatchMapping("/oauth2/me/kakao")
+    public ResponseEntity<BaseResponse<KakaoOAuth2AddInfoResponse>> addInfoKakao(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody KakaoOAuth2AddInfoRequest request,
+            HttpServletResponse response
+    ) {
+        return ResponseEntity.ok(BaseResponse.success("200", "추가정보 입력 완료",
+                authService.addInfoKakao(authUser.getId(), request, response)));
     }
 
     @PostMapping("/login")

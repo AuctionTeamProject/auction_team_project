@@ -34,6 +34,7 @@ import java.util.*;
 //Naver: GET /oauth2/authorization/naver
 //구글로그인 http://localhost:8080/oauth2/authorization/google -> 토큰 복붙해서 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111"}
 //카카오로그인 http://localhost:8080/oauth2/authorization/kakao -> 토큰 복붙해서 포스트맨 PATCH http://localhost:8080/api/auth/oauth2/me {"phone": "01011111111", "email": "abc@abc.com"}
+//네이버로그인 http://localhost:8080/oauth2/authorization/naver
 @Service
 @RequiredArgsConstructor
 //소셜로그인시 스프링 시큐리티가 자동으로 loadUser를 호출해서 구글한테서 유저정보 받아옴
@@ -90,6 +91,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         modifiedAttributes.put("isNewUser", isNewUser);
         modifiedAttributes.put("userId", user.getId());
         modifiedAttributes.put("email", user.getEmail());
+        modifiedAttributes.put("phone", user.getPhone());
         modifiedAttributes.put("userRole", user.getUserRole().name());
         modifiedAttributes.put("needsPhone", user.getPhone() == null);
         modifiedAttributes.put("needsEmail", user.getEmail() == null);
@@ -142,14 +144,34 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_NICKNAME);
     }
 
+    private String noHyphenPhone(String phone) {
+
+        if(phone == null) {
+            return null;
+        }
+
+        String str = phone.replace("-", "");
+
+        if(str.startsWith("+82")) { // 연락처가 +82-10-1234-5678 형태로 올 경우
+            str =  "0" + str.substring(3);
+        }
+
+        if(!str.startsWith("01") || str.length() < 10 || str.length() > 11 ) { // 01로 시작하는 번호가 아니거나, 길이가 짧거나 긴 경우
+            throw new ServiceErrorException(ErrorEnum.ERR_INVALID_PHONE);
+        }
+        return str;
+    }
+
     private User createNewSocialUser(OAuth2UserInfo userInfo) {
         String nickname = generateNickname(userInfo.getNickname());
         String name = checkName(userInfo.getName());
+        String phone = noHyphenPhone(userInfo.getPhone());
         try {
             User newUser = userRepository.save(new User(
                     nickname,
                     name,
                     userInfo.getEmail(),
+                    phone,
                     UserRole.ROLE_USER
             ));
             membershipRepository.save(new Membership(MembershipEnum.NORMAL, null, newUser.getId()));
