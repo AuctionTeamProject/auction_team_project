@@ -88,10 +88,16 @@ public class BidService {
         Auction auction = getAuction(auctionId);
         validateAuction(auction);
 
+        //종료 5분전 감지
+        boolean isBlindPhase = isWithin5MinutesOfEnd(auction);
+
         // 현재 최고 입찰자 재입찰 방지
         Long currentTopBidderId = getCurrentTopBidderId(auctionId);
         if (currentTopBidderId != null && currentTopBidderId.equals(userId)) {
             saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) {
+                return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            }
             throw new ServiceErrorException(ErrorEnum.ERR_BID_ALREADY_TOP_BIDDER);
         }
 
@@ -99,6 +105,9 @@ public class BidService {
         Long currentTopPrice = getCurrentTopPrice(auctionId);
         if (price <= currentTopPrice) {
             saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) {
+                return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            }
             throw new ServiceErrorException(ErrorEnum.ERR_BID_PRICE_TOO_LOW);
         }
 
@@ -108,6 +117,9 @@ public class BidService {
         if (balanceAfterDeduct < 0) {
             refundBalance(userId, price); // 롤백
             saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) {
+                return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            }
             throw new ServiceErrorException(ErrorEnum.ERR_BID_INSUFFICIENT_BALANCE);
         }
 
@@ -127,7 +139,10 @@ public class BidService {
                 )
         );
 
-        return BidResponse.of(bid, getNickname(userId));
+        //5분 전이면 주요 정보를 담지 않은 응답, 아니면 일반적인 응답
+        return isBlindPhase
+                ? BidResponse.ofBlind(bid, getNickname(userId))
+                : BidResponse.of(bid, getNickname(userId));
     }
 
     // 낙찰자 Redis point를 MySQL에 반영 (실제 차감된 포인트 기준)
