@@ -755,7 +755,9 @@
         // ── DONE 상태: 낙찰가 + 낙찰자만 표시 ──
         if (a.status === 'DONE') {
             const bids = rb.ok && rb.d?.data ? rb.d.data : [];
-            const winBid = bids.find(b => b.status === 'SUCCEED');
+            const winBid = bids.find(b => b.status === 'SUCCEEDED');
+            const finalPrice = winBid?.price
+                ?? (bids.filter(b => b.status === 'FAILED').sort((x,y) => (y.price||0) - (x.price||0))[0]?.price || null);
             dc.innerHTML = `
 <div class="detail-img">${img}</div>
 <div class="detail-info">
@@ -768,7 +770,7 @@
     </div>
     <div class="price-block" style="border-color:var(--accent)">
         <div class="price-label">🏆 최종 낙찰가</div>
-        <div class="price-val">${winBid ? Number(winBid.price).toLocaleString() : '-'}<small> 원</small></div>
+        <div class="price-val">${finalPrice ? Number(finalPrice).toLocaleString() : '-'}<small> 원</small></div>
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
             <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">낙찰자</div>
             <div style="font-size:20px;font-weight:700;color:var(--accent)">${winBid ? esc(winBid.bidderNickname || '비공개') : '-'}</div>
@@ -839,10 +841,10 @@
         <div class="bid-row">
             <div>
                 <div class="bp">${Number(b.price).toLocaleString()}원</div>
-                <div class="bt" style="${b.status === 'SUCCEED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+                <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
-                ${b.status === 'SUCCEED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
+                ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
                 <div class="bt">${fDate(b.createdAt)}</div>
             </div>
         </div>`).join('');
