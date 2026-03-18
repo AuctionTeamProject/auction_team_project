@@ -1,17 +1,20 @@
 package sparta.auction_team_project.domain.auth.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.response.BaseResponse;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
+import sparta.auction_team_project.domain.auth.dto.request.OAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
+import sparta.auction_team_project.domain.auth.dto.response.OAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
 import sparta.auction_team_project.domain.auth.service.AuthService;
 
@@ -23,13 +26,47 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<BaseResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<BaseResponse<SignupResponse>> signup(
+            @Valid @RequestBody SignupRequest signupRequest
+    ) {
         return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "회원가입 성공", authService.signup(signupRequest)));
 
     }
 
+    //소셜로그인 신규유저의 전화번호 입력 처리
+    @PatchMapping("/oauth2/me")
+    public ResponseEntity<BaseResponse<OAuth2AddInfoResponse>> addInfo(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody OAuth2AddInfoRequest request,
+            HttpServletResponse response
+    ) {
+        return ResponseEntity.ok(BaseResponse.success("200", "추가정보 입력 완료",
+                authService.addInfo(authUser.getId(), request, response)));
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
-        return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "로그인 성공", authService.signin(loginRequest)));
+    public ResponseEntity<BaseResponse<LoginResponse>> login(
+            @Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(BaseResponse.success("200", "로그인 성공", authService.signin(loginRequest, response)));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<Void>> logout(
+            @AuthenticationPrincipal AuthUser authUser,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        String bearerToken = request.getHeader("Authorization");
+        authService.logout(bearerToken, authUser.getId(), response);
+        return ResponseEntity.ok(BaseResponse.success("200", "로그아웃 성공", null));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<BaseResponse<LoginResponse>> refresh(
+            HttpServletRequest request, HttpServletResponse response
+    ) {
+        LoginResponse loginResponse = authService.refresh(request, response);
+        return ResponseEntity.ok(BaseResponse.success("200", "토큰 갱신 성공", loginResponse));
     }
 }
