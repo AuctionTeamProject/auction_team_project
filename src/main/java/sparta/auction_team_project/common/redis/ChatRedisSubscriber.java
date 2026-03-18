@@ -7,8 +7,6 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
-import sparta.auction_team_project.common.exception.ErrorEnum;
-import sparta.auction_team_project.common.exception.ServiceErrorException;
 
 import java.io.IOException;
 

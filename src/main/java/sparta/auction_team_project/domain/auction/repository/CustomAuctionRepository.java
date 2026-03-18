@@ -4,8 +4,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionDetailResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse;
+import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 public interface CustomAuctionRepository {
@@ -20,4 +24,6 @@ public interface CustomAuctionRepository {
             AuctionStatus status,
             Pageable pageable
     );
+
+    List<Auction> findEndingSoon(LocalDateTime now, LocalDateTime target);
 }

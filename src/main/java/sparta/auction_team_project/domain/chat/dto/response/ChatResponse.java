@@ -1,6 +1,5 @@
 package sparta.auction_team_project.domain.chat.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;

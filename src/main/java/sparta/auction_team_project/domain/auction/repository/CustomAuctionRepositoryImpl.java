@@ -9,12 +9,16 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionDetailResponse;
 import sparta.auction_team_project.domain.auction.dto.response.AuctionListResponse;
+import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 import sparta.auction_team_project.domain.auction.entity.QAuction;
 import sparta.auction_team_project.domain.user.entity.QUser;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import static sparta.auction_team_project.domain.auction.entity.QAuction.auction;
 
 @RequiredArgsConstructor
 public class CustomAuctionRepositoryImpl implements CustomAuctionRepository {
@@ -102,5 +106,18 @@ public class CustomAuctionRepositoryImpl implements CustomAuctionRepository {
 
         // Page 객체로 반환
         return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public List<Auction> findEndingSoon(LocalDateTime now, LocalDateTime target) {
+
+        return queryFactory
+                .selectFrom(auction)
+                .where(
+                        auction.status.eq(AuctionStatus.ACTIVE),
+                        auction.endAt.between(now, target),
+                        auction.notifiedEndSoon.eq(false)
+                )
+                .fetch();
     }
 }
