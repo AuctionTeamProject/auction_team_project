@@ -4,8 +4,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import sparta.auction_team_project.domain.chat.dto.response.ChatResponse;
-import sparta.auction_team_project.domain.chat.entity.QChat;
-import sparta.auction_team_project.domain.user.entity.QUser;
 
 import java.util.List;
 

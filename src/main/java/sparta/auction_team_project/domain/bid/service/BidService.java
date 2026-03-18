@@ -2,10 +2,13 @@ package sparta.auction_team_project.domain.bid.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sparta.auction_team_project.common.dto.AuctionEndedEvent;
 import sparta.auction_team_project.common.dto.AuthUser;
+import sparta.auction_team_project.common.dto.BidPlacedEvent;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.redis.RedisLock;
@@ -39,6 +42,7 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Redis 키 구조
     //   user:point:{userId}         -> 유저 잔액
@@ -84,10 +88,16 @@ public class BidService {
         Auction auction = getAuction(auctionId);
         validateAuction(auction);
 
+        //종료 5분전 감지
+        boolean isBlindPhase = isWithin5MinutesOfEnd(auction);
+
         // 현재 최고 입찰자 재입찰 방지
         Long currentTopBidderId = getCurrentTopBidderId(auctionId);
         if (currentTopBidderId != null && currentTopBidderId.equals(userId)) {
             saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) {
+                return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            }
             throw new ServiceErrorException(ErrorEnum.ERR_BID_ALREADY_TOP_BIDDER);
         }
 
@@ -95,6 +105,9 @@ public class BidService {
         Long currentTopPrice = getCurrentTopPrice(auctionId);
         if (price <= currentTopPrice) {
             saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) {
+                return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            }
             throw new ServiceErrorException(ErrorEnum.ERR_BID_PRICE_TOO_LOW);
         }
 
@@ -104,6 +117,9 @@ public class BidService {
         if (balanceAfterDeduct < 0) {
             refundBalance(userId, price); // 롤백
             saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) {
+                return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            }
             throw new ServiceErrorException(ErrorEnum.ERR_BID_INSUFFICIENT_BALANCE);
         }
 
@@ -114,7 +130,19 @@ public class BidService {
         saveBidLog(bid.getId(), userId, auctionId, price, BidLogStatus.SUCCESS);
         updateTopBid(auctionId, userId, price);
 
-        return BidResponse.of(bid, getNickname(userId));
+        //입찰 알림
+        eventPublisher.publishEvent(
+                new BidPlacedEvent(
+                        auctionId,
+                        userId,
+                        currentTopBidderId
+                )
+        );
+
+        //5분 전이면 주요 정보를 담지 않은 응답, 아니면 일반적인 응답
+        return isBlindPhase
+                ? BidResponse.ofBlind(bid, getNickname(userId))
+                : BidResponse.of(bid, getNickname(userId));
     }
 
     // 낙찰자 Redis point를 MySQL에 반영 (실제 차감된 포인트 기준)
@@ -347,5 +375,12 @@ public class BidService {
 
         // Redis 경매 키 정리
         cleanupAuctionRedisKeys(auctionId);
+
+        //이벤트 종료, 낙찰 알림
+        eventPublisher.publishEvent(
+                new AuctionEndedEvent(
+                        auctionId,
+                        topBidderId // winnerId (없으면 null)
+                ));
     }
 }
