@@ -58,9 +58,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             //    + "&needsPhone=" + needsPhone
             //    + "&provider=" + provider);
             response.getWriter().write(String.format(
-                    "{\"isNewUser\":true,\"needsEmail\":%b,\"needsPhone\":%b,\"accessToken\":\"%s\", \"provider\":%s," +
+                    "{\"isNewUser\":true,\"needsEmail\":%b,\"needsPhone\":%b,\"accessToken\":\"%s\",\"provider\":\"%s\"," +
                             "\"message\":\"PATCH http://localhost:8080/api/auth/oauth2/me 로 추가 정보를 입력해주세요.\"}",
-                    needsEmail, needsPhone, provider, rawToken
+                    needsEmail, needsPhone, rawToken, provider
             ));
         } else {
             // 기존 유저는 바로 토큰 발급
