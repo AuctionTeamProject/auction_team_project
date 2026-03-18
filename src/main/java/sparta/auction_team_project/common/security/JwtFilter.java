@@ -33,7 +33,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String url = httpRequest.getRequestURI();
 
-        if (url.startsWith("/api/auth/login") || url.startsWith("/api/auth/signup") || url.startsWith("/api/auth/refresh") || url.startsWith("/ws")){
+        if (url.startsWith("/api/auth/login") || url.startsWith("/api/auth/signup")
+                || url.startsWith("/api/auth/refresh") || url.startsWith("/ws")
+                || url.startsWith("/auction_frontend.html")) {  // 프론트 접속
             chain.doFilter(request, response);
             return;
         }
