@@ -41,13 +41,16 @@
         .nav-btn:hover { color: var(--text); background: var(--surface2); }
         .nav-btn.cta { background: var(--accent); color: #000; font-weight: 700; }
         .nav-btn.cta:hover { background: #ffc030; }
-        #user-info { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-        #user-info strong { color: var(--accent); }
         .point-badge { background: var(--surface2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 20px; font-size: 12px; }
 
         /* LAYOUT */
         .page { display: none; padding: 32px; max-width: 1100px; margin: 0 auto; }
         .page.active { display: block; }
+
+        /* 채팅 페이지만 flex */
+        #page-chat { padding: 20px 32px 0; height: calc(100vh - 60px); flex-direction: column; }
+        #page-chat.active { display: flex; }
+        #page-chat .sec-title { flex-shrink: 0; margin-bottom: 12px; }
 
         /* HERO */
         #hero {
@@ -78,17 +81,14 @@
 
         /* CARDS */
         .auction-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
-        .auction-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            overflow: hidden; cursor: pointer; transition: all .25s; position: relative;
-        }
+        .auction-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all .25s; position: relative; }
         .auction-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(240,165,0,0.12); }
         .card-img { width: 100%; aspect-ratio: 4/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 52px; position: relative; overflow: hidden; }
         .card-img img { width: 100%; height: 100%; object-fit: cover; }
         .card-badge { position: absolute; top: 8px; right: 8px; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .b-ACTIVE { background: var(--green); color: #000; }
-        .b-READY { background: var(--accent); color: #000; }
-        .b-DONE { background: #333; color: var(--text2); }
+        .b-READY  { background: var(--accent); color: #000; }
+        .b-DONE   { background: #333; color: var(--text2); }
         .rank-badge { position: absolute; top: 8px; left: 8px; font-family: 'Bebas Neue'; font-size: 28px; color: rgba(255,255,255,0.15); line-height: 1; }
         .card-body { padding: 12px; }
         .card-cat { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
@@ -152,151 +152,57 @@
         .search-bar input:focus, .search-bar select:focus { outline: none; border-color: var(--accent); }
         .search-bar select option { background: var(--surface2); }
 
-        // ── CHAT ──
-           async function loadChatPage() {
-            if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
-        // myNickname이 없으면 반드시 서버에서 가져오기 (좌우 구분의 핵심)
-        if (!myNickname) await fetchMe();
-        document.getElementById('room-spin').style.display = 'inline-block';
-            const r = await api('GET', '/api/chat/rooms');
-        document.getElementById('room-spin').style.display = 'none';
-            const el = document.getElementById('room-items');
-            if (r.ok && r.d?.data?.length) {
-        el.innerHTML = r.d.data.map(rm => `
-        <div class="room-item" id="ri-${rm.id}" onclick="joinRoom(${rm.id},'${esc(rm.name)}')">
-        <div class="rn">💬 ${esc(rm.name)}</div><div class="rd">${fDate(rm.createdAt)}</div>
-        </div>`).join('');
-        } else el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">채팅방이 없습니다.</div>`;
+        /* CHAT LAYOUT */
+        .chat-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            flex: 1;
+            min-height: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
         }
-
-        async function createRoom() {
-            const name = document.getElementById('cr-name').value.trim();
-            if (!name) { toast('채팅방 이름을 입력하세요.', 'er'); return; }
-            const r = await api('POST', '/api/chat/rooms', { name });
-        if (r.ok) { closeM('m-room'); toast('채팅방 생성 완료!', 'ok'); document.getElementById('cr-name').value = ''; loadChatPage(); }
-        else toast(r.d?.message || '생성 실패', 'er');
+        /* 채팅방 목록 — 고정, 독립 스크롤 */
+        .room-list { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        .room-list-hd { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+        #room-items { flex: 1; overflow-y: auto; }
+        .room-item { padding: 12px 16px; cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border); }
+        .room-item:hover { background: var(--surface2); }
+        .room-item.active { background: var(--surface2); border-left: 3px solid var(--accent); }
+        .room-item .rn { font-size: 13px; font-weight: 500; }
+        .room-item .rd { font-size: 11px; color: var(--text2); margin-top: 2px; }
+        /* 채팅 메인 — 독립 스크롤 */
+        .chat-main { display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .chat-hd { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .chat-hd h3 { font-size: 14px; font-weight: 700; }
+        .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; margin-right: 6px; }
+        .ws-dot.on { background: var(--green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        /* 메시지 영역 — 독립 스크롤 */
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+        .cmsg { display: flex; flex-direction: column; max-width: 72%; }
+        .cmsg.mine { align-self: flex-end; align-items: flex-end; }
+        .cmsg .cs { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+        .cmsg .cb { background: var(--surface2); border-radius: 12px 12px 12px 3px; padding: 8px 14px; font-size: 13px; line-height: 1.5; word-break: break-all; }
+        .cmsg.mine .cb { background: var(--accent); color: #000; border-radius: 12px 12px 3px 12px; }
+        .cmsg .ct { font-size: 10px; color: var(--text2); margin-top: 3px; }
+        /* 최신 메시지 버튼 */
+        .scroll-btn {
+            position: absolute; bottom: 68px; right: 16px;
+            background: var(--accent); color: #000;
+            border: none; border-radius: 20px;
+            padding: 6px 14px; font-size: 12px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10;
         }
-
-        async function joinRoom(roomId, roomName) {
-            curRoomId = roomId;
-        // myNickname이 없으면 반드시 가져오기
-        if (!myNickname && token) await fetchMe();
-        pendingEchoSet.clear(); // 방 전환 시 에코 추적 초기화
-        document.getElementById('cur-room-name').textContent = roomName;
-        document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('ri-' + roomId)?.classList.add('active');
-        document.getElementById('chat-in').disabled = false;
-            const msgs = document.getElementById('chat-msgs');
-        msgs.innerHTML = `<div class="chat-empty"><div class="spin"></div></div>`;
-            const r = await api('GET', `/api/rooms/${roomId}/messages?size=50`);
-        msgs.innerHTML = '';
-            if (r.ok && Array.isArray(r.d) && r.d.length) r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
-        else msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
-        // 초기 로드 후 무조건 맨 아래로 스크롤
-        msgs.scrollTop = msgs.scrollHeight;
-        // 스크롤 이벤트로 "최신 메시지" 버튼 표시/숨김
-        msgs.onscroll = () => updateScrollBtn(msgs);
-        connectWs(roomId);
-        }
-
-        function connectWs(roomId) {
-            if (stompClient && stompClient.connected) stompClient.disconnect();
-            const sock = new SockJS(BASE + '/ws');
-            stompClient = Stomp.over(sock);
-        stompClient.debug = null;
-        stompClient.connect(
-        { Authorization: 'Bearer ' + token },
-        () => {
-        document.getElementById('ws-dot').classList.add('on');
-        document.getElementById('ws-txt').textContent = '연결됨';
-        stompClient.subscribe(`/sub/chat/rooms/${roomId}`, msg => {
-            const b = JSON.parse(msg.body);
-            const el = document.getElementById('chat-msgs');
-            if (el.querySelector('.chat-empty')) el.innerHTML = '';
-
-        // 내가 보낸 메시지 에코는 이미 로컬에서 표시했으므로 무시
-        const sender = b.userName || b.nickname || b.sender || b.username || '';
-            const message = b.message || b.content || b.text || '';
-            if (myNickname && sender === myNickname && pendingEchoSet.has(message)) {
-        pendingEchoSet.delete(message);
-            return;
-        }
-        appendMsg(sender, message, b.createdAt || b.timestamp);
-        });
-        },
-        () => {
-        document.getElementById('ws-dot').classList.remove('on');
-        document.getElementById('ws-txt').textContent = '연결 끊김';
-        }
-        );
-        }
-
-        function sendChat() {
-            if (!stompClient || !stompClient.connected) { toast('채팅 연결이 끊겼습니다.', 'er'); return; }
-            const inp = document.getElementById('chat-in');
-            const msg = inp.value.trim(); if (!msg) return;
-
-        // 내 메시지를 즉시 내 쪽(오른쪽)에 표시 — 서버 에코를 기다리지 않음
-        appendMsgMine(msg);
-        // 서버 에코가 왔을 때 중복 표시 방지용 추적
-        pendingEchoSet.add(msg);
-
-        stompClient.send('/pub/chat.send', {}, JSON.stringify({ roomId: curRoomId, message: msg }));
-        inp.value = '';
-        }
-
-        // 내가 보낸 메시지를 즉시 오른쪽에 표시
-           function appendMsgMine(message) {
-            const msgs = document.getElementById('chat-msgs');
-            if (msgs.querySelector('.chat-empty')) msgs.innerHTML = '';
-            const div = document.createElement('div');
-        div.className = 'cmsg mine';
-        div.innerHTML = `<div class="cb">${esc(message)}</div>
-        <div class="ct">${new Date().toLocaleTimeString('ko', {hour:'2-digit', minute:'2-digit'})}</div>`;
-        msgs.appendChild(div);
-        msgs.scrollTop = msgs.scrollHeight;
-        }
-
-        function appendMsg(sender, message, time) {
-            const msgs = document.getElementById('chat-msgs');
-        // myNickname이 없을 때 최후 수단으로 me에서 재시도
-        if (!myNickname) {
-            if (!me) me = JSON.parse(localStorage.getItem('me') || 'null');
-            myNickname = me?.nickname || null;
-        }
-            const isMine = myNickname && sender === myNickname;
-
-        // 사용자가 스크롤을 위로 올렸는지 확인 (100px 여유)
-        const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
-
-            const div = document.createElement('div');
-        div.className = 'cmsg' + (isMine ? ' mine' : '');
-        div.innerHTML = `${!isMine ? `<div class="cs">${esc(sender)}</div>` : ''}
-        <div class="cb">${esc(message)}</div>
-        <div class="ct">${time ? new Date(time).toLocaleTimeString('ko',{hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
-        msgs.appendChild(div);
-
-        // 내 메시지이거나 이미 하단에 있을 때만 자동 스크롤
-           if (isMine || isNearBottom) {
-        msgs.scrollTop = msgs.scrollHeight;
-        } else {
-          // 위로 스크롤 중이면 "최신 메시지" 버튼 표시
-          updateScrollBtn(msgs);
-          }
-        }
-
-        function updateScrollBtn(msgs) {
-            const btn = document.getElementById('scroll-btn');
-            if (!btn) return;
-            const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
-        btn.classList.toggle('visible', !isNearBottom);
-        }
-
-        function scrollToBottom() {
-            const msgs = document.getElementById('chat-msgs');
-        msgs.scrollTop = msgs.scrollHeight;
-        document.getElementById('scroll-btn')?.classList.remove('visible');
-        }
+        .scroll-btn.visible { opacity: 1; pointer-events: all; }
+        /* 입력창 */
+        .chat-in-area { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+        .chat-in-area input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; border-radius: 8px; font-size: 13px; font-family: inherit; }
+        .chat-in-area input:focus { outline: none; border-color: var(--accent); }
+        .chat-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text2); font-size: 13px; }
 
         /* MYPAGE */
         .mypage-grid { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
@@ -332,10 +238,10 @@
         /* TOAST */
         #toast-ct { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
         .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 13px; min-width: 220px; max-width: 340px; animation: slideIn .3s ease; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        .toast.ok { border-left: 3px solid var(--green); }
-        .toast.er { border-left: 3px solid var(--red); }
+        .toast.ok  { border-left: 3px solid var(--green); }
+        .toast.er  { border-left: 3px solid var(--red); }
         .toast.inf { border-left: 3px solid var(--accent); }
-        @keyframes slideIn { from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
 
         /* PAGINATION */
         .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
@@ -348,17 +254,19 @@
         .empty p { font-size: 13px; }
         .spin { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
         @keyframes spin { to{transform:rotate(360deg)} }
-        .loading-block { display:flex;justify-content:center;padding:32px; }
+        .loading-block { display: flex; justify-content: center; padding: 32px; }
 
         /* REGISTER */
         .reg-wrap { max-width: 560px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; }
 
+        /* RESPONSIVE */
         @media (max-width: 768px) {
-            .detail-wrap,.mypage-grid { grid-template-columns: 1fr; }
-            .chat-layout { grid-template-columns: 1fr; height: auto; }
-            .room-list { height: 200px; border-right: none; border-bottom: 1px solid var(--border); }
+            .detail-wrap, .mypage-grid { grid-template-columns: 1fr; }
+            .chat-layout { grid-template-columns: 1fr; grid-template-rows: 200px 1fr; }
+            .room-list { border-right: none; border-bottom: 1px solid var(--border); }
             header { padding: 0 14px; }
             .page { padding: 20px 14px; }
+            #page-chat { padding: 10px 14px 0; height: calc(100vh - 60px); }
             #hero { padding: 40px 20px; }
             .hero-inner h1 { font-size: 48px; }
         }
@@ -420,8 +328,18 @@
         <div class="sec-title"><h2>경매 목록</h2><button class="btn btn-p btn-sm" onclick="goPage('register')">+ 경매 등록</button></div>
         <div class="search-bar">
             <input id="s-kw" placeholder="🔍 상품명 검색..." />
-            <select id="s-cat"><option value="">전체 카테고리</option><option value="CLOTHES">👗 의류</option><option value="ELECTRONICS">📱 가전제품</option><option value="FOOD">🍱 식품</option></select>
-            <select id="s-st"><option value="">전체 상태</option><option value="READY">진행전</option><option value="ACTIVE">진행중</option><option value="DONE">종료</option></select>
+            <select id="s-cat">
+                <option value="">전체 카테고리</option>
+                <option value="CLOTHES">👗 의류</option>
+                <option value="ELECTRONICS">📱 가전제품</option>
+                <option value="FOOD">🍱 식품</option>
+            </select>
+            <select id="s-st">
+                <option value="">전체 상태</option>
+                <option value="READY">진행전</option>
+                <option value="ACTIVE">진행중</option>
+                <option value="DONE">종료</option>
+            </select>
             <button class="btn btn-p btn-sm" onclick="searchAuctions(0)">검색</button>
         </div>
         <div class="auction-grid" id="g-list"><div class="loading-block"><div class="spin"></div></div></div>
@@ -440,7 +358,14 @@
         <div class="reg-wrap">
             <div class="fg"><label>상품명</label><input id="ra-name" placeholder="예: 1990년대 빈티지 청자켓" /></div>
             <div class="fg"><label>이미지 URL</label><input id="ra-img" placeholder="https://..." /></div>
-            <div class="fg"><label>카테고리</label><select id="ra-cat"><option value="CLOTHES">👗 의류</option><option value="ELECTRONICS">📱 가전제품</option><option value="FOOD">🍱 식품</option></select></div>
+            <div class="fg">
+                <label>카테고리</label>
+                <select id="ra-cat">
+                    <option value="CLOTHES">👗 의류</option>
+                    <option value="ELECTRONICS">📱 가전제품</option>
+                    <option value="FOOD">🍱 식품</option>
+                </select>
+            </div>
             <div class="fr2">
                 <div class="fg"><label>시작가 (원)</label><input id="ra-sp" type="number" placeholder="10000" /></div>
                 <div class="fg"><label>최소 입찰 단위 (원)</label><input id="ra-mb" type="number" placeholder="1000" /></div>
@@ -455,20 +380,32 @@
 
     <!-- CHAT -->
     <div id="page-chat" class="page">
-        <div class="sec-title"><h2>💬 채팅</h2><button class="btn btn-o btn-sm" onclick="openM('m-room')">+ 채팅방 만들기</button></div>
+        <div class="sec-title">
+            <h2>💬 채팅</h2>
+            <button class="btn btn-o btn-sm" onclick="openM('m-room')">+ 채팅방 만들기</button>
+        </div>
         <div class="chat-layout">
+            <!-- 채팅방 목록 (고정, 독립 스크롤) -->
             <div class="room-list">
-                <div class="room-list-hd"><span>채팅방</span><div class="spin" id="room-spin" style="display:none"></div></div>
+                <div class="room-list-hd">
+                    <span>채팅방</span>
+                    <div class="spin" id="room-spin" style="display:none"></div>
+                </div>
                 <div id="room-items"></div>
             </div>
+            <!-- 채팅 영역 (독립 스크롤) -->
             <div class="chat-main">
                 <div class="chat-hd">
                     <h3 id="cur-room-name">채팅방을 선택하세요</h3>
                     <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
-                        <span class="ws-dot" id="ws-dot"></span><span id="ws-txt">오프라인</span>
+                        <span class="ws-dot" id="ws-dot"></span>
+                        <span id="ws-txt">오프라인</span>
                     </div>
                 </div>
-                <div class="chat-msgs" id="chat-msgs"><div class="chat-empty">채팅방을 선택하면 대화를 시작할 수 있어요</div></div>
+                <div class="chat-msgs" id="chat-msgs">
+                    <div class="chat-empty">채팅방을 선택하면 대화를 시작할 수 있어요</div>
+                </div>
+                <button class="scroll-btn" id="scroll-btn" onclick="scrollToBottom()">↓ 최신 메시지</button>
                 <div class="chat-in-area">
                     <input id="chat-in" placeholder="메시지를 입력하세요..." onkeydown="if(event.key==='Enter')sendChat()" disabled />
                     <button class="btn btn-p btn-sm" onclick="sendChat()">전송</button>
@@ -479,13 +416,16 @@
 
     <!-- COUPON -->
     <div id="page-coupon" class="page">
-        <div class="sec-title"><h2>🎟️ 이벤트 & 쿠폰</h2></div>
+        <div class="sec-title"><h2>🎟️ 이벤트 &amp; 쿠폰</h2></div>
         <div class="coupon-card">
             <div class="cc-icon">🎁</div>
             <div class="cc-body">
                 <div class="cc-name">이벤트 쿠폰 발급</div>
                 <div class="cc-desc">이벤트 ID를 입력하고 쿠폰을 발급받으세요</div>
-                <div class="cc-row"><input id="cp-eid" placeholder="이벤트 ID" /><button class="btn btn-p btn-sm" onclick="issueCoupon()">발급받기</button></div>
+                <div class="cc-row">
+                    <input id="cp-eid" placeholder="이벤트 ID" />
+                    <button class="btn btn-p btn-sm" onclick="issueCoupon()">발급받기</button>
+                </div>
             </div>
         </div>
         <div class="coupon-card">
@@ -493,7 +433,10 @@
             <div class="cc-body">
                 <div class="cc-name">쿠폰 사용</div>
                 <div class="cc-desc">보유한 쿠폰 ID를 입력하여 사용하세요</div>
-                <div class="cc-row"><input id="cp-cid" placeholder="쿠폰 ID" /><button class="btn btn-o btn-sm" onclick="useCoupon()">사용하기</button></div>
+                <div class="cc-row">
+                    <input id="cp-cid" placeholder="쿠폰 ID" />
+                    <button class="btn btn-o btn-sm" onclick="useCoupon()">사용하기</button>
+                </div>
             </div>
         </div>
     </div>
@@ -506,7 +449,10 @@
                     <div class="avatar" id="my-av">?</div>
                     <div class="pn" id="my-nick">-</div>
                     <div class="pe" id="my-email">-</div>
-                    <div class="point-disp"><div class="pl">보유 포인트</div><div class="pv" id="my-pt">0</div></div>
+                    <div class="point-disp">
+                        <div class="pl">보유 포인트</div>
+                        <div class="pv" id="my-pt">0</div>
+                    </div>
                     <button class="btn btn-s btn-full btn-sm" onclick="openM('m-edit')">프로필 수정</button>
                 </div>
             </div>
@@ -553,9 +499,21 @@
         <div class="fg"><label>비밀번호 (영문+숫자+특수문자 8~15자)</label><input id="su-pw" type="password" /></div>
         <div class="fr2">
             <div class="fg"><label>전화번호 (숫자 11자리)</label><input id="su-ph" placeholder="01012345678" /></div>
-            <div class="fg"><label>역할</label><select id="su-role"><option value="ROLE_USER">일반 유저</option><option value="ROLE_ADMIN">관리자</option></select></div>
+            <div class="fg">
+                <label>역할</label>
+                <select id="su-role">
+                    <option value="ROLE_USER">일반 유저</option>
+                    <option value="ROLE_ADMIN">관리자</option>
+                </select>
+            </div>
         </div>
-        <div class="fg"><label>멤버십</label><select id="su-grade"><option value="NORMAL">일반</option><option value="VIP">VIP</option></select></div>
+        <div class="fg">
+            <label>멤버십</label>
+            <select id="su-grade">
+                <option value="NORMAL">일반</option>
+                <option value="VIP">VIP</option>
+            </select>
+        </div>
         <button class="btn btn-p btn-full" onclick="doSignup()">가입하기</button>
     </div>
 </div>
@@ -599,9 +557,13 @@
 
 <script>
     // ── 상태 ──
-    const BASE = 'http://localhost:8080';
-    let token = localStorage.getItem('token') || '';
-    let me = JSON.parse(localStorage.getItem('me') || 'null');
+    const BASE     = 'http://localhost:8080';
+    let token      = localStorage.getItem('token') || '';
+    let me         = JSON.parse(localStorage.getItem('me') || 'null');
+    // 채팅 좌우 구분 전용 변수 (me 객체 타이밍과 완전히 분리)
+    let myNickname = me?.nickname || null;
+    // 내가 보낸 메시지의 서버 에코 중복 방지
+    const echoSet  = new Set();
     let prevPage = 'home', curPage = 'home';
     let bidTargetId = null, curRoomId = null;
     let stompClient = null;
@@ -611,11 +573,17 @@
         const h = { 'Content-Type': 'application/json' };
         if (token) h['Authorization'] = 'Bearer ' + token;
         try {
-            const res = await fetch(BASE + path, { method, headers: h, credentials: 'include', body: body ? JSON.stringify(body) : undefined });
+            const res = await fetch(BASE + path, {
+                method, headers: h, credentials: 'include',
+                body: body ? JSON.stringify(body) : undefined
+            });
             const txt = await res.text();
-            let d; try { d = JSON.parse(txt); } catch { d = { message: txt }; }
+            let d;
+            try { d = JSON.parse(txt); } catch { d = { message: txt }; }
             return { ok: res.ok, d };
-        } catch(e) { return { ok: false, d: { message: e.message } }; }
+        } catch(e) {
+            return { ok: false, d: { message: e.message } };
+        }
     }
 
     // ── TOAST ──
@@ -631,7 +599,9 @@
     // ── MODAL ──
     function openM(id) { document.getElementById(id).classList.add('open'); }
     function closeM(id) { document.getElementById(id).classList.remove('open'); }
-    document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+    document.querySelectorAll('.modal-overlay').forEach(o =>
+        o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); })
+    );
 
     // ── NAVIGATION ──
     function goPage(p) {
@@ -639,15 +609,15 @@
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
         document.getElementById('page-' + p).classList.add('active');
         window.scrollTo(0, 0);
-        if (p === 'home') loadHome();
+        if      (p === 'home')     loadHome();
         else if (p === 'auctions') loadAuctions(0);
-        else if (p === 'chat') loadChatPage();
-        else if (p === 'mypage') loadMypage();
+        else if (p === 'chat')     loadChatPage();
+        else if (p === 'mypage')   loadMypage();
         else if (p === 'register' && !token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
     }
     function goBack() { goPage(prevPage || 'home'); }
 
-    // ── AUTH HEADER ──
+    // ── AUTH ──
     function applyAuth() {
         if (me) {
             document.getElementById('hdr-user').style.display = 'flex';
@@ -660,26 +630,35 @@
         }
     }
 
+    // me 와 myNickname 을 항상 동시에 갱신
     async function fetchMe() {
         const r = await api('GET', '/api/users/me');
-        if (r.ok && r.d?.data) { me = r.d.data; localStorage.setItem('me', JSON.stringify(me)); }
+        if (r.ok && r.d?.data) {
+            me = r.d.data;
+            myNickname = me.nickname;   // ← 핵심
+            localStorage.setItem('me', JSON.stringify(me));
+        }
     }
 
     async function doLogin() {
         const r = await api('POST', '/api/auth/login', { email: v('l-em'), password: v('l-pw') });
         if (r.ok && r.d?.data?.accessToken) {
-            // "Bearer " 제거하고 순수 토큰만 저장
             token = r.d.data.accessToken.replace('Bearer ', '').trim();
             localStorage.setItem('token', token);
-            closeM('m-login'); toast('로그인 성공!', 'ok');
-            await fetchMe(); applyAuth();
-        } else toast(r.d?.message || '로그인 실패', 'er');
+            closeM('m-login');
+            toast('로그인 성공!', 'ok');
+            await fetchMe();   // 내부에서 myNickname 도 세팅됨
+            applyAuth();
+        } else {
+            toast(r.d?.message || '로그인 실패', 'er');
+        }
     }
 
     async function doSignup() {
         const r = await api('POST', '/api/auth/signup', {
-            nickname: v('su-nick'), name: v('su-name'), email: v('su-em'), password: v('su-pw'),
-            phone: v('su-ph'), userRole: v('su-role'), membershipGrade: v('su-grade'),
+            nickname: v('su-nick'), name: v('su-name'), email: v('su-em'),
+            password: v('su-pw'), phone: v('su-ph'),
+            userRole: v('su-role'), membershipGrade: v('su-grade'),
         });
         if (r.ok) { closeM('m-signup'); toast('회원가입 완료! 로그인해주세요.', 'ok'); openM('m-login'); }
         else toast(r.d?.message || '회원가입 실패', 'er');
@@ -687,7 +666,7 @@
 
     async function doLogout() {
         await api('POST', '/api/auth/logout');
-        token = ''; me = null;
+        token = ''; me = null; myNickname = null;
         localStorage.removeItem('token'); localStorage.removeItem('me');
         applyAuth(); goPage('home'); toast('로그아웃되었습니다.', 'inf');
         if (stompClient) { stompClient.disconnect(); stompClient = null; }
@@ -695,15 +674,13 @@
 
     // ── HOME ──
     async function loadHome() {
-        // TOP5
         const r5 = await api('GET', '/api/auctions/top5');
         const g5 = document.getElementById('g-top5');
         if (r5.ok && r5.d?.data?.length) {
             document.getElementById('stat-n').textContent = r5.d.data.length;
-            g5.innerHTML = r5.d.data.slice(0,5).map((a,i) => card(a, i+1)).join('');
+            g5.innerHTML = r5.d.data.slice(0, 5).map((a, i) => card(a, i + 1)).join('');
         } else g5.innerHTML = empty('인기 경매가 없습니다.');
 
-        // ACTIVE
         const ra = await api('GET', '/api/auctions/v2?status=ACTIVE&page=0&size=8');
         const ga = document.getElementById('g-active');
         if (ra.ok && ra.d?.data?.content?.length) ga.innerHTML = ra.d.data.content.map(a => card(a)).join('');
@@ -714,41 +691,43 @@
     async function loadAuctions(page) {
         const kw = v('s-kw'), cat = v('s-cat'), st = v('s-st');
         let q = `?page=${page}&size=12`;
-        if (kw) q += `&keyword=${encodeURIComponent(kw)}`;
+        if (kw)  q += `&keyword=${encodeURIComponent(kw)}`;
         if (cat) q += `&category=${cat}`;
-        if (st) q += `&status=${st}`;
+        if (st)  q += `&status=${st}`;
         const r = await api('GET', '/api/auctions/v2' + q);
         const grid = document.getElementById('g-list');
-        const pag = document.getElementById('pag');
+        const pag  = document.getElementById('pag');
         if (r.ok && r.d?.data) {
             const { content, totalPages, number } = r.d.data;
             grid.innerHTML = content?.length ? content.map(a => card(a)).join('') : empty('검색 결과가 없습니다.');
             pag.innerHTML = '';
             for (let i = 0; i < (totalPages || 0); i++) {
-                pag.innerHTML += `<button class="${i===number?'active':''}" onclick="searchAuctions(${i})">${i+1}</button>`;
+                pag.innerHTML += `<button class="${i === number ? 'active' : ''}" onclick="searchAuctions(${i})">${i + 1}</button>`;
             }
         } else grid.innerHTML = empty('경매 목록을 불러올 수 없습니다.');
     }
     function searchAuctions(p = 0) { loadAuctions(p); }
 
-    // ── CARD HTML ──
+    // ── CARD ──
     const CE = { CLOTHES:'👗', ELECTRONICS:'📱', FOOD:'🍱' };
     const CL = { CLOTHES:'의류', ELECTRONICS:'가전제품', FOOD:'식품' };
     const SL = { ACTIVE:'진행중', READY:'진행전', DONE:'종료' };
 
     function card(a, rank) {
-        const img = a.imageUrl ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />` : (CE[a.category]||'📦');
+        const img = a.imageUrl
+            ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
+            : (CE[a.category] || '📦');
         const rb = rank ? `<div class="rank-badge">${rank}</div>` : '';
         return `<div class="auction-card" onclick="openDetail(${a.auctionId})">
     ${rb}
-    <div class="card-img">${img}<div class="card-badge b-${a.status}">${SL[a.status]||a.status}</div></div>
+    <div class="card-img">${img}<div class="card-badge b-${a.status}">${SL[a.status] || a.status}</div></div>
     <div class="card-body">
-      <div class="card-cat">${CL[a.category]||a.category}</div>
-      <div class="card-name">${esc(a.productName)}</div>
-      <div class="card-price">${Number(a.startPrice).toLocaleString()}<small>원~</small></div>
-      <div class="card-seller">by ${esc(a.sellerNickname)}</div>
+        <div class="card-cat">${CL[a.category] || a.category}</div>
+        <div class="card-name">${esc(a.productName)}</div>
+        <div class="card-price">${Number(a.startPrice).toLocaleString()}<small>원~</small></div>
+        <div class="card-seller">by ${esc(a.sellerNickname)}</div>
     </div>
-  </div>`;
+</div>`;
     }
 
     // ── DETAIL ──
@@ -762,62 +741,71 @@
         const r = await api('GET', `/api/auctions/${id}`);
         if (!r.ok || !r.d?.data) { dc.innerHTML = empty('경매 정보를 불러올 수 없습니다.'); return; }
         const a = r.d.data;
-        const img = a.imageUrl ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />` : (CE[a.category]||'📦');
+        const img = a.imageUrl
+            ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
+            : (CE[a.category] || '📦');
         dc.innerHTML = `
-  <div class="detail-img">${img}</div>
-  <div class="detail-info">
+<div class="detail-img">${img}</div>
+<div class="detail-info">
     <div>
-      <div style="margin-bottom:8px"><span class="card-badge b-${a.status}" style="position:static">${SL[a.status]}</span></div>
-      <div class="detail-title">${esc(a.productName)}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)} · 조회 ${a.viewCount||0}회</div>
+        <div style="margin-bottom:8px"><span class="card-badge b-${a.status}" style="position:static">${SL[a.status]}</span></div>
+        <div class="detail-title">${esc(a.productName)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)} · 조회 ${a.viewCount || 0}회</div>
     </div>
     <div class="price-block">
-      <div class="price-label">시작가</div>
-      <div class="price-val">${Number(a.startPrice).toLocaleString()}<small> 원</small></div>
-      <div style="font-size:12px;color:var(--text2);margin-top:6px">최소 입찰 단위: ${Number(a.minimumBid).toLocaleString()}원</div>
+        <div class="price-label">시작가</div>
+        <div class="price-val">${Number(a.startPrice).toLocaleString()}<small> 원</small></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px">최소 입찰 단위: ${Number(a.minimumBid).toLocaleString()}원</div>
     </div>
     <div class="meta-grid">
-      <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
-      <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
+        <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
+        <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
     </div>
-        <div style="display:flex;gap:8px">
-      <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})"
-        ${a.status === 'DONE' ? 'disabled style="flex:1;opacity:0.4;cursor:not-allowed;background:var(--surface2);color:var(--text2)"' : ''}>
-        ${a.status === 'DONE' ? '경매 종료' : '입찰하기'}
-      </button>
-      <button class="btn btn-s btn-sm" onclick="goPage('chat')">💬 채팅</button>
+    <div style="display:flex;gap:8px">
+        <button class="btn btn-p" style="flex:1"
+            onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})"
+            ${a.status === 'DONE' ? 'disabled style="flex:1;opacity:0.4;cursor:not-allowed;background:var(--surface2);color:var(--text2)"' : ''}>
+            ${a.status === 'DONE' ? '경매 종료' : '입찰하기'}
+        </button>
+        <button class="btn btn-s btn-sm" onclick="goPage('chat')">💬 채팅</button>
     </div>
     ${a.status === 'DONE' && a.finalPrice ? `
     <div style="background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:16px;">
-      <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🏆 최종 낙찰가</div>
-      <div style="font-family:'Bebas Neue';font-size:42px;color:var(--accent);letter-spacing:2px">${Number(a.finalPrice).toLocaleString()}<small style="font-family:'Noto Sans KR';font-size:14px;color:var(--text2)"> 원</small></div>
+        <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🏆 최종 낙찰가</div>
+        <div style="font-family:'Bebas Neue';font-size:42px;color:var(--accent);letter-spacing:2px">${Number(a.finalPrice).toLocaleString()}<small style="font-family:'Noto Sans KR';font-size:14px;color:var(--text2)"> 원</small></div>
     </div>` : ''}
     <div class="bid-block">
-      <div class="bid-block-hd"><span>입찰 내역</span><span id="bid-cnt">-</span></div>
-      <div id="bid-body"><div class="loading-block"><div class="spin"></div></div></div>
+        <div class="bid-block-hd"><span>입찰 내역</span><span id="bid-cnt">-</span></div>
+        <div id="bid-body"><div class="loading-block"><div class="spin"></div></div></div>
     </div>
-  </div>`;
+</div>`;
         loadBids(id);
     }
 
     async function loadBids(auctionId) {
-        const r = await api('GET', `/api/bids/${auctionId}`);
+        const r  = await api('GET', `/api/bids/${auctionId}`);
         const el = document.getElementById('bid-body');
         const ct = document.getElementById('bid-cnt');
         if (r.ok && r.d?.data) {
             const bids = r.d.data;
             ct.textContent = `총 ${bids.length}건`;
             el.innerHTML = bids.length
-                ? bids.map(b => `<div class="bid-row"><div><div class="bp">${Number(b.price).toLocaleString()}원</div><div class="bt">${b.status}</div></div><div class="bt">${fDate(b.createdAt)}</div></div>`).join('')
+                ? bids.map(b => `<div class="bid-row">
+                    <div><div class="bp">${Number(b.price).toLocaleString()}원</div><div class="bt">${b.status}</div></div>
+                    <div class="bt">${fDate(b.createdAt)}</div>
+                  </div>`).join('')
                 : `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">아직 입찰이 없습니다.</div>`;
-        } else el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">로드 실패</div>`;
+        } else {
+            el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">로드 실패</div>`;
+        }
     }
 
     // ── BID ──
     function openBidModal(id, sp, mb) {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
         bidTargetId = id;
-        document.getElementById('bid-info').innerHTML = `시작가 <strong>${Number(sp).toLocaleString()}원</strong> · 최소단위 <strong>${Number(mb).toLocaleString()}원</strong>`;
+        document.getElementById('bid-info').innerHTML =
+            `시작가 <strong>${Number(sp).toLocaleString()}원</strong> · 최소단위 <strong>${Number(mb).toLocaleString()}원</strong>`;
         document.getElementById('bm-price').value = '';
         openM('m-bid');
     }
@@ -851,38 +839,61 @@
     // ── CHAT ──
     async function loadChatPage() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        // 채팅 진입 전 myNickname 반드시 확보
+        if (!myNickname) await fetchMe();
         document.getElementById('room-spin').style.display = 'inline-block';
         const r = await api('GET', '/api/chat/rooms');
         document.getElementById('room-spin').style.display = 'none';
         const el = document.getElementById('room-items');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(rm => `
-      <div class="room-item" id="ri-${rm.id}" onclick="joinRoom(${rm.id},'${esc(rm.name)}')">
-        <div class="rn">💬 ${esc(rm.name)}</div><div class="rd">${fDate(rm.createdAt)}</div>
-      </div>`).join('');
-        } else el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">채팅방이 없습니다.</div>`;
+                <div class="room-item" id="ri-${rm.id}" onclick="joinRoom(${rm.id},'${esc(rm.name)}')">
+                    <div class="rn">💬 ${esc(rm.name)}</div>
+                    <div class="rd">${fDate(rm.createdAt)}</div>
+                </div>`).join('');
+        } else {
+            el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">채팅방이 없습니다.</div>`;
+        }
     }
 
     async function createRoom() {
         const name = document.getElementById('cr-name').value.trim();
         if (!name) { toast('채팅방 이름을 입력하세요.', 'er'); return; }
         const r = await api('POST', '/api/chat/rooms', { name });
-        if (r.ok) { closeM('m-room'); toast('채팅방 생성 완료!', 'ok'); document.getElementById('cr-name').value = ''; loadChatPage(); }
-        else toast(r.d?.message || '생성 실패', 'er');
+        if (r.ok) {
+            closeM('m-room');
+            toast('채팅방 생성 완료!', 'ok');
+            document.getElementById('cr-name').value = '';
+            loadChatPage();
+        } else {
+            toast(r.d?.message || '생성 실패', 'er');
+        }
     }
 
     async function joinRoom(roomId, roomName) {
         curRoomId = roomId;
+        // 방 입장 시 myNickname 재확인
+        if (!myNickname && token) await fetchMe();
+        echoSet.clear();
+
         document.getElementById('cur-room-name').textContent = roomName;
         document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
         document.getElementById('ri-' + roomId)?.classList.add('active');
         document.getElementById('chat-in').disabled = false;
+
         const msgs = document.getElementById('chat-msgs');
         msgs.innerHTML = `<div class="chat-empty"><div class="spin"></div></div>`;
+
         const r = await api('GET', `/api/rooms/${roomId}/messages?size=50`);
         msgs.innerHTML = '';
-        if (r.ok && Array.isArray(r.d) && r.d.length) r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
-        else msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
+        if (r.ok && Array.isArray(r.d) && r.d.length) {
+            r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
+        } else {
+            msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
+        }
+        msgs.scrollTop = msgs.scrollHeight;
+        msgs.onscroll = () => updateScrollBtn(msgs);
+
         connectWs(roomId);
     }
 
@@ -896,11 +907,21 @@
             () => {
                 document.getElementById('ws-dot').classList.add('on');
                 document.getElementById('ws-txt').textContent = '연결됨';
-                stompClient.subscribe(`/sub/chat/rooms/${roomId}`, msg => {
+                stompClient.subscribe(`/sub/chat/${roomId}`, msg => {
                     const b = JSON.parse(msg.body);
                     const el = document.getElementById('chat-msgs');
                     if (el.querySelector('.chat-empty')) el.innerHTML = '';
-                    appendMsg(b.userName, b.message, b.createdAt);
+
+                    // 서버 필드명 대응
+                    const sender  = b.userName || b.nickname || b.sender || b.username || '';
+                    const message = b.message  || b.content  || b.text   || '';
+
+                    // 내가 보낸 메시지 에코 무시
+                    if (myNickname && sender === myNickname && echoSet.has(message)) {
+                        echoSet.delete(message);
+                        return;
+                    }
+                    appendMsg(sender, message, b.createdAt || b.timestamp);
                 });
             },
             () => {
@@ -913,33 +934,76 @@
     function sendChat() {
         if (!stompClient || !stompClient.connected) { toast('채팅 연결이 끊겼습니다.', 'er'); return; }
         const inp = document.getElementById('chat-in');
-        const msg = inp.value.trim(); if (!msg) return;
+        const msg = inp.value.trim();
+        if (!msg) return;
+        // 즉시 내 쪽(오른쪽)에 표시
+        appendMsgMine(msg);
+        // 에코 중복 방지
+        echoSet.add(msg);
         stompClient.send('/pub/chat.send', {}, JSON.stringify({ roomId: curRoomId, message: msg }));
         inp.value = '';
     }
 
+    // 내가 보낸 메시지 — 항상 오른쪽
+    function appendMsgMine(message) {
+        const msgs = document.getElementById('chat-msgs');
+        if (msgs.querySelector('.chat-empty')) msgs.innerHTML = '';
+        const div = document.createElement('div');
+        div.className = 'cmsg mine';
+        div.innerHTML = `<div class="cb">${esc(message)}</div>
+<div class="ct">${new Date().toLocaleTimeString('ko', { hour: '2-digit', minute: '2-digit' })}</div>`;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // 상대방 메시지 — 스마트 스크롤
     function appendMsg(sender, message, time) {
         const msgs = document.getElementById('chat-msgs');
-        const isMine = me && sender === me.nickname;
+        // myNickname 최후 보루
+        if (!myNickname) {
+            if (!me) me = JSON.parse(localStorage.getItem('me') || 'null');
+            myNickname = me?.nickname || null;
+        }
+        const isMine      = myNickname && sender === myNickname;
+        const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
+
         const div = document.createElement('div');
         div.className = 'cmsg' + (isMine ? ' mine' : '');
         div.innerHTML = `${!isMine ? `<div class="cs">${esc(sender)}</div>` : ''}
-    <div class="cb">${esc(message)}</div>
-    <div class="ct">${time ? new Date(time).toLocaleTimeString('ko',{hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
+<div class="cb">${esc(message)}</div>
+<div class="ct">${time ? new Date(time).toLocaleTimeString('ko', { hour: '2-digit', minute: '2-digit' }) : ''}</div>`;
         msgs.appendChild(div);
+
+        if (isMine || isNearBottom) {
+            msgs.scrollTop = msgs.scrollHeight;
+        } else {
+            updateScrollBtn(msgs);
+        }
+    }
+
+    function updateScrollBtn(msgs) {
+        const btn = document.getElementById('scroll-btn');
+        if (!btn) return;
+        const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
+        btn.classList.toggle('visible', !isNearBottom);
+    }
+
+    function scrollToBottom() {
+        const msgs = document.getElementById('chat-msgs');
         msgs.scrollTop = msgs.scrollHeight;
+        document.getElementById('scroll-btn')?.classList.remove('visible');
     }
 
     // ── COUPON ──
     async function issueCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
         const r = await api('POST', `/api/events/${v('cp-eid')}/coupons`);
-        toast(r.ok ? (r.d?.message||'쿠폰 발급 완료!') : (r.d?.message||'발급 실패'), r.ok?'ok':'er');
+        toast(r.ok ? (r.d?.message || '쿠폰 발급 완료!') : (r.d?.message || '발급 실패'), r.ok ? 'ok' : 'er');
     }
     async function useCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
         const r = await api('POST', `/api/coupons/${v('cp-cid')}/use`);
-        toast(r.ok ? (r.d?.message||'쿠폰 사용 완료!') : (r.d?.message||'사용 실패'), r.ok?'ok':'er');
+        toast(r.ok ? (r.d?.message || '쿠폰 사용 완료!') : (r.d?.message || '사용 실패'), r.ok ? 'ok' : 'er');
     }
 
     // ── MYPAGE ──
@@ -947,58 +1011,66 @@
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
         const r = await api('GET', '/api/users/me');
         if (r.ok && r.d?.data) {
-            const u = r.d.data; me = u; localStorage.setItem('me', JSON.stringify(me));
-            document.getElementById('my-av').textContent = (u.nickname?.[0]||'?').toUpperCase();
-            document.getElementById('my-nick').textContent = u.nickname;
+            const u = r.d.data;
+            me = u; myNickname = u.nickname;
+            localStorage.setItem('me', JSON.stringify(me));
+            document.getElementById('my-av').textContent    = (u.nickname?.[0] || '?').toUpperCase();
+            document.getElementById('my-nick').textContent  = u.nickname;
             document.getElementById('my-email').textContent = u.email;
-            document.getElementById('my-pt').textContent = Number(u.point||0).toLocaleString();
+            document.getElementById('my-pt').textContent    = Number(u.point || 0).toLocaleString();
             applyAuth();
         }
         loadMyAuctions(); loadMyBids(); loadAlerts();
     }
 
     async function loadMyAuctions() {
-        const r = await api('GET', '/api/users/me/auctions');
+        const r  = await api('GET', '/api/users/me/auctions');
         const el = document.getElementById('tp-auctions');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(a => `
-      <div class="li" onclick="openDetail(${a.auctionId})">
-        <div><div class="lt">${esc(a.productName)}</div><div class="ls">${CL[a.category]} · ${SL[a.status]}</div></div>
-        <div class="lp">${Number(a.startPrice).toLocaleString()}원~</div>
-      </div>`).join('');
+                <div class="li" onclick="openDetail(${a.auctionId})">
+                    <div><div class="lt">${esc(a.productName)}</div><div class="ls">${CL[a.category]} · ${SL[a.status]}</div></div>
+                    <div class="lp">${Number(a.startPrice).toLocaleString()}원~</div>
+                </div>`).join('');
         } else el.innerHTML = empty('등록한 경매가 없습니다.');
     }
 
     async function loadMyBids() {
-        const r = await api('GET', '/api/bids/me');
+        const r  = await api('GET', '/api/bids/me');
         const el = document.getElementById('tp-bids');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(b => `
-      <div class="li" onclick="openDetail(${b.auctionId})">
-        <div><div class="lt">경매 #${b.auctionId}</div><div class="ls">${b.status} · ${fDate(b.createdAt)}</div></div>
-        <div class="lp">${Number(b.price).toLocaleString()}원</div>
-      </div>`).join('');
+                <div class="li" onclick="openDetail(${b.auctionId})">
+                    <div><div class="lt">경매 #${b.auctionId}</div><div class="ls">${b.status} · ${fDate(b.createdAt)}</div></div>
+                    <div class="lp">${Number(b.price).toLocaleString()}원</div>
+                </div>`).join('');
         } else el.innerHTML = empty('입찰 내역이 없습니다.');
     }
 
     async function loadAlerts() {
-        const r = await api('GET', '/api/alerts');
+        const r  = await api('GET', '/api/alerts');
         const el = document.getElementById('tp-alerts');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(a => `
-      <div class="li"><div><div class="lt">${esc(a.message||a.type)}</div><div class="ls">${fDate(a.createdAt)}</div></div></div>`).join('');
+                <div class="li">
+                    <div><div class="lt">${esc(a.message || a.type)}</div><div class="ls">${fDate(a.createdAt)}</div></div>
+                </div>`).join('');
         } else el.innerHTML = empty('알림이 없습니다.');
     }
 
     async function changeNick() {
-        const nick = v('ep-nick'); if (!nick) { toast('닉네임을 입력하세요.', 'er'); return; }
+        const nick = v('ep-nick');
+        if (!nick) { toast('닉네임을 입력하세요.', 'er'); return; }
         const r = await api('PATCH', '/api/users/me', { nickname: nick });
-        toast(r.ok ? '닉네임 변경 완료!' : (r.d?.message||'변경 실패'), r.ok?'ok':'er');
+        toast(r.ok ? '닉네임 변경 완료!' : (r.d?.message || '변경 실패'), r.ok ? 'ok' : 'er');
         if (r.ok) { closeM('m-edit'); loadMypage(); }
     }
+
     async function changePw() {
-        const r = await api('PATCH', '/api/users/me/password', { currentPassword: v('ep-cpw'), newPassword: v('ep-npw') });
-        toast(r.ok ? '비밀번호 변경 완료!' : (r.d?.message||'변경 실패'), r.ok?'ok':'er');
+        const r = await api('PATCH', '/api/users/me/password', {
+            currentPassword: v('ep-cpw'), newPassword: v('ep-npw')
+        });
+        toast(r.ok ? '비밀번호 변경 완료!' : (r.d?.message || '변경 실패'), r.ok ? 'ok' : 'er');
         if (r.ok) closeM('m-edit');
     }
 
@@ -1011,12 +1083,12 @@
     }
 
     // ── UTIL ──
-    function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function v(id)    { const el = document.getElementById(id); return el ? el.value : ''; }
+    function esc(s)   { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function iso(val) { return val ? val + ':00' : null; }
     function fDate(s) {
         if (!s) return '-';
-        try { return new Date(s).toLocaleString('ko',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+        try { return new Date(s).toLocaleString('ko', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
         catch { return s; }
     }
     function empty(msg) { return `<div class="empty"><div class="ei">📭</div><p>${msg}</p></div>`; }
