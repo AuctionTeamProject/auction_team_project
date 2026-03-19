@@ -1099,8 +1099,10 @@
         <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
         <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
     </div>
-    <div style="display:flex;gap:8px">
-        <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${a.status !== 'PENDING' ? `<button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>` : ''}
+        ${isAdmin() && a.status === 'PENDING' ? `
+        <button class="btn btn-p" style="flex:1;background:#7c3aed" onclick="approveAuction(${a.auctionId})">✅ 경매 승인</button>` : ''}
         ${me && me.nickname === a.sellerNickname && a.status === 'PENDING' ? `
         <button class="btn btn-s btn-sm" onclick="openAuctionEdit(${a.auctionId})">✏️ 수정</button>
         <button class="btn btn-d btn-sm" onclick="deleteAuction(${a.auctionId})">🗑️ 삭제</button>` : ''}
@@ -1635,6 +1637,17 @@
     }
 
     // ── AUCTION EDIT / DELETE ──
+    async function approveAuction(auctionId) {
+        if (!confirm('이 경매를 승인하시겠습니까?')) return;
+        const r = await api('PATCH', `/admin/auctions/${auctionId}/approve`);
+        if (r.ok) {
+            toast('경매가 승인되었습니다!', 'ok');
+            openDetail(auctionId); // 상세 새로고침
+        } else {
+            toast(r.d?.message || '승인 실패', 'er');
+        }
+    }
+
     let editUploadedImageUrl = null;
 
     function toggleAeImgMode(mode) {
