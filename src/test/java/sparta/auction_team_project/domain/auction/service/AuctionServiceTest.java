@@ -252,4 +252,114 @@ class AuctionServiceTest {
         assertThrows(ServiceErrorException.class,
                 () -> auctionService.approveAuction(1L));
     }
+
+    @Test
+    void 경매등록_시작시간이_현재시간의_30분이후가아니면_실패() {
+
+        User user = 판매자();
+
+        AuctionCreateRequest request = new AuctionCreateRequest(
+                "상품",
+                "img",
+                AuctionCategory.ELECTRONICS,
+                10000L,
+                1000L,
+                LocalDateTime.now().plusMinutes(10),
+                LocalDateTime.now().plusHours(3)
+        );
+
+        given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+
+        assertThrows(ServiceErrorException.class,
+                () -> auctionService.createAuction(user.getEmail(), request));
+    }
+
+    @Test
+    void 경매등록_종료시간이_시작시간의_1시간이후가아니면_실패() {
+
+        User user = 판매자();
+
+        AuctionCreateRequest request = new AuctionCreateRequest(
+                "상품",
+                "img",
+                AuctionCategory.ELECTRONICS,
+                10000L,
+                1000L,
+                LocalDateTime.now().plusHours(2),
+                LocalDateTime.now().plusHours(2).plusMinutes(30)
+        );
+
+        given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+
+        assertThrows(ServiceErrorException.class,
+                () -> auctionService.createAuction(user.getEmail(), request));
+    }
+
+    @Test
+    void 경매등록_시작가격이최소입찰가보다작으면_실패() {
+
+        User user = 판매자();
+
+        AuctionCreateRequest request = new AuctionCreateRequest(
+                "상품",
+                "img",
+                AuctionCategory.ELECTRONICS,
+                500L,
+                1000L,  // minimumBid
+                LocalDateTime.now().plusHours(2),
+                LocalDateTime.now().plusHours(5)
+        );
+
+        given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+
+        assertThrows(ServiceErrorException.class,
+                () -> auctionService.createAuction(user.getEmail(), request));
+    }
+
+    @Test
+    void 경매등록_membership이_SELLER가아니면_실패() {
+
+        User user = mock(User.class);
+        Membership membership = mock(Membership.class);
+
+        given(user.getId()).willReturn(1L);
+        given(user.getEmail()).willReturn("user@test.com");
+
+        given(membership.getGrade()).willReturn(MembershipEnum.NORMAL);
+
+        given(userRepository.findByEmail(user.getEmail()))
+                .willReturn(Optional.of(user));
+
+        given(membershipRepository.findByUserId(1L))
+                .willReturn(Optional.of(membership));
+
+        AuctionCreateRequest request = 정상등록요청();
+
+        assertThrows(ServiceErrorException.class,
+                () -> auctionService.createAuction(user.getEmail(), request));
+    }
+
+    @Test
+    void 경매수정_PENDING상태아니면_실패() {
+
+        User user = 판매자();
+        Auction auction = 경매();
+        auction.approve(); // READY 상태
+
+        AuctionUpdateRequest request = new AuctionUpdateRequest(
+                "수정",
+                "img",
+                AuctionCategory.ELECTRONICS,
+                12000L,
+                1000L,
+                LocalDateTime.now().plusHours(3),
+                LocalDateTime.now().plusHours(6)
+        );
+
+        given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
+        given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
+
+        assertThrows(ServiceErrorException.class,
+                () -> auctionService.updateAuction(1L, user.getEmail(), request));
+    }
 }

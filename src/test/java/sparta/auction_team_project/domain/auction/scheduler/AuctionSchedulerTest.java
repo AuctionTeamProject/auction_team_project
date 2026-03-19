@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import sparta.auction_team_project.domain.alert.service.AlertService;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
 import sparta.auction_team_project.domain.bid.service.BidService;
@@ -24,13 +25,16 @@ class AuctionSchedulerTest {
     @Mock
     private Auction auction;
 
+    @Mock
+    private AlertService alertService;
+
     private AuctionScheduler auctionScheduler;
     private BidService bidService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        auctionScheduler = new AuctionScheduler(auctionRepository, bidService);
+        auctionScheduler = new AuctionScheduler(auctionRepository, bidService, alertService);
     }
 
     @Test
