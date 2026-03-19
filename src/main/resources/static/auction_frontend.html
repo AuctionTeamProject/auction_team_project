@@ -1099,8 +1099,10 @@
         <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
         <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
     </div>
-    <div style="display:flex;gap:8px">
-        <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${a.status !== 'PENDING' ? `<button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>` : ''}
+        ${isAdmin() && a.status === 'PENDING' ? `
+        <button class="btn btn-p" style="flex:1;background:#7c3aed" onclick="approveAuction(${a.auctionId})">✅ 경매 승인</button>` : ''}
         ${me && me.nickname === a.sellerNickname && a.status === 'PENDING' ? `
         <button class="btn btn-s btn-sm" onclick="openAuctionEdit(${a.auctionId})">✏️ 수정</button>
         <button class="btn btn-d btn-sm" onclick="deleteAuction(${a.auctionId})">🗑️ 삭제</button>` : ''}
@@ -1272,6 +1274,65 @@
     }
 
     // ── CHAT ──
+    async function loadMoreMessages(roomId) {
+        if (!window._chatCursor || window._chatLoading) return;
+        window._chatLoading = true;
+
+        const msgs = document.getElementById('chat-msgs');
+
+        // 로딩 인디케이터 맨 위에 추가
+        const loader = document.createElement('div');
+        loader.id = 'chat-loader';
+        loader.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:12px';
+        loader.innerHTML = '<div class="spin" style="margin:0 auto"></div>';
+        msgs.prepend(loader);
+
+        const r = await api('GET', `/api/messages/before/${roomId}?cursor=${window._chatCursor}&size=50`);
+
+        document.getElementById('chat-loader')?.remove();
+
+        if (r.ok && Array.isArray(r.d) && r.d.length) {
+            // 현재 스크롤 높이 저장 (삽입 후 위치 유지용)
+            const prevHeight = msgs.scrollHeight;
+
+            // 오래된 메시지를 맨 위에 삽입
+            const fragment = document.createDocumentFragment();
+            r.d.forEach(m => {
+                const isMine = myNickname && m.userName === myNickname;
+                const div = document.createElement('div');
+                div.className = 'cmsg' + (isMine ? ' mine' : '');
+                div.innerHTML = `${!isMine ? `<div class="cs">${esc(m.userName)}</div>` : ''}
+<div class="cb">${esc(m.message)}</div>
+<div class="ct">${m.createdAt ? new Date(m.createdAt).toLocaleTimeString('ko', {hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
+                fragment.appendChild(div);
+            });
+            msgs.prepend(fragment);
+
+            // 스크롤 위치 유지 (새 메시지 삽입 후 튀는 현상 방지)
+            msgs.scrollTop = msgs.scrollHeight - prevHeight;
+
+            // cursor 갱신 — 새로 불러온 것 중 가장 오래된 id
+            window._chatCursor = r.d[0].id;
+            window._chatHasMore = r.d.length >= 50;
+
+            // 더 이상 없으면 안내 표시
+            if (!window._chatHasMore) {
+                const end = document.createElement('div');
+                end.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:11px';
+                end.textContent = '— 대화 시작 —';
+                msgs.prepend(end);
+            }
+        } else {
+            window._chatHasMore = false;
+            const end = document.createElement('div');
+            end.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:11px';
+            end.textContent = '— 대화 시작 —';
+            msgs.prepend(end);
+        }
+
+        window._chatLoading = false;
+    }
+
     async function loadChatPage() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
         // 채팅 진입 전 myNickname 반드시 확보
@@ -1307,7 +1368,6 @@
 
     async function joinRoom(roomId, roomName) {
         curRoomId = roomId;
-        // 방 입장 시 myNickname 재확인
         if (!myNickname && token) await fetchMe();
         echoSet.clear();
 
@@ -1319,15 +1379,30 @@
         const msgs = document.getElementById('chat-msgs');
         msgs.innerHTML = `<div class="chat-empty"><div class="spin"></div></div>`;
 
+        // 최초 50개 메시지 로드
         const r = await api('GET', `/api/rooms/${roomId}/messages?size=50`);
         msgs.innerHTML = '';
+
         if (r.ok && Array.isArray(r.d) && r.d.length) {
+            // 가장 오래된 메시지의 id를 cursor로 저장
+            window._chatCursor = r.d[0].id;
+            window._chatHasMore = r.d.length >= 50;
             r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
         } else {
+            window._chatCursor = null;
+            window._chatHasMore = false;
             msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
         }
+
         msgs.scrollTop = msgs.scrollHeight;
-        msgs.onscroll = () => updateScrollBtn(msgs);
+
+        // 스크롤 맨 위 감지 → 과거 메시지 로드
+        msgs.onscroll = () => {
+            updateScrollBtn(msgs);
+            if (msgs.scrollTop === 0 && window._chatHasMore && !window._chatLoading) {
+                loadMoreMessages(roomId);
+            }
+        };
 
         connectWs(roomId);
     }
@@ -1562,6 +1637,17 @@
     }
 
     // ── AUCTION EDIT / DELETE ──
+    async function approveAuction(auctionId) {
+        if (!confirm('이 경매를 승인하시겠습니까?')) return;
+        const r = await api('PATCH', `/admin/auctions/${auctionId}/approve`);
+        if (r.ok) {
+            toast('경매가 승인되었습니다!', 'ok');
+            openDetail(auctionId); // 상세 새로고침
+        } else {
+            toast(r.d?.message || '승인 실패', 'er');
+        }
+    }
+
     let editUploadedImageUrl = null;
 
     function toggleAeImgMode(mode) {
