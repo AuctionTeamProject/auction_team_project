@@ -523,6 +523,14 @@
                         <div class="pl">보유 포인트</div>
                         <div class="pv" id="my-pt">0</div>
                     </div>
+                    <div class="point-disp" style="margin-bottom:14px">
+                        <div class="pl">멤버십 등급</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+                            <div id="my-grade" style="font-size:20px;font-weight:700;color:var(--accent)">-</div>
+                            <div id="my-grade-badge" style="font-size:11px;padding:2px 8px;border-radius:10px;"></div>
+                        </div>
+                        <div id="my-grade-exp" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+                    </div>
                     <button class="btn btn-s btn-full btn-sm" onclick="openM('m-edit')">프로필 수정</button>
                 </div>
             </div>
@@ -718,6 +726,59 @@
     </div>
 </div>
 
+<!-- 경매 수정 모달 -->
+<div class="modal-overlay" id="m-auction-edit">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-auction-edit')">✕</button>
+        <h2>경매 <em>수정</em></h2>
+        <input type="hidden" id="ae-id" />
+        <div class="fg"><label>상품명</label><input id="ae-name" /></div>
+        <div class="fg">
+            <label>이미지</label>
+            <div style="display:flex;gap:12px;margin-bottom:10px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+                    <input type="radio" name="ae-img-mode" value="url" checked onchange="toggleAeImgMode('url')" style="width:auto" /> 기존 URL 유지
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+                    <input type="radio" name="ae-img-mode" value="upload" onchange="toggleAeImgMode('upload')" style="width:auto" /> 새 이미지 업로드
+                </label>
+            </div>
+            <!-- 기존 URL 모드 -->
+            <div id="ae-img-url-mode">
+                <input id="ae-img" placeholder="이미지 URL" />
+            </div>
+            <!-- 새 업로드 모드 -->
+            <div id="ae-img-upload-mode" style="display:none;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:8px;align-items:center">
+                    <input type="file" id="ae-file" accept="image/*" onchange="previewAeImage(this)"
+                           style="flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px" />
+                    <button class="btn btn-s btn-sm" onclick="uploadAeImage()" id="ae-upload-btn">업로드</button>
+                </div>
+                <div id="ae-img-preview" style="display:none;width:100%;aspect-ratio:16/9;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                    <img id="ae-img-preview-img" style="width:100%;height:100%;object-fit:cover" />
+                </div>
+                <div id="ae-upload-ok" style="display:none;font-size:12px;color:var(--green)">✅ 이미지 업로드 완료</div>
+            </div>
+        </div>
+        <div class="fg"><label>카테고리</label>
+            <select id="ae-cat">
+                <option value="CLOTHES">👗 의류</option>
+                <option value="ELECTRONICS">📱 가전제품</option>
+                <option value="FOOD">🍱 식품</option>
+            </select>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작가 (원)</label><input id="ae-sp" type="number" /></div>
+            <div class="fg"><label>최소 입찰 단위 (원)</label><input id="ae-mb" type="number" /></div>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작 시간</label><input id="ae-sa" type="datetime-local" /></div>
+            <div class="fg"><label>종료 시간</label><input id="ae-ea" type="datetime-local" /></div>
+        </div>
+        <button class="btn btn-p btn-full" onclick="updateAuction()">수정하기</button>
+    </div>
+</div>
+
 <div id="toast-ct"></div>
 
 <script>
@@ -855,6 +916,24 @@
 
     // ── AUCTION LIST ──
     async function loadAuctions(page) {
+        // PENDING 옵션 — 어드민 또는 본인 등록 경매가 있는 판매자만 표시
+        const stSelect = document.getElementById('s-st');
+        const hasPending = stSelect.querySelector('option[value="PENDING"]');
+
+        let isSeller = false;
+        if (me && !isAdmin()) {
+            const r = await api('GET', '/api/users/me/auctions');
+            isSeller = r.ok && r.d?.data?.length > 0;
+        }
+
+        if ((isAdmin() || isSeller) && !hasPending) {
+            const opt = document.createElement('option');
+            opt.value = 'PENDING'; opt.textContent = '승인대기';
+            stSelect.appendChild(opt);
+        } else if (!isAdmin() && !isSeller && hasPending) {
+            hasPending.remove();
+        }
+
         const kw = v('s-kw'), cat = v('s-cat'), st = v('s-st');
         let q = `?page=${page}&size=12`;
         if (kw)  q += `&keyword=${encodeURIComponent(kw)}`;
@@ -923,6 +1002,7 @@
         if (!ra.ok || !ra.d?.data) { dc.innerHTML = empty('경매 정보를 불러올 수 없습니다.'); return; }
         const a = ra.d.data;
         window._auctionEndAt = a.endAt; // 5분 블라인드 기준
+        window._currentAuction = a;
 
         const img = a.imageUrl
             ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
@@ -980,6 +1060,9 @@
     </div>
     <div style="display:flex;gap:8px">
         <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>
+        ${me && me.nickname === a.sellerNickname && a.status === 'PENDING' ? `
+        <button class="btn btn-s btn-sm" onclick="openAuctionEdit(${a.auctionId})">✏️ 수정</button>
+        <button class="btn btn-d btn-sm" onclick="deleteAuction(${a.auctionId})">🗑️ 삭제</button>` : ''}
     </div>
     <div class="bid-block">
         <div class="bid-block-hd"><span>입찰 내역</span><span id="bid-cnt">-</span></div>
@@ -1437,6 +1520,116 @@
         }
     }
 
+    // ── AUCTION EDIT / DELETE ──
+    let editUploadedImageUrl = null;
+
+    function toggleAeImgMode(mode) {
+        document.getElementById('ae-img-url-mode').style.display    = mode === 'url'    ? 'block' : 'none';
+        document.getElementById('ae-img-upload-mode').style.display = mode === 'upload' ? 'flex'  : 'none';
+        if (mode === 'upload') editUploadedImageUrl = null;
+    }
+
+    function previewAeImage(input) {
+        editUploadedImageUrl = null;
+        document.getElementById('ae-upload-ok').style.display = 'none';
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('ae-img-preview').style.display = 'block';
+            document.getElementById('ae-img-preview-img').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    async function uploadAeImage() {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
+        const fileInput = document.getElementById('ae-file');
+        if (!fileInput.files || !fileInput.files[0]) { toast('이미지를 선택해주세요.', 'er'); return; }
+        const btn = document.getElementById('ae-upload-btn');
+        btn.disabled = true; btn.textContent = '업로드 중...';
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        const h = {};
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        try {
+            const res = await fetch(BASE + '/api/auctions/files/upload', { method: 'POST', headers: h, body: formData });
+            const data = await res.json();
+            if (!res.ok || !data?.data?.key) { toast(data?.message || '업로드 실패', 'er'); return; }
+            editUploadedImageUrl = data.data.key;
+            document.getElementById('ae-img-preview-img').src = editUploadedImageUrl;
+            document.getElementById('ae-upload-ok').style.display = 'block';
+            toast('이미지 업로드 완료!', 'ok');
+        } catch(e) { toast('업로드 중 오류: ' + e.message, 'er'); }
+        btn.disabled = false; btn.textContent = '업로드';
+    }
+
+
+    function openAuctionEdit(auctionId) {
+        const a = window._currentAuction;
+        document.getElementById('ae-id').value   = auctionId;
+        document.getElementById('ae-name').value = a?.productName || '';
+        document.getElementById('ae-img').value  = a?.imageUrl || '';
+        document.getElementById('ae-cat').value  = a?.category || 'CLOTHES';
+        document.getElementById('ae-sp').value   = a?.startPrice || '';
+        document.getElementById('ae-mb').value   = a?.minimumBid || '';
+        document.getElementById('ae-sa').value   = a?.startAt?.slice(0, 16) || '';
+        document.getElementById('ae-ea').value   = a?.endAt?.slice(0, 16) || '';
+        // 라디오 초기화 — 기존 URL 모드로
+        document.querySelector('input[name="ae-img-mode"][value="url"]').checked = true;
+        toggleAeImgMode('url');
+        editUploadedImageUrl = null;
+        document.getElementById('ae-upload-ok').style.display = 'none';
+        document.getElementById('ae-img-preview').style.display = 'none';
+        openM('m-auction-edit');
+    }
+
+    async function updateAuction() {
+        const id   = document.getElementById('ae-id').value;
+        const mode = document.querySelector('input[name="ae-img-mode"]:checked')?.value;
+        const img  = mode === 'upload' ? editUploadedImageUrl : v('ae-img');
+
+        if (mode === 'upload' && !editUploadedImageUrl) { toast('이미지를 업로드해주세요.', 'er'); return; }
+
+        const name = v('ae-name');
+        const cat  = v('ae-cat');
+        const sp   = v('ae-sp');
+        const mb   = v('ae-mb');
+        const sa   = v('ae-sa');
+        const ea   = v('ae-ea');
+
+        if (!name) { toast('상품명을 입력해주세요.', 'er'); return; }
+        if (!img)  { toast('이미지 URL을 입력해주세요.', 'er'); return; }
+        if (!cat)  { toast('카테고리를 선택해주세요.', 'er'); return; }
+        if (!sp)   { toast('시작가를 입력해주세요.', 'er'); return; }
+        if (!mb)   { toast('최소 입찰 단위를 입력해주세요.', 'er'); return; }
+        if (!sa)   { toast('시작 시간을 입력해주세요.', 'er'); return; }
+        if (!ea)   { toast('종료 시간을 입력해주세요.', 'er'); return; }
+
+        const r = await api('PATCH', `/api/auctions/${id}`, {
+            productName: name, imageUrl: img, category: cat,
+            startPrice: Number(sp), minimumBid: Number(mb),
+            startAt: iso(sa), endAt: iso(ea),
+        });
+        if (r.ok) {
+            toast('경매 수정 완료!', 'ok');
+            closeM('m-auction-edit');
+            openDetail(Number(id));
+        } else {
+            toast(r.d?.message || '수정 실패', 'er');
+        }
+    }
+
+    async function deleteAuction(auctionId) {
+        if (!confirm('경매를 삭제하시겠습니까?')) return;
+        const r = await api('DELETE', `/api/auctions/${auctionId}`);
+        if (r.ok) {
+            toast('경매가 삭제되었습니다.', 'ok');
+            goPage('auctions');
+        } else {
+            toast(r.d?.message || '삭제 실패', 'er');
+        }
+    }
+
     // ── COUPON ──
     async function issueCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
@@ -1468,6 +1661,22 @@
             document.getElementById('my-nick').textContent  = u.nickname;
             document.getElementById('my-email').textContent = u.email;
             document.getElementById('my-pt').textContent    = Number(u.point || 0).toLocaleString();
+
+            // 멤버십 정보 표시
+            const grade = u.membership?.grade || 'NORMAL';
+            const expAt = u.membership?.expiredAt;
+            const gradeLabel = { NORMAL: '일반', SELLER: '판매자' };
+            const gradeColor = { NORMAL: 'var(--text2)', SELLER: 'var(--accent)' };
+            const gradeIcon  = { NORMAL: '👤', SELLER: '🏪' };
+            document.getElementById('my-grade').textContent = `${gradeIcon[grade] || ''} ${gradeLabel[grade] || grade}`;
+            document.getElementById('my-grade').style.color = gradeColor[grade] || 'var(--text2)';
+            const badge = document.getElementById('my-grade-badge');
+            badge.textContent = grade;
+            badge.style.cssText = `font-size:11px;padding:2px 8px;border-radius:10px;background:${grade==='VIP'?'rgba(240,165,0,0.15)':grade==='PREMIUM'?'rgba(168,85,247,0.15)':'var(--surface2)'};color:${gradeColor[grade]||'var(--text2)'};border:1px solid ${gradeColor[grade]||'var(--border)'}`;
+            document.getElementById('my-grade-exp').textContent = expAt
+                ? `만료일: ${fDate(expAt)}`
+                : grade === 'NORMAL' ? '기본 멤버십' : '만료일 없음';
+
             applyAuth();
         }
         loadMyAuctions(); loadMyBids(); loadAlerts();
