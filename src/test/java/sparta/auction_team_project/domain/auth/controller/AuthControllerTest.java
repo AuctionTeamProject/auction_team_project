@@ -11,8 +11,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.config.WithAuthUser;
+import sparta.auction_team_project.domain.auth.dto.request.GoogleOAuth2AddInfoRequest;
+import sparta.auction_team_project.domain.auth.dto.request.KakaoOAuth2AddInfoRequest;
 import sparta.auction_team_project.domain.auth.dto.request.LoginRequest;
 import sparta.auction_team_project.domain.auth.dto.request.SignupRequest;
+import sparta.auction_team_project.domain.auth.dto.response.GoogleOAuth2AddInfoResponse;
+import sparta.auction_team_project.domain.auth.dto.response.KakaoOAuth2AddInfoResponse;
 import sparta.auction_team_project.domain.auth.dto.response.LoginResponse;
 import sparta.auction_team_project.domain.auth.dto.response.SignupResponse;
 import sparta.auction_team_project.domain.auth.service.AuthService;
@@ -21,6 +25,7 @@ import sparta.auction_team_project.domain.user.enums.UserRole;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -165,5 +170,151 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true)) // baseResponse의 success 필드 검증
                 .andExpect(jsonPath("$.data.accessToken").exists()); // 새 액세스 토큰 존재 여부 확인
+    }
+
+    @Test
+    @WithAuthUser(userId = 1L, email = "google@test.com", userRole = UserRole.ROLE_USER)
+    void 구글로소셜로그인_신규유저_로그인이성공한다() throws Exception {
+
+        // given
+        GoogleOAuth2AddInfoRequest request = new GoogleOAuth2AddInfoRequest("01012345678");
+
+        GoogleOAuth2AddInfoResponse response = new GoogleOAuth2AddInfoResponse(
+                "Bearer test.jwt.token",
+                "구글닉",
+                "01012345677",
+                "google@test.com"
+        );
+
+        given(authService.addInfoGoogle(any(), any(), any())).willReturn(response);
+
+        // when & then
+        mockMvc.perform(patch("/api/auth/oauth2/me/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.nickname").value("구글닉"))
+                .andExpect(jsonPath("$.data.phone").value("01012345677"))
+                .andExpect(jsonPath("$.data.email").value("google@test.com"));
+    }
+    @Test
+    @WithAuthUser(userId = 2L, email = "old_google@test.com", userRole = UserRole.ROLE_USER)
+    void 구글로소셜로그인_기존유저_로그인이성공한다() throws Exception{
+
+        // given
+        GoogleOAuth2AddInfoRequest request = new GoogleOAuth2AddInfoRequest("01012345678");
+
+        GoogleOAuth2AddInfoResponse response = new GoogleOAuth2AddInfoResponse(
+                "Bearer test.jwt.token",
+                "구글닉2",
+                "01012345674",
+                "old_google@test.com"
+        );
+
+        given(authService.addInfoGoogle(any(), any(), any())).willReturn(response);
+
+        // when & then
+        mockMvc.perform(patch("/api/auth/oauth2/me/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.nickname").value("구글닉2"))
+                .andExpect(jsonPath("$.data.phone").value("01012345674"))
+                .andExpect(jsonPath("$.data.email").value("old_google@test.com"));
+    }
+    // 네이버 소셜로그인의 경우 authController에 별도의 메서드가 없음
+
+    @Test
+    @WithAuthUser(userId = 5L, email = "needsEmail5", userRole = UserRole.ROLE_USER)
+    void 카카오로소셜로그인_신규유저_로그인이성공한다() throws Exception {
+
+
+        // given
+        KakaoOAuth2AddInfoRequest request = new KakaoOAuth2AddInfoRequest("01011112222", "kakao@test.com");
+
+        KakaoOAuth2AddInfoResponse response = new KakaoOAuth2AddInfoResponse(
+                "Bearer test.jwt.token",
+                "닉네임656",
+                "01011112222",
+                "kakao@test.com"
+        );
+
+        given(authService.addInfoKakao(any(), any(), any())).willReturn(response);
+
+        // when & then
+        mockMvc.perform(patch("/api/auth/oauth2/me/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.nickname").value("닉네임656"))
+                .andExpect(jsonPath("$.data.phone").value("01011112222"))
+                .andExpect(jsonPath("$.data.email").value("kakao@test.com"));
+    }
+    @Test
+    @WithAuthUser(userId = 6L, email = "old_kakao@test.com", userRole = UserRole.ROLE_USER)
+    void 카카오로소셜로그인_기존유저_로그인이성공한다() throws Exception {
+
+        // given
+        KakaoOAuth2AddInfoRequest request = new KakaoOAuth2AddInfoRequest("01033334444", "existing_kakao@test.com");
+
+        KakaoOAuth2AddInfoResponse response = new KakaoOAuth2AddInfoResponse(
+                "Bearer existing.kakao.jwt.token",
+                "닉네임165",
+                "01033334444",
+                "old_kakao@test.com"
+        );
+
+        given(authService.addInfoKakao(any(), any(), any())).willReturn(response);
+
+        // when & then
+        mockMvc.perform(patch("/api/auth/oauth2/me/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").exists())
+                .andExpect(jsonPath("$.data.email").value("old_kakao@test.com"));
+    }
+    @Test
+    @WithAuthUser(userId = 7L, email = "oldold_google@test.com", userRole = UserRole.ROLE_USER)
+    void 구글로소셜로그인_기존유저_이미있는폰번호입력하여_로그인이실패한다() throws Exception {
+
+        // given
+        GoogleOAuth2AddInfoRequest request = new GoogleOAuth2AddInfoRequest("01012345678");
+
+        given(authService.addInfoGoogle(any(), any(), any()))
+                .willThrow(new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE));
+
+        // when & then
+        mockMvc.perform(patch("/api/auth/oauth2/me/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("중복된 번호 입니다"));
+    }
+    @Test
+    @WithAuthUser(userId = 8L, email = "oldold_kakao@test.com", userRole = UserRole.ROLE_USER)
+    void 카카오로소셜로그인_기존유저_이미있는이메일입력하여_로그인이실패한다() throws Exception {
+
+        // given
+        KakaoOAuth2AddInfoRequest request = new KakaoOAuth2AddInfoRequest("01055556666", "duplicate@test.com");
+
+        given(authService.addInfoKakao(any(), any(), any()))
+                .willThrow(new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_EMAIL));
+
+        // when & then
+        mockMvc.perform(patch("/api/auth/oauth2/me/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("중복된 이메일 입니다"));
     }
 }

@@ -87,7 +87,7 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE);
+            throw new ServiceErrorException(ErrorEnum.ERR_EXISTING_MEMBER);
         }
         //폰번호는 모두 빈칸으로 오지만 이메일은 카카오만 빈값으로 옴
         user.updatePhone(request.getPhone());
@@ -121,7 +121,7 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBER));
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_PHONE);
+            throw new ServiceErrorException(ErrorEnum.ERR_EXISTING_MEMBER);
         }
         //폰번호는 모두 빈칸으로 오지만 이메일은 카카오만 빈값으로 옴
         user.updatePhone(request.getPhone());

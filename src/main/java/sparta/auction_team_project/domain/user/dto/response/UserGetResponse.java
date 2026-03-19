@@ -12,14 +12,16 @@ public class UserGetResponse {
     private final String phone;
     private final Long point;
     private final MembershipResponse membership;
+    private final String userRole;
 
-    public UserGetResponse(String nickname, String name, String email, String phone, Long point, MembershipResponse membership) {
+    public UserGetResponse(String nickname, String name, String email, String phone, Long point, MembershipResponse membership, String userRole) {
         this.nickname = nickname;
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.point = point;
         this.membership = membership;
+        this.userRole = userRole;
     }
 }
 
