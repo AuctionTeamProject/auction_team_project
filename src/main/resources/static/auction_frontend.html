@@ -293,7 +293,7 @@
         <button class="nav-btn" onclick="goPage('home')">홈</button>
         <button class="nav-btn" onclick="goPage('auctions')">경매 목록</button>
         <button class="nav-btn" onclick="goPage('chat')">채팅</button>
-        <button class="nav-btn" onclick="goPage('coupon')">이벤트</button>
+        <button class="nav-btn" onclick="goPage('event')">이벤트</button>
     </nav>
     <div id="header-right">
         <div id="hdr-user" style="display:none;align-items:center;gap:10px;font-size:13px">
@@ -440,6 +440,45 @@
                 <div class="chat-in-area">
                     <input id="chat-in" placeholder="메시지를 입력하세요..." onkeydown="if(event.key==='Enter')sendChat()" disabled />
                     <button class="btn btn-p btn-sm" onclick="sendChat()">전송</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EVENT -->
+    <div id="page-event" class="page">
+        <div class="sec-title">
+            <h2>🎟️ 이벤트</h2>
+            <button class="btn btn-p btn-sm" id="btn-create-event" style="display:none" onclick="openM('m-event-create')">+ 이벤트 생성</button>
+        </div>
+
+        <!-- 이벤트 목록 -->
+        <div id="event-list"><div class="loading-block"><div class="spin"></div></div></div>
+        <div class="pagination" id="event-pag"></div>
+
+        <!-- 쿠폰 발급/사용 -->
+        <div style="margin-top:32px">
+            <div class="sec-title"><h2>🎁 쿠폰</h2></div>
+            <div class="coupon-card">
+                <div class="cc-icon">🎁</div>
+                <div class="cc-body">
+                    <div class="cc-name">이벤트 쿠폰 발급</div>
+                    <div class="cc-desc">이벤트 ID를 입력하고 쿠폰을 발급받으세요</div>
+                    <div class="cc-row">
+                        <input id="cp-eid" placeholder="이벤트 ID" />
+                        <button class="btn btn-p btn-sm" onclick="issueCoupon()">발급받기</button>
+                    </div>
+                </div>
+            </div>
+            <div class="coupon-card">
+                <div class="cc-icon">✅</div>
+                <div class="cc-body">
+                    <div class="cc-name">쿠폰 사용</div>
+                    <div class="cc-desc">보유한 쿠폰 ID를 입력하여 사용하세요</div>
+                    <div class="cc-row">
+                        <input id="cp-cid" placeholder="쿠폰 ID" />
+                        <button class="btn btn-o btn-sm" onclick="useCoupon()">사용하기</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -615,6 +654,70 @@
     </div>
 </div>
 
+<!-- 이벤트 생성 모달 (ADMIN 전용) -->
+<div class="modal-overlay" id="m-event-create">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-event-create')">✕</button>
+        <h2>이벤트 <em>생성</em></h2>
+        <div class="fg"><label>이벤트 이름</label><input id="ec-name" placeholder="예: 신규 가입 축하 이벤트" /></div>
+        <div class="fg"><label>이벤트 설명</label><input id="ec-desc" placeholder="이벤트 설명을 입력하세요" /></div>
+        <div class="fr2">
+            <div class="fg"><label>총 수량</label><input id="ec-qty" type="number" placeholder="100" /></div>
+            <div class="fg"><label>리워드 타입</label>
+                <select id="ec-reward">
+                    <option value="POINT">포인트</option>
+                    <option value="MEMBERSHIP">멤버십</option>
+                </select>
+            </div>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작 시간</label><input id="ec-sa" type="datetime-local" /></div>
+            <div class="fg"><label>종료 시간</label><input id="ec-ea" type="datetime-local" /></div>
+        </div>
+        <button class="btn btn-p btn-full" onclick="createNewEvent()">생성하기</button>
+    </div>
+</div>
+
+<!-- 이벤트 수정 모달 (ADMIN 전용) -->
+<div class="modal-overlay" id="m-event-edit">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-event-edit')">✕</button>
+        <h2>이벤트 <em>수정</em></h2>
+        <input type="hidden" id="ee-id" />
+        <div class="fg"><label>이벤트 이름</label><input id="ee-name" /></div>
+        <div class="fg"><label>이벤트 설명</label><input id="ee-desc" /></div>
+        <div class="fr2">
+            <div class="fg"><label>총 수량</label><input id="ee-qty" type="number" /></div>
+            <div class="fg"><label>리워드 타입</label>
+                <select id="ee-reward">
+                    <option value="POINT">포인트</option>
+                    <option value="MEMBERSHIP">멤버십</option>
+                </select>
+            </div>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작 시간</label><input id="ee-sa" type="datetime-local" /></div>
+            <div class="fg"><label>종료 시간</label><input id="ee-ea" type="datetime-local" /></div>
+        </div>
+        <div class="fg"><label>상태</label>
+            <select id="ee-status">
+                <option value="OPEN">OPEN</option>
+                <option value="CLOSED">CLOSED</option>
+            </select>
+        </div>
+        <button class="btn btn-p btn-full" onclick="updateEvent()">수정하기</button>
+    </div>
+</div>
+
+<!-- 이벤트 상세 모달 -->
+<div class="modal-overlay" id="m-event-detail">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-event-detail')">✕</button>
+        <h2>이벤트 <em>상세</em></h2>
+        <div id="event-detail-content"></div>
+    </div>
+</div>
+
 <div id="toast-ct"></div>
 
 <script>
@@ -675,6 +778,7 @@
         else if (p === 'auctions') loadAuctions(0);
         else if (p === 'chat')     loadChatPage();
         else if (p === 'mypage')   loadMypage();
+        else if (p === 'event')    loadEventPage(1);
         else if (p === 'register' && !token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
     }
     function goBack() { goPage(prevPage || 'home'); }
@@ -1201,11 +1305,150 @@
         document.getElementById('scroll-btn')?.classList.remove('visible');
     }
 
+    // ── EVENT ──
+    const isAdmin = () => me?.userRole === 'ROLE_ADMIN' || me?.role === 'ROLE_ADMIN';
+    const rewardLabel = { POINT: '포인트', MEMBERSHIP: '멤버십' };
+    const eventStatusLabel = { OPEN: '진행중', CLOSED: '종료' };
+
+    async function loadEventPage(page = 1) {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        // 어드민이면 생성 버튼 표시
+        document.getElementById('btn-create-event').style.display = isAdmin() ? 'inline-flex' : 'none';
+
+        const r = await api('GET', `/api/events?page=${page}&size=6`);
+        const el = document.getElementById('event-list');
+        const pag = document.getElementById('event-pag');
+        if (!r.ok || !r.d?.data) { el.innerHTML = empty('이벤트 목록을 불러올 수 없습니다.'); return; }
+
+        const { events, totalPages, currentPage } = r.d.data;
+        if (!events?.length) { el.innerHTML = empty('진행중인 이벤트가 없습니다.'); pag.innerHTML = ''; return; }
+
+        el.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">${events.map(e => `
+        <div style="background:var(--surface);border:1px solid ${e.status==='OPEN'?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+            <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;${e.status==='OPEN'?'background:rgba(240,165,0,0.15);color:var(--accent);border:1px solid var(--accent)':'background:var(--surface2);color:var(--text2);border:1px solid var(--border)'}">${eventStatusLabel[e.status]||e.status}</span>
+                    <span style="font-size:11px;color:var(--text2)">${rewardLabel[e.rewardType]||e.rewardType}</span>
+                </div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:4px">${esc(e.eventName)}</div>
+                <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${esc(e.eventDescription)}</div>
+                <div style="display:flex;gap:16px;font-size:12px;color:var(--text2)">
+                    <span>📦 잔여 <strong style="color:var(--text)">${e.remainingQuantity}/${e.totalQuantity}</strong></span>
+                    <span>⏰ ${fDate(e.startAt)} ~ ${fDate(e.endAt)}</span>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+                <button class="btn btn-p btn-sm" onclick="openEventDetail(${e.eventId})">상세보기</button>
+                ${e.status==='OPEN' ? `<button class="btn btn-o btn-sm" onclick="quickIssueCoupon(${e.eventId})">쿠폰 발급</button>` : ''}
+                ${isAdmin() ? `
+                <button class="btn btn-s btn-sm" onclick="openEventEdit(${e.eventId})">수정</button>
+                <button class="btn btn-d btn-sm" onclick="deleteEvent(${e.eventId})">삭제</button>` : ''}
+            </div>
+        </div>`).join('')}</div>`;
+
+        pag.innerHTML = '';
+        for (let i = 1; i <= (totalPages || 0); i++) {
+            pag.innerHTML += `<button class="${i-1===currentPage?'active':''}" onclick="loadEventPage(${i})">${i}</button>`;
+        }
+    }
+
+    async function openEventDetail(eventId) {
+        const r = await api('GET', `/api/events/${eventId}`);
+        if (!r.ok || !r.d?.data) { toast('이벤트 정보를 불러올 수 없습니다.', 'er'); return; }
+        const e = r.d.data;
+        document.getElementById('event-detail-content').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13px">
+            <div style="display:flex;gap:8px">
+                <span style="padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;${e.status==='OPEN'?'background:rgba(240,165,0,0.15);color:var(--accent);border:1px solid var(--accent)':'background:var(--surface2);color:var(--text2);border:1px solid var(--border)'}">${eventStatusLabel[e.status]||e.status}</span>
+                <span style="padding:3px 10px;border-radius:4px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${rewardLabel[e.rewardType]||e.rewardType}</span>
+            </div>
+            <div style="font-size:20px;font-weight:700">${esc(e.eventName)}</div>
+            <div style="color:var(--text2)">${esc(e.eventDescription)}</div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">총 수량</div><div style="font-weight:700">${e.totalQuantity}</div></div>
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">발급된 수량</div><div style="font-weight:700">${e.issuedQuantity}</div></div>
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">시작</div><div style="font-weight:700">${fDate(e.startAt)}</div></div>
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">종료</div><div style="font-weight:700">${fDate(e.endAt)}</div></div>
+            </div>
+            ${e.status==='OPEN' ? `<button class="btn btn-p btn-full" onclick="quickIssueCoupon(${e.id});closeM('m-event-detail')">🎁 쿠폰 발급받기</button>` : ''}
+        </div>`;
+        openM('m-event-detail');
+    }
+
+    async function openEventEdit(eventId) {
+        const r = await api('GET', `/api/events/${eventId}`);
+        if (!r.ok || !r.d?.data) { toast('이벤트 정보를 불러올 수 없습니다.', 'er'); return; }
+        const e = r.d.data;
+        document.getElementById('ee-id').value    = e.id;
+        document.getElementById('ee-name').value  = e.eventName;
+        document.getElementById('ee-desc').value  = e.eventDescription;
+        document.getElementById('ee-qty').value   = e.totalQuantity;
+        document.getElementById('ee-reward').value = e.rewardType;
+        document.getElementById('ee-status').value = e.status;
+        document.getElementById('ee-sa').value    = e.startAt?.slice(0,16) || '';
+        document.getElementById('ee-ea').value    = e.endAt?.slice(0,16) || '';
+        openM('m-event-edit');
+    }
+
+    async function createNewEvent() {
+        const r = await api('POST', '/api/events', {
+            eventName: v('ec-name'), eventDescription: v('ec-desc'),
+            totalQuantity: Number(v('ec-qty')), rewardType: v('ec-reward'),
+            startAt: iso(v('ec-sa')), endAt: iso(v('ec-ea')),
+        });
+        if (r.ok) { toast('이벤트 생성 완료!', 'ok'); closeM('m-event-create'); loadEventPage(1); }
+        else toast(r.d?.message || '생성 실패', 'er');
+    }
+
+    async function updateEvent() {
+        const id = document.getElementById('ee-id').value;
+        const r = await api('PATCH', `/api/events/${id}`, {
+            eventName: v('ee-name'), eventDescription: v('ee-desc'),
+            totalQuantity: Number(v('ee-qty')), rewardType: v('ee-reward'),
+            status: v('ee-status'),
+            startAt: iso(v('ee-sa')), endAt: iso(v('ee-ea')),
+        });
+        if (r.ok) { toast('이벤트 수정 완료!', 'ok'); closeM('m-event-edit'); loadEventPage(1); }
+        else toast(r.d?.message || '수정 실패', 'er');
+    }
+
+    async function deleteEvent(eventId) {
+        if (!confirm('이벤트를 삭제하시겠습니까?')) return;
+        const r = await api('DELETE', `/api/events/${eventId}`);
+        if (r.ok) { toast('이벤트 삭제 완료!', 'ok'); loadEventPage(1); }
+        else toast(r.d?.message || '삭제 실패', 'er');
+    }
+
+    async function quickIssueCoupon(eventId) {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
+        const r = await api('POST', `/api/events/${eventId}/coupons`);
+        if (r.ok && r.d?.data?.couponId) {
+            const couponId = r.d.data.couponId;
+            // 쿠폰 ID를 복사할 수 있게 표시
+            const msg = `쿠폰 발급 완료! 쿠폰 ID: ${couponId}`;
+            toast(msg, 'ok');
+            // 쿠폰 사용 입력란에 자동 입력
+            const cidEl = document.getElementById('cp-cid');
+            if (cidEl) cidEl.value = couponId;
+            // 클립보드 복사
+            navigator.clipboard?.writeText(String(couponId)).catch(() => {});
+        } else {
+            toast(r.d?.message || '발급 실패', 'er');
+        }
+    }
+
     // ── COUPON ──
     async function issueCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
         const r = await api('POST', `/api/events/${v('cp-eid')}/coupons`);
-        toast(r.ok ? (r.d?.message || '쿠폰 발급 완료!') : (r.d?.message || '발급 실패'), r.ok ? 'ok' : 'er');
+        if (r.ok && r.d?.data?.couponId) {
+            const couponId = r.d.data.couponId;
+            toast(`쿠폰 발급 완료! 쿠폰 ID: ${couponId}`, 'ok');
+            document.getElementById('cp-cid').value = couponId;
+            navigator.clipboard?.writeText(String(couponId)).catch(() => {});
+        } else {
+            toast(r.d?.message || '발급 실패', 'er');
+        }
     }
     async function useCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
