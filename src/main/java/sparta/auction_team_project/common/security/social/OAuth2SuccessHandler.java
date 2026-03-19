@@ -23,8 +23,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    private static final String ADDITIONAL_INFO_URL = "http://localhost:3000/oauth2/additional-info";
-    private static final String LOGIN_SUCCESS_URL = "http://localhost:3000/oauth2/callback";
+    private static final String ADDITIONAL_INFO_URL = "http://localhost:8080/auction_frontend.html";
+    private static final String LOGIN_SUCCESS_URL = "http://localhost:8080/auction_frontend.html?oauth2=additional-info";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -53,7 +53,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             if (provider.equals("naver")) {
 
                 getRedirectStrategy().sendRedirect(request, response,
-                        LOGIN_SUCCESS_URL + "?token=" + rawToken);
+                        LOGIN_SUCCESS_URL + "&token=" + rawToken);
 
             } else if (provider.equals("google") || provider.equals("kakao")) {
                 getRedirectStrategy().sendRedirect(request, response,
@@ -65,7 +65,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             // 기존 유저는 바로 토큰 발급
             // 프론트 연동 시 원래거 지우고 아래 내용으로 수정해야 함
             getRedirectStrategy().sendRedirect(request, response,
-                    LOGIN_SUCCESS_URL + "?token=" + rawToken);
+                    LOGIN_SUCCESS_URL + "&token=" + rawToken);
 
         }
     }
