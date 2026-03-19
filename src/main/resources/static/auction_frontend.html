@@ -41,13 +41,16 @@
         .nav-btn:hover { color: var(--text); background: var(--surface2); }
         .nav-btn.cta { background: var(--accent); color: #000; font-weight: 700; }
         .nav-btn.cta:hover { background: #ffc030; }
-        #user-info { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-        #user-info strong { color: var(--accent); }
         .point-badge { background: var(--surface2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 20px; font-size: 12px; }
 
         /* LAYOUT */
         .page { display: none; padding: 32px; max-width: 1100px; margin: 0 auto; }
         .page.active { display: block; }
+
+        /* 채팅 페이지만 flex */
+        #page-chat { padding: 20px 32px 0; height: calc(100vh - 60px); flex-direction: column; }
+        #page-chat.active { display: flex; }
+        #page-chat .sec-title { flex-shrink: 0; margin-bottom: 12px; }
 
         /* HERO */
         #hero {
@@ -78,17 +81,14 @@
 
         /* CARDS */
         .auction-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
-        .auction-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            overflow: hidden; cursor: pointer; transition: all .25s; position: relative;
-        }
+        .auction-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all .25s; position: relative; }
         .auction-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(240,165,0,0.12); }
         .card-img { width: 100%; aspect-ratio: 4/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 52px; position: relative; overflow: hidden; }
         .card-img img { width: 100%; height: 100%; object-fit: cover; }
         .card-badge { position: absolute; top: 8px; right: 8px; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .b-ACTIVE { background: var(--green); color: #000; }
-        .b-PENDING { background: var(--accent); color: #000; }
-        .b-ENDED { background: #333; color: var(--text2); }
+        .b-READY  { background: var(--accent); color: #000; }
+        .b-DONE   { background: #333; color: var(--text2); }
         .rank-badge { position: absolute; top: 8px; left: 8px; font-family: 'Bebas Neue'; font-size: 28px; color: rgba(255,255,255,0.15); line-height: 1; }
         .card-body { padding: 12px; }
         .card-cat { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
@@ -152,28 +152,53 @@
         .search-bar input:focus, .search-bar select:focus { outline: none; border-color: var(--accent); }
         .search-bar select option { background: var(--surface2); }
 
-        /* CHAT */
-        .chat-layout { display: grid; grid-template-columns: 240px 1fr; height: calc(100vh - 200px); min-height: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .room-list { border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+        /* CHAT LAYOUT */
+        .chat-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            flex: 1;
+            min-height: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        /* 채팅방 목록 — 고정, 독립 스크롤 */
+        .room-list { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
         .room-list-hd { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+        #room-items { flex: 1; overflow-y: auto; }
         .room-item { padding: 12px 16px; cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border); }
         .room-item:hover { background: var(--surface2); }
         .room-item.active { background: var(--surface2); border-left: 3px solid var(--accent); }
         .room-item .rn { font-size: 13px; font-weight: 500; }
         .room-item .rd { font-size: 11px; color: var(--text2); margin-top: 2px; }
-        .chat-main { display: flex; flex-direction: column; }
+        /* 채팅 메인 — 독립 스크롤 */
+        .chat-main { display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .chat-hd { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .chat-hd h3 { font-size: 14px; font-weight: 700; }
         .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; margin-right: 6px; }
         .ws-dot.on { background: var(--green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        /* 메시지 영역 — 독립 스크롤 */
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
         .cmsg { display: flex; flex-direction: column; max-width: 72%; }
         .cmsg.mine { align-self: flex-end; align-items: flex-end; }
         .cmsg .cs { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
         .cmsg .cb { background: var(--surface2); border-radius: 12px 12px 12px 3px; padding: 8px 14px; font-size: 13px; line-height: 1.5; word-break: break-all; }
         .cmsg.mine .cb { background: var(--accent); color: #000; border-radius: 12px 12px 3px 12px; }
         .cmsg .ct { font-size: 10px; color: var(--text2); margin-top: 3px; }
+        /* 최신 메시지 버튼 */
+        .scroll-btn {
+            position: absolute; bottom: 68px; right: 16px;
+            background: var(--accent); color: #000;
+            border: none; border-radius: 20px;
+            padding: 6px 14px; font-size: 12px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10;
+        }
+        .scroll-btn.visible { opacity: 1; pointer-events: all; }
+        /* 입력창 */
         .chat-in-area { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
         .chat-in-area input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; border-radius: 8px; font-size: 13px; font-family: inherit; }
         .chat-in-area input:focus { outline: none; border-color: var(--accent); }
@@ -213,10 +238,10 @@
         /* TOAST */
         #toast-ct { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
         .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 13px; min-width: 220px; max-width: 340px; animation: slideIn .3s ease; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-        .toast.ok { border-left: 3px solid var(--green); }
-        .toast.er { border-left: 3px solid var(--red); }
+        .toast.ok  { border-left: 3px solid var(--green); }
+        .toast.er  { border-left: 3px solid var(--red); }
         .toast.inf { border-left: 3px solid var(--accent); }
-        @keyframes slideIn { from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
 
         /* PAGINATION */
         .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
@@ -229,17 +254,31 @@
         .empty p { font-size: 13px; }
         .spin { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
         @keyframes spin { to{transform:rotate(360deg)} }
-        .loading-block { display:flex;justify-content:center;padding:32px; }
+        .loading-block { display: flex; justify-content: center; padding: 32px; }
 
         /* REGISTER */
         .reg-wrap { max-width: 560px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; }
 
+        /* SOCIAL LOGIN */
+        .social-divider { display:flex; align-items:center; gap:10px; margin:18px 0 14px; }
+        .social-divider::before, .social-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+        .social-divider span { font-size:11px; color:var(--text2); white-space:nowrap; }
+        .social-btns { display:flex; flex-direction:column; gap:8px; }
+        .btn-social { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; }
+        .btn-social:hover { border-color:var(--accent); color:var(--accent); }
+        .btn-social .si { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; flex-shrink:0; }
+        .si-google { background:#fff; color:#4285F4; border:1px solid #ddd; }
+        .si-kakao  { background:#FEE500; color:#3C1E1E; border:none; }
+        .si-naver  { background:#03C75A; color:#fff; border:none; }
+
+        /* RESPONSIVE */
         @media (max-width: 768px) {
-            .detail-wrap,.mypage-grid { grid-template-columns: 1fr; }
-            .chat-layout { grid-template-columns: 1fr; height: auto; }
-            .room-list { height: 200px; border-right: none; border-bottom: 1px solid var(--border); }
+            .detail-wrap, .mypage-grid { grid-template-columns: 1fr; }
+            .chat-layout { grid-template-columns: 1fr; grid-template-rows: 200px 1fr; }
+            .room-list { border-right: none; border-bottom: 1px solid var(--border); }
             header { padding: 0 14px; }
             .page { padding: 20px 14px; }
+            #page-chat { padding: 10px 14px 0; height: calc(100vh - 60px); }
             #hero { padding: 40px 20px; }
             .hero-inner h1 { font-size: 48px; }
         }
@@ -254,7 +293,7 @@
         <button class="nav-btn" onclick="goPage('home')">홈</button>
         <button class="nav-btn" onclick="goPage('auctions')">경매 목록</button>
         <button class="nav-btn" onclick="goPage('chat')">채팅</button>
-        <button class="nav-btn" onclick="goPage('coupon')">이벤트</button>
+        <button class="nav-btn" onclick="goPage('event')">이벤트</button>
     </nav>
     <div id="header-right">
         <div id="hdr-user" style="display:none;align-items:center;gap:10px;font-size:13px">
@@ -301,8 +340,18 @@
         <div class="sec-title"><h2>경매 목록</h2><button class="btn btn-p btn-sm" onclick="goPage('register')">+ 경매 등록</button></div>
         <div class="search-bar">
             <input id="s-kw" placeholder="🔍 상품명 검색..." />
-            <select id="s-cat"><option value="">전체 카테고리</option><option value="CLOTHES">👗 의류</option><option value="ELECTRONICS">📱 가전제품</option><option value="FOOD">🍱 식품</option></select>
-            <select id="s-st"><option value="">전체 상태</option><option value="PENDING">대기중</option><option value="ACTIVE">진행중</option><option value="ENDED">종료</option></select>
+            <select id="s-cat">
+                <option value="">전체 카테고리</option>
+                <option value="CLOTHES">👗 의류</option>
+                <option value="ELECTRONICS">📱 가전제품</option>
+                <option value="FOOD">🍱 식품</option>
+            </select>
+            <select id="s-st">
+                <option value="">전체 상태</option>
+                <option value="READY">진행전</option>
+                <option value="ACTIVE">진행중</option>
+                <option value="DONE">종료</option>
+            </select>
             <button class="btn btn-p btn-sm" onclick="searchAuctions(0)">검색</button>
         </div>
         <div class="auction-grid" id="g-list"><div class="loading-block"><div class="spin"></div></div></div>
@@ -320,8 +369,34 @@
         <div class="sec-title"><h2>경매 등록</h2></div>
         <div class="reg-wrap">
             <div class="fg"><label>상품명</label><input id="ra-name" placeholder="예: 1990년대 빈티지 청자켓" /></div>
-            <div class="fg"><label>이미지 URL</label><input id="ra-img" placeholder="https://..." /></div>
-            <div class="fg"><label>카테고리</label><select id="ra-cat"><option value="CLOTHES">👗 의류</option><option value="ELECTRONICS">📱 가전제품</option><option value="FOOD">🍱 식품</option></select></div>
+
+            <!-- 이미지 업로드 -->
+            <div class="fg">
+                <label>상품 이미지</label>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <input type="file" id="ra-file" accept="image/*" onchange="previewImage(this)"
+                               style="flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px" />
+                        <button class="btn btn-s btn-sm" onclick="uploadImage()" id="upload-btn">업로드</button>
+                    </div>
+                    <!-- 미리보기 -->
+                    <div id="img-preview" style="display:none;position:relative;width:100%;aspect-ratio:16/9;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                        <img id="img-preview-img" style="width:100%;height:100%;object-fit:cover" />
+                        <div id="upload-status" style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;display:none"></div>
+                    </div>
+                    <!-- 업로드 완료 표시 -->
+                    <div id="upload-ok" style="display:none;font-size:12px;color:var(--green)">✅ 이미지 업로드 완료</div>
+                </div>
+            </div>
+
+            <div class="fg">
+                <label>카테고리</label>
+                <select id="ra-cat">
+                    <option value="CLOTHES">👗 의류</option>
+                    <option value="ELECTRONICS">📱 가전제품</option>
+                    <option value="FOOD">🍱 식품</option>
+                </select>
+            </div>
             <div class="fr2">
                 <div class="fg"><label>시작가 (원)</label><input id="ra-sp" type="number" placeholder="10000" /></div>
                 <div class="fg"><label>최소 입찰 단위 (원)</label><input id="ra-mb" type="number" placeholder="1000" /></div>
@@ -336,23 +411,35 @@
 
     <!-- CHAT -->
     <div id="page-chat" class="page">
-        <div class="sec-title"><h2>💬 채팅</h2><button class="btn btn-o btn-sm" onclick="openM('m-room')">+ 채팅방 만들기</button></div>
+        <div class="sec-title">
+            <h2>💬 채팅</h2>
+            <button class="btn btn-o btn-sm" onclick="openM('m-room')">+ 채팅방 만들기</button>
+        </div>
         <div class="chat-layout">
+            <!-- 채팅방 목록 (고정, 독립 스크롤) -->
             <div class="room-list">
-                <div class="room-list-hd"><span>채팅방</span><div class="spin" id="room-spin" style="display:none"></div></div>
+                <div class="room-list-hd">
+                    <span>채팅방</span>
+                    <div class="spin" id="room-spin" style="display:none"></div>
+                </div>
                 <div id="room-items"></div>
             </div>
+            <!-- 채팅 영역 (독립 스크롤) -->
             <div class="chat-main">
                 <div class="chat-hd">
                     <h3 id="cur-room-name">채팅방을 선택하세요</h3>
                     <div style="display:flex;align-items:center;gap:10px">
                         <button class="btn btn-d btn-sm" id="leave-btn" onclick="leaveRoom()" style="display:none">나가기</button>
                         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
-                            <span class="ws-dot" id="ws-dot"></span><span id="ws-txt">오프라인</span>
+                            <span class="ws-dot" id="ws-dot"></span>
+                            <span id="ws-txt">오프라인</span>
                         </div>
                     </div>
                 </div>
-                <div class="chat-msgs" id="chat-msgs"><div class="chat-empty">채팅방을 선택하면 대화를 시작할 수 있어요</div></div>
+                <div class="chat-msgs" id="chat-msgs">
+                    <div class="chat-empty">채팅방을 선택하면 대화를 시작할 수 있어요</div>
+                </div>
+                <button class="scroll-btn" id="scroll-btn" onclick="scrollToBottom()">↓ 최신 메시지</button>
                 <div class="chat-in-area">
                     <input id="chat-in" placeholder="메시지를 입력하세요..." onkeydown="if(event.key==='Enter')sendChat()" disabled />
                     <button class="btn btn-p btn-sm" onclick="sendChat()">전송</button>
@@ -361,15 +448,57 @@
         </div>
     </div>
 
+    <!-- EVENT -->
+    <div id="page-event" class="page">
+        <div class="sec-title">
+            <h2>🎟️ 이벤트</h2>
+            <button class="btn btn-p btn-sm" id="btn-create-event" style="display:none" onclick="openM('m-event-create')">+ 이벤트 생성</button>
+        </div>
+
+        <!-- 이벤트 목록 -->
+        <div id="event-list"><div class="loading-block"><div class="spin"></div></div></div>
+        <div class="pagination" id="event-pag"></div>
+
+        <!-- 쿠폰 발급/사용 -->
+        <div style="margin-top:32px">
+            <div class="sec-title"><h2>🎁 쿠폰</h2></div>
+            <div class="coupon-card">
+                <div class="cc-icon">🎁</div>
+                <div class="cc-body">
+                    <div class="cc-name">이벤트 쿠폰 발급</div>
+                    <div class="cc-desc">이벤트 ID를 입력하고 쿠폰을 발급받으세요</div>
+                    <div class="cc-row">
+                        <input id="cp-eid" placeholder="이벤트 ID" />
+                        <button class="btn btn-p btn-sm" onclick="issueCoupon()">발급받기</button>
+                    </div>
+                </div>
+            </div>
+            <div class="coupon-card">
+                <div class="cc-icon">✅</div>
+                <div class="cc-body">
+                    <div class="cc-name">쿠폰 사용</div>
+                    <div class="cc-desc">보유한 쿠폰 ID를 입력하여 사용하세요</div>
+                    <div class="cc-row">
+                        <input id="cp-cid" placeholder="쿠폰 ID" />
+                        <button class="btn btn-o btn-sm" onclick="useCoupon()">사용하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- COUPON -->
     <div id="page-coupon" class="page">
-        <div class="sec-title"><h2>🎟️ 이벤트 & 쿠폰</h2></div>
+        <div class="sec-title"><h2>🎟️ 이벤트 &amp; 쿠폰</h2></div>
         <div class="coupon-card">
             <div class="cc-icon">🎁</div>
             <div class="cc-body">
                 <div class="cc-name">이벤트 쿠폰 발급</div>
                 <div class="cc-desc">이벤트 ID를 입력하고 쿠폰을 발급받으세요</div>
-                <div class="cc-row"><input id="cp-eid" placeholder="이벤트 ID" /><button class="btn btn-p btn-sm" onclick="issueCoupon()">발급받기</button></div>
+                <div class="cc-row">
+                    <input id="cp-eid" placeholder="이벤트 ID" />
+                    <button class="btn btn-p btn-sm" onclick="issueCoupon()">발급받기</button>
+                </div>
             </div>
         </div>
         <div class="coupon-card">
@@ -377,7 +506,10 @@
             <div class="cc-body">
                 <div class="cc-name">쿠폰 사용</div>
                 <div class="cc-desc">보유한 쿠폰 ID를 입력하여 사용하세요</div>
-                <div class="cc-row"><input id="cp-cid" placeholder="쿠폰 ID" /><button class="btn btn-o btn-sm" onclick="useCoupon()">사용하기</button></div>
+                <div class="cc-row">
+                    <input id="cp-cid" placeholder="쿠폰 ID" />
+                    <button class="btn btn-o btn-sm" onclick="useCoupon()">사용하기</button>
+                </div>
             </div>
         </div>
     </div>
@@ -390,8 +522,20 @@
                     <div class="avatar" id="my-av">?</div>
                     <div class="pn" id="my-nick">-</div>
                     <div class="pe" id="my-email">-</div>
-                    <div class="point-disp"><div class="pl">보유 포인트</div><div class="pv" id="my-pt">0</div></div>
+                    <div class="point-disp">
+                        <div class="pl">보유 포인트</div>
+                        <div class="pv" id="my-pt">0</div>
+                    </div>
+                    <div class="point-disp" style="margin-bottom:14px">
+                        <div class="pl">멤버십 등급</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+                            <div id="my-grade" style="font-size:20px;font-weight:700;color:var(--accent)">-</div>
+                            <div id="my-grade-badge" style="font-size:11px;padding:2px 8px;border-radius:10px;"></div>
+                        </div>
+                        <div id="my-grade-exp" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+                    </div>
                     <button class="btn btn-s btn-full btn-sm" onclick="openM('m-edit')">프로필 수정</button>
+                    <button class="btn btn-o btn-full btn-sm" style="margin-top:8px" onclick="openMyInfo()">내 상세정보</button>
                 </div>
             </div>
             <div>
@@ -419,6 +563,18 @@
         <div class="fg"><label>이메일</label><input id="l-em" type="email" placeholder="example@email.com" /></div>
         <div class="fg"><label>비밀번호</label><input id="l-pw" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()" /></div>
         <button class="btn btn-p btn-full" onclick="doLogin()">로그인</button>
+        <div class="social-divider"><span>소셜 로그인</span></div>
+        <div class="social-btns">
+            <button class="btn-social" onclick="doSocialLogin('google')">
+                <span class="si si-google">G</span> Google로 로그인
+            </button>
+            <button class="btn-social" onclick="doSocialLogin('kakao')">
+                <span class="si si-kakao">K</span> 카카오로 로그인
+            </button>
+            <button class="btn-social" onclick="doSocialLogin('naver')">
+                <span class="si si-naver">N</span> 네이버로 로그인
+            </button>
+        </div>
         <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
             계정이 없으신가요? <a style="color:var(--accent);cursor:pointer" onclick="closeM('m-login');openM('m-signup')">회원가입</a>
         </div>
@@ -437,13 +593,44 @@
         <div class="fg"><label>비밀번호 (영문+숫자+특수문자 8~15자)</label><input id="su-pw" type="password" /></div>
         <div class="fr2">
             <div class="fg"><label>전화번호 (숫자 11자리)</label><input id="su-ph" placeholder="01012345678" /></div>
-            <div class="fg"><label>역할</label><select id="su-role"><option value="ROLE_USER">일반 유저</option><option value="ROLE_ADMIN">관리자</option></select></div>
+            <div class="fg">
+                <label>역할</label>
+                <select id="su-role">
+                    <option value="ROLE_USER">일반 유저</option>
+                    <option value="ROLE_ADMIN">관리자</option>
+                </select>
+            </div>
         </div>
-        <div class="fg"><label>멤버십</label><select id="su-grade"><option value="NORMAL">일반</option><option value="VIP">VIP</option></select></div>
+        <div class="fg">
+            <label>멤버십</label>
+            <select id="su-grade">
+                <option value="NORMAL">일반</option>
+                <option value="VIP">VIP</option>
+            </select>
+        </div>
         <button class="btn btn-p btn-full" onclick="doSignup()">가입하기</button>
     </div>
 </div>
+<!-- GOOGLE 추가정보 모달 -->
+<div class="modal-overlay" id="m-google-info">
+    <div class="modal">
+        <h2><span class="si si-google" style="width:24px;height:24px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:#4285F4;border:1px solid #ddd;margin-right:8px;vertical-align:middle">G</span><em>Google</em> 추가 정보</h2>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:18px">처음 로그인하셨네요! 전화번호를 입력해 주세요.</p>
+        <div class="fg"><label>전화번호 (숫자 11자리)</label><input id="gi-ph" type="tel" placeholder="01012345678" maxlength="11" onkeydown="if(event.key==='Enter')doGoogleAddInfo()" /></div>
+        <button class="btn btn-p btn-full" onclick="doGoogleAddInfo()">완료</button>
+    </div>
+</div>
 
+<!-- KAKAO 추가정보 모달 -->
+<div class="modal-overlay" id="m-kakao-info">
+    <div class="modal">
+        <h2><span class="si si-kakao" style="width:24px;height:24px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:#FEE500;color:#3C1E1E;margin-right:8px;vertical-align:middle">K</span><em>카카오</em> 추가 정보</h2>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:18px">처음 로그인하셨네요! 추가 정보를 입력해 주세요.</p>
+        <div class="fg"><label>전화번호 (숫자 11자리)</label><input id="ki-ph" type="tel" placeholder="01012345678" maxlength="11" /></div>
+        <div class="fg"><label>이메일</label><input id="ki-em" type="email" placeholder="example@email.com" onkeydown="if(event.key==='Enter')doKakaoAddInfo()" /></div>
+        <button class="btn btn-p btn-full" onclick="doKakaoAddInfo()">완료</button>
+    </div>
+</div>
 <div class="modal-overlay" id="m-room">
     <div class="modal">
         <button class="modal-x" onclick="closeM('m-room')">✕</button>
@@ -479,27 +666,194 @@
     </div>
 </div>
 
+<!-- 이벤트 생성 모달 (ADMIN 전용) -->
+<div class="modal-overlay" id="m-event-create">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-event-create')">✕</button>
+        <h2>이벤트 <em>생성</em></h2>
+        <div class="fg"><label>이벤트 이름</label><input id="ec-name" placeholder="예: 신규 가입 축하 이벤트" /></div>
+        <div class="fg"><label>이벤트 설명</label><input id="ec-desc" placeholder="이벤트 설명을 입력하세요" /></div>
+        <div class="fr2">
+            <div class="fg"><label>총 수량</label><input id="ec-qty" type="number" placeholder="100" /></div>
+            <div class="fg"><label>리워드 타입</label>
+                <select id="ec-reward">
+                    <option value="POINT">포인트</option>
+                    <option value="MEMBERSHIP">멤버십</option>
+                </select>
+            </div>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작 시간</label><input id="ec-sa" type="datetime-local" /></div>
+            <div class="fg"><label>종료 시간</label><input id="ec-ea" type="datetime-local" /></div>
+        </div>
+        <button class="btn btn-p btn-full" onclick="createNewEvent()">생성하기</button>
+    </div>
+</div>
+
+<!-- 이벤트 수정 모달 (ADMIN 전용) -->
+<div class="modal-overlay" id="m-event-edit">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-event-edit')">✕</button>
+        <h2>이벤트 <em>수정</em></h2>
+        <input type="hidden" id="ee-id" />
+        <div class="fg"><label>이벤트 이름</label><input id="ee-name" /></div>
+        <div class="fg"><label>이벤트 설명</label><input id="ee-desc" /></div>
+        <div class="fr2">
+            <div class="fg"><label>총 수량</label><input id="ee-qty" type="number" /></div>
+            <div class="fg"><label>리워드 타입</label>
+                <select id="ee-reward">
+                    <option value="POINT">포인트</option>
+                    <option value="MEMBERSHIP">멤버십</option>
+                </select>
+            </div>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작 시간</label><input id="ee-sa" type="datetime-local" /></div>
+            <div class="fg"><label>종료 시간</label><input id="ee-ea" type="datetime-local" /></div>
+        </div>
+        <div class="fg"><label>상태</label>
+            <select id="ee-status">
+                <option value="OPEN">OPEN</option>
+                <option value="CLOSED">CLOSED</option>
+            </select>
+        </div>
+        <button class="btn btn-p btn-full" onclick="updateEvent()">수정하기</button>
+    </div>
+</div>
+
+<!-- 이벤트 상세 모달 -->
+<div class="modal-overlay" id="m-event-detail">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-event-detail')">✕</button>
+        <h2>이벤트 <em>상세</em></h2>
+        <div id="event-detail-content"></div>
+    </div>
+</div>
+
+<!-- 경매 수정 모달 -->
+<div class="modal-overlay" id="m-auction-edit">
+    <div class="modal" style="width:480px">
+        <button class="modal-x" onclick="closeM('m-auction-edit')">✕</button>
+        <h2>경매 <em>수정</em></h2>
+        <input type="hidden" id="ae-id" />
+        <div class="fg"><label>상품명</label><input id="ae-name" /></div>
+        <div class="fg">
+            <label>이미지</label>
+            <div style="display:flex;gap:12px;margin-bottom:10px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+                    <input type="radio" name="ae-img-mode" value="url" checked onchange="toggleAeImgMode('url')" style="width:auto" /> 기존 URL 유지
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+                    <input type="radio" name="ae-img-mode" value="upload" onchange="toggleAeImgMode('upload')" style="width:auto" /> 새 이미지 업로드
+                </label>
+            </div>
+            <!-- 기존 URL 모드 -->
+            <div id="ae-img-url-mode">
+                <input id="ae-img" placeholder="이미지 URL" />
+            </div>
+            <!-- 새 업로드 모드 -->
+            <div id="ae-img-upload-mode" style="display:none;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:8px;align-items:center">
+                    <input type="file" id="ae-file" accept="image/*" onchange="previewAeImage(this)"
+                           style="flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px" />
+                    <button class="btn btn-s btn-sm" onclick="uploadAeImage()" id="ae-upload-btn">업로드</button>
+                </div>
+                <div id="ae-img-preview" style="display:none;width:100%;aspect-ratio:16/9;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                    <img id="ae-img-preview-img" style="width:100%;height:100%;object-fit:cover" />
+                </div>
+                <div id="ae-upload-ok" style="display:none;font-size:12px;color:var(--green)">✅ 이미지 업로드 완료</div>
+            </div>
+        </div>
+        <div class="fg"><label>카테고리</label>
+            <select id="ae-cat">
+                <option value="CLOTHES">👗 의류</option>
+                <option value="ELECTRONICS">📱 가전제품</option>
+                <option value="FOOD">🍱 식품</option>
+            </select>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작가 (원)</label><input id="ae-sp" type="number" /></div>
+            <div class="fg"><label>최소 입찰 단위 (원)</label><input id="ae-mb" type="number" /></div>
+        </div>
+        <div class="fr2">
+            <div class="fg"><label>시작 시간</label><input id="ae-sa" type="datetime-local" /></div>
+            <div class="fg"><label>종료 시간</label><input id="ae-ea" type="datetime-local" /></div>
+        </div>
+        <button class="btn btn-p btn-full" onclick="updateAuction()">수정하기</button>
+    </div>
+</div>
+
+
+<!-- 내 상세정보 모달 -->
+<div class="modal-overlay" id="m-my-info">
+    <div class="modal">
+        <button class="modal-x" onclick="closeM('m-my-info')">✕</button>
+        <h2>내 <em>상세정보</em></h2>
+        <div id="my-info-content"></div>
+    </div>
+</div>
+
 <div id="toast-ct"></div>
 
 <script>
     // ── 상태 ──
-    const BASE = 'http://localhost:8080';
-    let token = localStorage.getItem('token') || '';
-    let me = JSON.parse(localStorage.getItem('me') || 'null');
+    const BASE     = 'http://localhost:8080';
+    let token      = localStorage.getItem('token') || '';
+    let me         = JSON.parse(localStorage.getItem('me') || 'null');
+    // 채팅 좌우 구분 전용 변수 (me 객체 타이밍과 완전히 분리)
+    let myNickname = me?.nickname || null;
+    // 내가 보낸 메시지의 서버 에코 중복 방지
+    const echoSet  = new Set();
     let prevPage = 'home', curPage = 'home';
     let bidTargetId = null, curRoomId = null;
     let stompClient = null;
 
     // ── HTTP ──
-    async function api(method, path, body) {
+    async function api(method, path, body, _retry = false) {
         const h = { 'Content-Type': 'application/json' };
         if (token) h['Authorization'] = 'Bearer ' + token;
         try {
-            const res = await fetch(BASE + path, { method, headers: h, credentials: 'include', body: body ? JSON.stringify(body) : undefined });
+            const res = await fetch(BASE + path, {
+                method, headers: h, credentials: 'include',
+                body: body ? JSON.stringify(body) : undefined
+            });
             const txt = await res.text();
-            let d; try { d = JSON.parse(txt); } catch { d = { message: txt }; }
+            let d;
+            try { d = JSON.parse(txt); } catch { d = { message: txt }; }
+
+            // 401이고 아직 재시도 안 했으면 토큰 갱신 후 재시도
+            if (res.status === 401 && !_retry) {
+                const refreshed = await tryRefresh();
+                if (refreshed) return api(method, path, body, true);
+                // 갱신 실패 시 로그아웃
+                token = ''; me = null; myNickname = null;
+                localStorage.removeItem('token'); localStorage.removeItem('me');
+                applyAuth();
+                toast('세션이 만료되었습니다. 다시 로그인해주세요.', 'er');
+                openM('m-login');
+            }
+
             return { ok: res.ok, d };
-        } catch(e) { return { ok: false, d: { message: e.message } }; }
+        } catch(e) {
+            return { ok: false, d: { message: e.message } };
+        }
+    }
+
+    async function tryRefresh() {
+        try {
+            const res = await fetch(BASE + '/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include', // 쿠키 자동 포함
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const d = await res.json();
+            if (res.ok && d?.data?.accessToken) {
+                token = d.data.accessToken.replace('Bearer ', '').trim();
+                localStorage.setItem('token', token);
+                return true;
+            }
+            return false;
+        } catch { return false; }
     }
 
     // ── TOAST ──
@@ -515,7 +869,9 @@
     // ── MODAL ──
     function openM(id) { document.getElementById(id).classList.add('open'); }
     function closeM(id) { document.getElementById(id).classList.remove('open'); }
-    document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+    document.querySelectorAll('.modal-overlay').forEach(o =>
+        o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); })
+    );
 
     // ── NAVIGATION ──
     function goPage(p) {
@@ -523,15 +879,16 @@
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
         document.getElementById('page-' + p).classList.add('active');
         window.scrollTo(0, 0);
-        if (p === 'home') loadHome();
+        if      (p === 'home')     loadHome();
         else if (p === 'auctions') loadAuctions(0);
-        else if (p === 'chat') loadChatPage();
-        else if (p === 'mypage') loadMypage();
+        else if (p === 'chat')     loadChatPage();
+        else if (p === 'mypage')   loadMypage();
+        else if (p === 'event')    loadEventPage(1);
         else if (p === 'register' && !token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
     }
     function goBack() { goPage(prevPage || 'home'); }
 
-    // ── AUTH HEADER ──
+    // ── AUTH ──
     function applyAuth() {
         if (me) {
             document.getElementById('hdr-user').style.display = 'flex';
@@ -544,26 +901,35 @@
         }
     }
 
+    // me 와 myNickname 을 항상 동시에 갱신
     async function fetchMe() {
         const r = await api('GET', '/api/users/me');
-        if (r.ok && r.d?.data) { me = r.d.data; localStorage.setItem('me', JSON.stringify(me)); }
+        if (r.ok && r.d?.data) {
+            me = r.d.data;
+            myNickname = me.nickname;   // ← 핵심
+            localStorage.setItem('me', JSON.stringify(me));
+        }
     }
 
     async function doLogin() {
         const r = await api('POST', '/api/auth/login', { email: v('l-em'), password: v('l-pw') });
         if (r.ok && r.d?.data?.accessToken) {
-            // "Bearer " 제거하고 순수 토큰만 저장
             token = r.d.data.accessToken.replace('Bearer ', '').trim();
             localStorage.setItem('token', token);
-            closeM('m-login'); toast('로그인 성공!', 'ok');
-            await fetchMe(); applyAuth();
-        } else toast(r.d?.message || '로그인 실패', 'er');
+            closeM('m-login');
+            toast('로그인 성공!', 'ok');
+            await fetchMe();   // 내부에서 myNickname 도 세팅됨
+            applyAuth();
+        } else {
+            toast(r.d?.message || '로그인 실패', 'er');
+        }
     }
 
     async function doSignup() {
         const r = await api('POST', '/api/auth/signup', {
-            nickname: v('su-nick'), name: v('su-name'), email: v('su-em'), password: v('su-pw'),
-            phone: v('su-ph'), userRole: v('su-role'), membershipGrade: v('su-grade'),
+            nickname: v('su-nick'), name: v('su-name'), email: v('su-em'),
+            password: v('su-pw'), phone: v('su-ph'),
+            userRole: v('su-role'), membershipGrade: v('su-grade'),
         });
         if (r.ok) { closeM('m-signup'); toast('회원가입 완료! 로그인해주세요.', 'ok'); openM('m-login'); }
         else toast(r.d?.message || '회원가입 실패', 'er');
@@ -571,7 +937,7 @@
 
     async function doLogout() {
         await api('POST', '/api/auth/logout');
-        token = ''; me = null;
+        token = ''; me = null; myNickname = null;
         localStorage.removeItem('token'); localStorage.removeItem('me');
         applyAuth(); goPage('home'); toast('로그아웃되었습니다.', 'inf');
         if (stompClient) { stompClient.disconnect(); stompClient = null; }
@@ -579,16 +945,14 @@
 
     // ── HOME ──
     async function loadHome() {
-        // TOP5
         const r5 = await api('GET', '/api/auctions/top5');
         const g5 = document.getElementById('g-top5');
         if (r5.ok && r5.d?.data?.length) {
             document.getElementById('stat-n').textContent = r5.d.data.length;
-            g5.innerHTML = r5.d.data.slice(0,5).map((a,i) => card(a, i+1)).join('');
+            g5.innerHTML = r5.d.data.slice(0, 5).map((a, i) => card(a, i + 1)).join('');
         } else g5.innerHTML = empty('인기 경매가 없습니다.');
 
-        // ACTIVE
-        const ra = await api('GET', '/api/auctions/v1?status=ACTIVE&page=0&size=8');
+        const ra = await api('GET', '/api/auctions/v2?status=ACTIVE&page=0&size=8');
         const ga = document.getElementById('g-active');
         if (ra.ok && ra.d?.data?.content?.length) ga.innerHTML = ra.d.data.content.map(a => card(a)).join('');
         else ga.innerHTML = empty('진행중인 경매가 없습니다.');
@@ -596,43 +960,73 @@
 
     // ── AUCTION LIST ──
     async function loadAuctions(page) {
+        // PENDING 옵션 — 어드민 또는 본인 등록 경매가 있는 판매자만 표시
+        const stSelect = document.getElementById('s-st');
+        const hasPending = stSelect.querySelector('option[value="PENDING"]');
+
+        let isSeller = false;
+        if (me && !isAdmin()) {
+            const r = await api('GET', '/api/users/me/auctions');
+            isSeller = r.ok && r.d?.data?.length > 0;
+        }
+
+        if ((isAdmin() || isSeller) && !hasPending) {
+            const opt = document.createElement('option');
+            opt.value = 'PENDING'; opt.textContent = '승인대기';
+            stSelect.appendChild(opt);
+        } else if (!isAdmin() && !isSeller && hasPending) {
+            hasPending.remove();
+        }
+
         const kw = v('s-kw'), cat = v('s-cat'), st = v('s-st');
         let q = `?page=${page}&size=12`;
-        if (kw) q += `&keyword=${encodeURIComponent(kw)}`;
+        if (kw)  q += `&keyword=${encodeURIComponent(kw)}`;
         if (cat) q += `&category=${cat}`;
-        if (st) q += `&status=${st}`;
-        const r = await api('GET', '/api/auctions/v1' + q);
+        if (st)  q += `&status=${st}`;
+        const r = await api('GET', '/api/auctions/v2' + q);
         const grid = document.getElementById('g-list');
-        const pag = document.getElementById('pag');
+        const pag  = document.getElementById('pag');
         if (r.ok && r.d?.data) {
             const { content, totalPages, number } = r.d.data;
             grid.innerHTML = content?.length ? content.map(a => card(a)).join('') : empty('검색 결과가 없습니다.');
             pag.innerHTML = '';
             for (let i = 0; i < (totalPages || 0); i++) {
-                pag.innerHTML += `<button class="${i===number?'active':''}" onclick="searchAuctions(${i})">${i+1}</button>`;
+                pag.innerHTML += `<button class="${i === number ? 'active' : ''}" onclick="searchAuctions(${i})">${i + 1}</button>`;
             }
         } else grid.innerHTML = empty('경매 목록을 불러올 수 없습니다.');
     }
     function searchAuctions(p = 0) { loadAuctions(p); }
 
-    // ── CARD HTML ──
+    // ── CARD ──
     const CE = { CLOTHES:'👗', ELECTRONICS:'📱', FOOD:'🍱' };
     const CL = { CLOTHES:'의류', ELECTRONICS:'가전제품', FOOD:'식품' };
-    const SL = { ACTIVE:'진행중', PENDING:'대기', ENDED:'종료' };
+    const SL = { ACTIVE:'진행중', READY:'진행전', DONE:'종료' };
 
     function card(a, rank) {
-        const img = a.imageUrl ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />` : (CE[a.category]||'📦');
-        const rb = rank ? `<div class="rank-badge">${rank}</div>` : '';
+        const img = a.imageUrl
+            ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
+            : (CE[a.category] || '📦');
+        const rb = rank ? `<div style="
+        position:absolute; top:8px; left:8px;
+        background:${rank === 1 ? '#f0a500' : rank === 2 ? '#aaaaaa' : rank === 3 ? '#cd7f32' : 'rgba(0,0,0,0.6)'};
+        color:${rank <= 3 ? '#000' : '#fff'};
+        font-family:'Bebas Neue'; font-size:13px; letter-spacing:1px;
+        padding:3px 8px; border-radius:4px; line-height:1.4;
+        z-index:1;
+    ">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`} TOP${rank}</div>` : '';
         return `<div class="auction-card" onclick="openDetail(${a.auctionId})">
-    ${rb}
-    <div class="card-img">${img}<div class="card-badge b-${a.status}">${SL[a.status]||a.status}</div></div>
-    <div class="card-body">
-      <div class="card-cat">${CL[a.category]||a.category}</div>
-      <div class="card-name">${esc(a.productName)}</div>
-      <div class="card-price">${Number(a.startPrice).toLocaleString()}<small>원~</small></div>
-      <div class="card-seller">by ${esc(a.sellerNickname)}</div>
+    <div class="card-img">
+        ${img}
+        ${rb}
+        <div class="card-badge b-${a.status}">${SL[a.status] || a.status}</div>
     </div>
-  </div>`;
+    <div class="card-body">
+        <div class="card-cat">${CL[a.category] || a.category}</div>
+        <div class="card-name">${esc(a.productName)}</div>
+        <div class="card-price">${Number(a.startPrice).toLocaleString()}<small>원~</small></div>
+        <div class="card-seller">by ${esc(a.sellerNickname)}</div>
+    </div>
+</div>`;
     }
 
     // ── DETAIL ──
@@ -643,65 +1037,150 @@
         window.scrollTo(0, 0);
         const dc = document.getElementById('detail-content');
         dc.innerHTML = `<div class="loading-block"><div class="spin"></div></div>`;
-        const r = await api('GET', `/api/auctions/${id}`);
-        if (!r.ok || !r.d?.data) { dc.innerHTML = empty('경매 정보를 불러올 수 없습니다.'); return; }
-        const a = r.d.data;
-        const img = a.imageUrl ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />` : (CE[a.category]||'📦');
-        dc.innerHTML = `
-  <div class="detail-img">${img}</div>
-  <div class="detail-info">
+
+        const [ra, rb] = await Promise.all([
+            api('GET', `/api/auctions/${id}`),
+            api('GET', `/api/bids/${id}`)
+        ]);
+
+        if (!ra.ok || !ra.d?.data) { dc.innerHTML = empty('경매 정보를 불러올 수 없습니다.'); return; }
+        const a = ra.d.data;
+        window._auctionEndAt = a.endAt; // 5분 블라인드 기준
+        window._currentAuction = a;
+
+        const img = a.imageUrl
+            ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
+            : (CE[a.category] || '📦');
+
+        // ── DONE 상태: 낙찰가 + 낙찰자만 표시 ──
+        if (a.status === 'DONE') {
+            const bids = rb.ok && rb.d?.data ? rb.d.data : [];
+            const winBid = bids.find(b => b.status === 'SUCCEEDED');
+            const finalPrice = winBid?.price
+                ?? (bids.filter(b => b.status === 'FAILED').sort((x,y) => (y.price||0) - (x.price||0))[0]?.price || null);
+            dc.innerHTML = `
+<div class="detail-img">${img}</div>
+<div class="detail-info">
     <div>
-      <div style="margin-bottom:8px"><span class="card-badge b-${a.status}" style="position:static">${SL[a.status]}</span></div>
-      <div class="detail-title">${esc(a.productName)}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)} · 조회 ${a.viewCount||0}회</div>
+        <div style="margin-bottom:8px">
+            <span class="card-badge" style="position:static;background:#7c3aed;color:#fff">🏆 낙찰 완료</span>
+        </div>
+        <div class="detail-title">${esc(a.productName)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)}</div>
     </div>
-    <div class="price-block">
-      <div class="price-label">시작가</div>
-      <div class="price-val">${Number(a.startPrice).toLocaleString()}<small> 원</small></div>
-      <div style="font-size:12px;color:var(--text2);margin-top:6px">최소 입찰 단위: ${Number(a.minimumBid).toLocaleString()}원</div>
+    <div class="price-block" style="border-color:var(--accent)">
+        <div class="price-label">🏆 최종 낙찰가</div>
+        <div class="price-val">${finalPrice ? Number(finalPrice).toLocaleString() : '-'}<small> 원</small></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">낙찰자</div>
+            <div style="font-size:20px;font-weight:700;color:var(--accent)">${winBid ? esc(winBid.bidderNickname || '비공개') : '-'}</div>
+        </div>
     </div>
     <div class="meta-grid">
-      <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
-      <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
+        <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
+        <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
     </div>
-        <div style="display:flex;gap:8px">
-      <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})"
-        ${a.status === 'ENDED' ? 'disabled style="flex:1;opacity:0.4;cursor:not-allowed;background:var(--surface2);color:var(--text2)"' : ''}>
-        ${a.status === 'ENDED' ? '경매 종료' : '입찰하기'}
-      </button>
-      <button class="btn btn-s btn-sm" onclick="goPage('chat')">💬 채팅</button>
+</div>`;
+            return;
+        }
+
+        // ── 일반 상태 ──
+        dc.innerHTML = `
+<div class="detail-img">${img}</div>
+<div class="detail-info">
+    <div>
+        <div style="margin-bottom:8px"><span class="card-badge b-${a.status}" style="position:static">${SL[a.status] || a.status}</span></div>
+        <div class="detail-title">${esc(a.productName)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)} · 조회 ${a.viewCount || 0}회</div>
     </div>
-    ${a.status === 'ENDED' && a.finalPrice ? `
-    <div style="background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:16px;">
-      <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🏆 최종 낙찰가</div>
-      <div style="font-family:'Bebas Neue';font-size:42px;color:var(--accent);letter-spacing:2px">${Number(a.finalPrice).toLocaleString()}<small style="font-family:'Noto Sans KR';font-size:14px;color:var(--text2)"> 원</small></div>
-    </div>` : ''}
+    <div class="price-block">
+        <div class="price-label">시작가</div>
+        <div class="price-val">${Number(a.startPrice).toLocaleString()}<small> 원</small></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px">최소 입찰 단위: ${Number(a.minimumBid).toLocaleString()}원</div>
+    </div>
+    <div class="meta-grid">
+        <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
+        <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${a.status !== 'PENDING' ? `<button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>` : ''}
+        ${isAdmin() && a.status === 'PENDING' ? `
+        <button class="btn btn-p" style="flex:1;background:#7c3aed" onclick="approveAuction(${a.auctionId})">✅ 경매 승인</button>` : ''}
+        ${me && me.nickname === a.sellerNickname && a.status === 'PENDING' ? `
+        <button class="btn btn-s btn-sm" onclick="openAuctionEdit(${a.auctionId})">✏️ 수정</button>
+        <button class="btn btn-d btn-sm" onclick="deleteAuction(${a.auctionId})">🗑️ 삭제</button>` : ''}
+    </div>
     <div class="bid-block">
-      <div class="bid-block-hd"><span>입찰 내역</span><span id="bid-cnt">-</span></div>
-      <div id="bid-body"><div class="loading-block"><div class="spin"></div></div></div>
+        <div class="bid-block-hd"><span>입찰 내역</span><span id="bid-cnt">-</span></div>
+        <div id="bid-body"><div class="loading-block"><div class="spin"></div></div></div>
     </div>
-  </div>`;
-        loadBids(id);
+</div>`;
+        loadBids(id, rb);
     }
 
-    async function loadBids(auctionId) {
-        const r = await api('GET', `/api/bids/${auctionId}`);
+    async function loadBids(auctionId, cached) {
+        const r  = cached || await api('GET', `/api/bids/${auctionId}`);
         const el = document.getElementById('bid-body');
         const ct = document.getElementById('bid-cnt');
-        if (r.ok && r.d?.data) {
-            const bids = r.d.data;
-            ct.textContent = `총 ${bids.length}건`;
-            el.innerHTML = bids.length
-                ? bids.map(b => `<div class="bid-row"><div><div class="bp">${Number(b.price).toLocaleString()}원</div><div class="bt">${b.status}</div></div><div class="bt">${fDate(b.createdAt)}</div></div>`).join('')
-                : `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">아직 입찰이 없습니다.</div>`;
-        } else el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">로드 실패</div>`;
+        if (!r.ok || !r.d?.data) {
+            el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">로드 실패</div>`;
+            return;
+        }
+        const bids = r.d.data;
+        ct.textContent = `총 ${bids.length}건`;
+        if (!bids.length) {
+            el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">아직 입찰이 없습니다.</div>`;
+            return;
+        }
+
+        // 종료 5분 전 기준 시각
+        const blindCutoff = window._auctionEndAt
+            ? new Date(new Date(window._auctionEndAt).getTime() - 5 * 60 * 1000)
+            : null;
+
+        const normalBids  = bids.filter(b => !blindCutoff || new Date(b.createdAt) < blindCutoff);
+        const blindedBids = bids.filter(b =>  blindCutoff && new Date(b.createdAt) >= blindCutoff);
+
+        const normalHtml = normalBids.map(b => `
+        <div class="bid-row">
+            <div>
+                <div class="bp">${Number(b.price).toLocaleString()}원</div>
+                <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
+                <div class="bt">${fDate(b.createdAt)}</div>
+            </div>
+        </div>`).join('');
+
+        const divider = blindedBids.length ? `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 16px">
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <span style="font-size:10px;color:var(--text2);white-space:nowrap">🔒 종료 5분 전 이후 입찰</span>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>` : '';
+
+        const blindedHtml = blindedBids.map(b => `
+        <div class="bid-row" style="opacity:0.5">
+            <div>
+                <div class="bp" style="filter:blur(5px);user-select:none;pointer-events:none">${Number(b.price).toLocaleString()}원</div>
+                <div class="bt" style="filter:blur(4px);user-select:none;pointer-events:none">${b.status}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:var(--text2);font-size:11px">🔒 비공개</span>
+                <div class="bt">${fDate(b.createdAt)}</div>
+            </div>
+        </div>`).join('');
+
+        el.innerHTML = normalHtml + divider + blindedHtml;
     }
 
     // ── BID ──
     function openBidModal(id, sp, mb) {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
         bidTargetId = id;
-        document.getElementById('bid-info').innerHTML = `시작가 <strong>${Number(sp).toLocaleString()}원</strong> · 최소단위 <strong>${Number(mb).toLocaleString()}원</strong>`;
+        document.getElementById('bid-info').innerHTML =
+            `시작가 <strong>${Number(sp).toLocaleString()}원</strong> · 최소단위 <strong>${Number(mb).toLocaleString()}원</strong>`;
         document.getElementById('bm-price').value = '';
         openM('m-bid');
     }
@@ -720,54 +1199,215 @@
         else toast(r.d?.message || '자동 입찰 실패', 'er');
     }
 
+    // ── IMAGE UPLOAD ──
+    let uploadedImageUrl = null;
+
+    function previewImage(input) {
+        uploadedImageUrl = null;
+        document.getElementById('upload-ok').style.display = 'none';
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('img-preview').style.display = 'block';
+            document.getElementById('img-preview-img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function uploadImage() {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
+        const fileInput = document.getElementById('ra-file');
+        if (!fileInput.files || !fileInput.files[0]) { toast('이미지를 선택해주세요.', 'er'); return; }
+
+        const btn = document.getElementById('upload-btn');
+        btn.disabled = true;
+        btn.textContent = '업로드 중...';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        const h = {};
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        try {
+            const res = await fetch(BASE + '/api/auctions/files/upload', {
+                method: 'POST', headers: h, body: formData
+            });
+            const data = await res.json();
+            if (!res.ok || !data?.data?.key) {
+                toast(data?.message || '업로드 실패', 'er');
+                btn.disabled = false; btn.textContent = '업로드';
+                return;
+            }
+
+            // key가 이미 완전한 S3 URL이므로 바로 사용
+            uploadedImageUrl = data.data.key;
+            document.getElementById('img-preview-img').src = uploadedImageUrl;
+            document.getElementById('upload-ok').style.display = 'block';
+            toast('이미지 업로드 완료!', 'ok');
+        } catch(e) {
+            toast('업로드 중 오류: ' + e.message, 'er');
+        }
+        btn.disabled = false; btn.textContent = '업로드';
+    }
+
+
     // ── CREATE AUCTION ──
     async function createAuction() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        if (!uploadedImageUrl) { toast('이미지를 업로드해주세요.', 'er'); return; }
         const r = await api('POST', '/api/auctions', {
-            productName: v('ra-name'), imageUrl: v('ra-img'), category: v('ra-cat'),
-            startPrice: Number(v('ra-sp')), minimumBid: Number(v('ra-mb')),
-            startAt: iso(v('ra-sa')), endAt: iso(v('ra-ea')),
+            productName: v('ra-name'),
+            imageUrl: uploadedImageUrl,
+            category: v('ra-cat'),
+            startPrice: Number(v('ra-sp')),
+            minimumBid: Number(v('ra-mb')),
+            startAt: iso(v('ra-sa')),
+            endAt: iso(v('ra-ea')),
         });
-        if (r.ok) { toast('경매 등록 완료!', 'ok'); goPage('auctions'); }
-        else toast(r.d?.message || '등록 실패', 'er');
+        if (r.ok) {
+            toast('경매 등록 완료!', 'ok');
+            uploadedImageUrl = null;
+            document.getElementById('ra-file').value = '';
+            document.getElementById('img-preview').style.display = 'none';
+            document.getElementById('upload-ok').style.display = 'none';
+            goPage('auctions');
+        } else {
+            toast(r.d?.message || '등록 실패', 'er');
+        }
     }
 
     // ── CHAT ──
+    async function loadMoreMessages(roomId) {
+        if (!window._chatCursor || window._chatLoading) return;
+        window._chatLoading = true;
+
+        const msgs = document.getElementById('chat-msgs');
+
+        // 로딩 인디케이터 맨 위에 추가
+        const loader = document.createElement('div');
+        loader.id = 'chat-loader';
+        loader.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:12px';
+        loader.innerHTML = '<div class="spin" style="margin:0 auto"></div>';
+        msgs.prepend(loader);
+
+        const r = await api('GET', `/api/messages/before/${roomId}?cursor=${window._chatCursor}&size=50`);
+
+        document.getElementById('chat-loader')?.remove();
+
+        if (r.ok && Array.isArray(r.d) && r.d.length) {
+            // 현재 스크롤 높이 저장 (삽입 후 위치 유지용)
+            const prevHeight = msgs.scrollHeight;
+
+            // 오래된 메시지를 맨 위에 삽입
+            const fragment = document.createDocumentFragment();
+            r.d.forEach(m => {
+                const isMine = myNickname && m.userName === myNickname;
+                const div = document.createElement('div');
+                div.className = 'cmsg' + (isMine ? ' mine' : '');
+                div.innerHTML = `${!isMine ? `<div class="cs">${esc(m.userName)}</div>` : ''}
+<div class="cb">${esc(m.message)}</div>
+<div class="ct">${m.createdAt ? new Date(m.createdAt).toLocaleTimeString('ko', {hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
+                fragment.appendChild(div);
+            });
+            msgs.prepend(fragment);
+
+            // 스크롤 위치 유지 (새 메시지 삽입 후 튀는 현상 방지)
+            msgs.scrollTop = msgs.scrollHeight - prevHeight;
+
+            // cursor 갱신 — 새로 불러온 것 중 가장 오래된 id
+            window._chatCursor = r.d[0].id;
+            window._chatHasMore = r.d.length >= 50;
+
+            // 더 이상 없으면 안내 표시
+            if (!window._chatHasMore) {
+                const end = document.createElement('div');
+                end.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:11px';
+                end.textContent = '— 대화 시작 —';
+                msgs.prepend(end);
+            }
+        } else {
+            window._chatHasMore = false;
+            const end = document.createElement('div');
+            end.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:11px';
+            end.textContent = '— 대화 시작 —';
+            msgs.prepend(end);
+        }
+
+        window._chatLoading = false;
+    }
+
     async function loadChatPage() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        // 채팅 진입 전 myNickname 반드시 확보
+        if (!myNickname) await fetchMe();
         document.getElementById('room-spin').style.display = 'inline-block';
         const r = await api('GET', '/api/chat/rooms');
         document.getElementById('room-spin').style.display = 'none';
         const el = document.getElementById('room-items');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(rm => `
-      <div class="room-item" id="ri-${rm.id}" onclick="joinRoom(${rm.id},'${esc(rm.name)}')">
-        <div class="rn">💬 ${esc(rm.name)}</div><div class="rd">${fDate(rm.createdAt)}</div>
-      </div>`).join('');
-        } else el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">채팅방이 없습니다.</div>`;
+                <div class="room-item" id="ri-${rm.id}" onclick="joinRoom(${rm.id},'${esc(rm.name)}')">
+                    <div class="rn">💬 ${esc(rm.name)}</div>
+                    <div class="rd">${fDate(rm.createdAt)}</div>
+                </div>`).join('');
+        } else {
+            el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">채팅방이 없습니다.</div>`;
+        }
     }
 
     async function createRoom() {
         const name = document.getElementById('cr-name').value.trim();
         if (!name) { toast('채팅방 이름을 입력하세요.', 'er'); return; }
         const r = await api('POST', '/api/chat/rooms', { name });
-        if (r.ok) { closeM('m-room'); toast('채팅방 생성 완료!', 'ok'); document.getElementById('cr-name').value = ''; loadChatPage(); }
-        else toast(r.d?.message || '생성 실패', 'er');
+        if (r.ok) {
+            closeM('m-room');
+            toast('채팅방 생성 완료!', 'ok');
+            document.getElementById('cr-name').value = '';
+            loadChatPage();
+        } else {
+            toast(r.d?.message || '생성 실패', 'er');
+        }
     }
 
     async function joinRoom(roomId, roomName) {
         curRoomId = roomId;
+        if (!myNickname && token) await fetchMe();
+        echoSet.clear();
+
         document.getElementById('cur-room-name').textContent = roomName;
         document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
         document.getElementById('ri-' + roomId)?.classList.add('active');
         document.getElementById('chat-in').disabled = false;
-        document.getElementById('leave-btn').style.display = 'inline-flex'; // 나가기 버튼 표시
+        document.getElementById('leave-btn').style.display = 'inline-flex';
+
         const msgs = document.getElementById('chat-msgs');
         msgs.innerHTML = `<div class="chat-empty"><div class="spin"></div></div>`;
+
+        // 최초 50개 메시지 로드
         const r = await api('GET', `/api/rooms/${roomId}/messages?size=50`);
         msgs.innerHTML = '';
-        if (r.ok && Array.isArray(r.d) && r.d.length) r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
-        else msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
+
+        if (r.ok && Array.isArray(r.d) && r.d.length) {
+            // 가장 오래된 메시지의 id를 cursor로 저장
+            window._chatCursor = r.d[0].id;
+            window._chatHasMore = r.d.length >= 50;
+            r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
+        } else {
+            window._chatCursor = null;
+            window._chatHasMore = false;
+            msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
+        }
+
+        msgs.scrollTop = msgs.scrollHeight;
+
+        // 스크롤 맨 위 감지 → 과거 메시지 로드
+        msgs.onscroll = () => {
+            updateScrollBtn(msgs);
+            if (msgs.scrollTop === 0 && window._chatHasMore && !window._chatLoading) {
+                loadMoreMessages(roomId);
+            }
+        };
+
         connectWs(roomId);
     }
 
@@ -786,10 +1426,15 @@
                     const el = document.getElementById('chat-msgs');
                     if (el.querySelector('.chat-empty')) el.innerHTML = '';
 
+                    // 서버 필드명 대응
                     const sender  = b.userName || b.nickname || b.sender || b.username || '';
                     const message = b.message  || b.content  || b.text   || '';
 
-                    // 채팅방 종료 — 나가기 누른 쪽, 상대방 모두 처리
+                    // 내가 보낸 메시지 에코 무시
+                    if (myNickname && sender === myNickname && echoSet.has(message)) {
+                        echoSet.delete(message);
+                        return;
+                    }
                     if (message === 'ROOM_CLOSED') {
                         resetChatUI();
                         toast('채팅방이 종료되었습니다.', 'inf');
@@ -811,7 +1456,6 @@
         if (!confirm('채팅방을 나가면 대화 내용이 모두 삭제됩니다. 나가시겠습니까?')) return;
         const r = await api('DELETE', `/api/chat/rooms/${curRoomId}`);
         if (!r.ok) { toast(r.d?.message || '나가기 실패', 'er'); return; }
-        // 성공 시 UI 초기화는 ROOM_CLOSED 메시지 수신 후 자동 처리
     }
 
     function resetChatUI() {
@@ -826,39 +1470,342 @@
         document.getElementById('ws-dot').classList.remove('on');
         document.getElementById('ws-txt').textContent = '오프라인';
         document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
-        loadChatPage(); // 채팅방 목록 새로고침
+        loadChatPage();
     }
 
     function sendChat() {
         if (!stompClient || !stompClient.connected) { toast('채팅 연결이 끊겼습니다.', 'er'); return; }
         const inp = document.getElementById('chat-in');
-        const msg = inp.value.trim(); if (!msg) return;
+        const msg = inp.value.trim();
+        if (!msg) return;
+        // 즉시 내 쪽(오른쪽)에 표시
+        appendMsgMine(msg);
+        // 에코 중복 방지
+        echoSet.add(msg);
         stompClient.send('/pub/chat.send', {}, JSON.stringify({ roomId: curRoomId, message: msg }));
         inp.value = '';
     }
 
+    // 내가 보낸 메시지 — 항상 오른쪽
+    function appendMsgMine(message) {
+        const msgs = document.getElementById('chat-msgs');
+        if (msgs.querySelector('.chat-empty')) msgs.innerHTML = '';
+        const div = document.createElement('div');
+        div.className = 'cmsg mine';
+        div.innerHTML = `<div class="cb">${esc(message)}</div>
+<div class="ct">${new Date().toLocaleTimeString('ko', { hour: '2-digit', minute: '2-digit' })}</div>`;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    // 상대방 메시지 — 스마트 스크롤
     function appendMsg(sender, message, time) {
         const msgs = document.getElementById('chat-msgs');
-        const isMine = me && sender === me.nickname;
+        // myNickname 최후 보루
+        if (!myNickname) {
+            if (!me) me = JSON.parse(localStorage.getItem('me') || 'null');
+            myNickname = me?.nickname || null;
+        }
+        const isMine      = myNickname && sender === myNickname;
+        const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
+
         const div = document.createElement('div');
         div.className = 'cmsg' + (isMine ? ' mine' : '');
         div.innerHTML = `${!isMine ? `<div class="cs">${esc(sender)}</div>` : ''}
-    <div class="cb">${esc(message)}</div>
-    <div class="ct">${time ? new Date(time).toLocaleTimeString('ko',{hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
+<div class="cb">${esc(message)}</div>
+<div class="ct">${time ? new Date(time).toLocaleTimeString('ko', { hour: '2-digit', minute: '2-digit' }) : ''}</div>`;
         msgs.appendChild(div);
+
+        if (isMine || isNearBottom) {
+            msgs.scrollTop = msgs.scrollHeight;
+        } else {
+            updateScrollBtn(msgs);
+        }
+    }
+
+    function updateScrollBtn(msgs) {
+        const btn = document.getElementById('scroll-btn');
+        if (!btn) return;
+        const isNearBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 100;
+        btn.classList.toggle('visible', !isNearBottom);
+    }
+
+    function scrollToBottom() {
+        const msgs = document.getElementById('chat-msgs');
         msgs.scrollTop = msgs.scrollHeight;
+        document.getElementById('scroll-btn')?.classList.remove('visible');
+    }
+
+    // ── EVENT ──
+    const isAdmin = () => me?.userRole === 'ROLE_ADMIN' || me?.role === 'ROLE_ADMIN';
+    const rewardLabel = { POINT: '포인트', MEMBERSHIP: '멤버십' };
+    const eventStatusLabel = { OPEN: '진행중', CLOSED: '종료' };
+
+    async function loadEventPage(page = 1) {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        // 어드민이면 생성 버튼 표시
+        document.getElementById('btn-create-event').style.display = isAdmin() ? 'inline-flex' : 'none';
+
+        const r = await api('GET', `/api/events?page=${page}&size=6`);
+        const el = document.getElementById('event-list');
+        const pag = document.getElementById('event-pag');
+        if (!r.ok || !r.d?.data) { el.innerHTML = empty('이벤트 목록을 불러올 수 없습니다.'); return; }
+
+        const { events, totalPages, currentPage } = r.d.data;
+        if (!events?.length) { el.innerHTML = empty('진행중인 이벤트가 없습니다.'); pag.innerHTML = ''; return; }
+
+        el.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">${events.map(e => `
+        <div style="background:var(--surface);border:1px solid ${e.status==='OPEN'?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:18px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+            <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;${e.status==='OPEN'?'background:rgba(240,165,0,0.15);color:var(--accent);border:1px solid var(--accent)':'background:var(--surface2);color:var(--text2);border:1px solid var(--border)'}">${eventStatusLabel[e.status]||e.status}</span>
+                    <span style="font-size:11px;color:var(--text2)">${rewardLabel[e.rewardType]||e.rewardType}</span>
+                </div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:4px">${esc(e.eventName)}</div>
+                <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${esc(e.eventDescription)}</div>
+                <div style="display:flex;gap:16px;font-size:12px;color:var(--text2)">
+                    <span>📦 잔여 <strong style="color:var(--text)">${e.remainingQuantity}/${e.totalQuantity}</strong></span>
+                    <span>⏰ ${fDate(e.startAt)} ~ ${fDate(e.endAt)}</span>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+                <button class="btn btn-p btn-sm" onclick="openEventDetail(${e.eventId})">상세보기</button>
+                ${e.status==='OPEN' ? `<button class="btn btn-o btn-sm" onclick="quickIssueCoupon(${e.eventId})">쿠폰 발급</button>` : ''}
+                ${isAdmin() ? `
+                <button class="btn btn-s btn-sm" onclick="openEventEdit(${e.eventId})">수정</button>
+                <button class="btn btn-d btn-sm" onclick="deleteEvent(${e.eventId})">삭제</button>` : ''}
+            </div>
+        </div>`).join('')}</div>`;
+
+        pag.innerHTML = '';
+        for (let i = 1; i <= (totalPages || 0); i++) {
+            pag.innerHTML += `<button class="${i-1===currentPage?'active':''}" onclick="loadEventPage(${i})">${i}</button>`;
+        }
+    }
+
+    async function openEventDetail(eventId) {
+        const r = await api('GET', `/api/events/${eventId}`);
+        if (!r.ok || !r.d?.data) { toast('이벤트 정보를 불러올 수 없습니다.', 'er'); return; }
+        const e = r.d.data;
+        document.getElementById('event-detail-content').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13px">
+            <div style="display:flex;gap:8px">
+                <span style="padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;${e.status==='OPEN'?'background:rgba(240,165,0,0.15);color:var(--accent);border:1px solid var(--accent)':'background:var(--surface2);color:var(--text2);border:1px solid var(--border)'}">${eventStatusLabel[e.status]||e.status}</span>
+                <span style="padding:3px 10px;border-radius:4px;font-size:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)">${rewardLabel[e.rewardType]||e.rewardType}</span>
+            </div>
+            <div style="font-size:20px;font-weight:700">${esc(e.eventName)}</div>
+            <div style="color:var(--text2)">${esc(e.eventDescription)}</div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">총 수량</div><div style="font-weight:700">${e.totalQuantity}</div></div>
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">발급된 수량</div><div style="font-weight:700">${e.issuedQuantity}</div></div>
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">시작</div><div style="font-weight:700">${fDate(e.startAt)}</div></div>
+                <div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">종료</div><div style="font-weight:700">${fDate(e.endAt)}</div></div>
+            </div>
+            ${e.status==='OPEN' ? `<button class="btn btn-p btn-full" onclick="quickIssueCoupon(${e.id});closeM('m-event-detail')">🎁 쿠폰 발급받기</button>` : ''}
+        </div>`;
+        openM('m-event-detail');
+    }
+
+    async function openEventEdit(eventId) {
+        const r = await api('GET', `/api/events/${eventId}`);
+        if (!r.ok || !r.d?.data) { toast('이벤트 정보를 불러올 수 없습니다.', 'er'); return; }
+        const e = r.d.data;
+        document.getElementById('ee-id').value    = e.id;
+        document.getElementById('ee-name').value  = e.eventName;
+        document.getElementById('ee-desc').value  = e.eventDescription;
+        document.getElementById('ee-qty').value   = e.totalQuantity;
+        document.getElementById('ee-reward').value = e.rewardType;
+        document.getElementById('ee-status').value = e.status;
+        document.getElementById('ee-sa').value    = e.startAt?.slice(0,16) || '';
+        document.getElementById('ee-ea').value    = e.endAt?.slice(0,16) || '';
+        openM('m-event-edit');
+    }
+
+    async function createNewEvent() {
+        const r = await api('POST', '/api/events', {
+            eventName: v('ec-name'), eventDescription: v('ec-desc'),
+            totalQuantity: Number(v('ec-qty')), rewardType: v('ec-reward'),
+            startAt: iso(v('ec-sa')), endAt: iso(v('ec-ea')),
+        });
+        if (r.ok) { toast('이벤트 생성 완료!', 'ok'); closeM('m-event-create'); loadEventPage(1); }
+        else toast(r.d?.message || '생성 실패', 'er');
+    }
+
+    async function updateEvent() {
+        const id = document.getElementById('ee-id').value;
+        const r = await api('PATCH', `/api/events/${id}`, {
+            eventName: v('ee-name'), eventDescription: v('ee-desc'),
+            totalQuantity: Number(v('ee-qty')), rewardType: v('ee-reward'),
+            status: v('ee-status'),
+            startAt: iso(v('ee-sa')), endAt: iso(v('ee-ea')),
+        });
+        if (r.ok) { toast('이벤트 수정 완료!', 'ok'); closeM('m-event-edit'); loadEventPage(1); }
+        else toast(r.d?.message || '수정 실패', 'er');
+    }
+
+    async function deleteEvent(eventId) {
+        if (!confirm('이벤트를 삭제하시겠습니까?')) return;
+        const r = await api('DELETE', `/api/events/${eventId}`);
+        if (r.ok) { toast('이벤트 삭제 완료!', 'ok'); loadEventPage(1); }
+        else toast(r.d?.message || '삭제 실패', 'er');
+    }
+
+    async function quickIssueCoupon(eventId) {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
+        const r = await api('POST', `/api/events/${eventId}/coupons`);
+        if (r.ok && r.d?.data?.couponId) {
+            const couponId = r.d.data.couponId;
+            // 쿠폰 ID를 복사할 수 있게 표시
+            const msg = `쿠폰 발급 완료! 쿠폰 ID: ${couponId}`;
+            toast(msg, 'ok');
+            // 쿠폰 사용 입력란에 자동 입력
+            const cidEl = document.getElementById('cp-cid');
+            if (cidEl) cidEl.value = couponId;
+            // 클립보드 복사
+            navigator.clipboard?.writeText(String(couponId)).catch(() => {});
+        } else {
+            toast(r.d?.message || '발급 실패', 'er');
+        }
+    }
+
+    // ── AUCTION EDIT / DELETE ──
+    async function approveAuction(auctionId) {
+        if (!confirm('이 경매를 승인하시겠습니까?')) return;
+        const r = await api('PATCH', `/admin/auctions/${auctionId}/approve`);
+        if (r.ok) {
+            toast('경매가 승인되었습니다!', 'ok');
+            openDetail(auctionId); // 상세 새로고침
+        } else {
+            toast(r.d?.message || '승인 실패', 'er');
+        }
+    }
+
+    let editUploadedImageUrl = null;
+
+    function toggleAeImgMode(mode) {
+        document.getElementById('ae-img-url-mode').style.display    = mode === 'url'    ? 'block' : 'none';
+        document.getElementById('ae-img-upload-mode').style.display = mode === 'upload' ? 'flex'  : 'none';
+        if (mode === 'upload') editUploadedImageUrl = null;
+    }
+
+    function previewAeImage(input) {
+        editUploadedImageUrl = null;
+        document.getElementById('ae-upload-ok').style.display = 'none';
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('ae-img-preview').style.display = 'block';
+            document.getElementById('ae-img-preview-img').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    async function uploadAeImage() {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
+        const fileInput = document.getElementById('ae-file');
+        if (!fileInput.files || !fileInput.files[0]) { toast('이미지를 선택해주세요.', 'er'); return; }
+        const btn = document.getElementById('ae-upload-btn');
+        btn.disabled = true; btn.textContent = '업로드 중...';
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        const h = {};
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        try {
+            const res = await fetch(BASE + '/api/auctions/files/upload', { method: 'POST', headers: h, body: formData });
+            const data = await res.json();
+            if (!res.ok || !data?.data?.key) { toast(data?.message || '업로드 실패', 'er'); return; }
+            editUploadedImageUrl = data.data.key;
+            document.getElementById('ae-img-preview-img').src = editUploadedImageUrl;
+            document.getElementById('ae-upload-ok').style.display = 'block';
+            toast('이미지 업로드 완료!', 'ok');
+        } catch(e) { toast('업로드 중 오류: ' + e.message, 'er'); }
+        btn.disabled = false; btn.textContent = '업로드';
+    }
+
+
+    function openAuctionEdit(auctionId) {
+        const a = window._currentAuction;
+        document.getElementById('ae-id').value   = auctionId;
+        document.getElementById('ae-name').value = a?.productName || '';
+        document.getElementById('ae-img').value  = a?.imageUrl || '';
+        document.getElementById('ae-cat').value  = a?.category || 'CLOTHES';
+        document.getElementById('ae-sp').value   = a?.startPrice || '';
+        document.getElementById('ae-mb').value   = a?.minimumBid || '';
+        document.getElementById('ae-sa').value   = a?.startAt?.slice(0, 16) || '';
+        document.getElementById('ae-ea').value   = a?.endAt?.slice(0, 16) || '';
+        // 라디오 초기화 — 기존 URL 모드로
+        document.querySelector('input[name="ae-img-mode"][value="url"]').checked = true;
+        toggleAeImgMode('url');
+        editUploadedImageUrl = null;
+        document.getElementById('ae-upload-ok').style.display = 'none';
+        document.getElementById('ae-img-preview').style.display = 'none';
+        openM('m-auction-edit');
+    }
+
+    async function updateAuction() {
+        const id   = document.getElementById('ae-id').value;
+        const mode = document.querySelector('input[name="ae-img-mode"]:checked')?.value;
+        const img  = mode === 'upload' ? editUploadedImageUrl : v('ae-img');
+
+        if (mode === 'upload' && !editUploadedImageUrl) { toast('이미지를 업로드해주세요.', 'er'); return; }
+
+        const name = v('ae-name');
+        const cat  = v('ae-cat');
+        const sp   = v('ae-sp');
+        const mb   = v('ae-mb');
+        const sa   = v('ae-sa');
+        const ea   = v('ae-ea');
+
+        if (!name) { toast('상품명을 입력해주세요.', 'er'); return; }
+        if (!img)  { toast('이미지 URL을 입력해주세요.', 'er'); return; }
+        if (!cat)  { toast('카테고리를 선택해주세요.', 'er'); return; }
+        if (!sp)   { toast('시작가를 입력해주세요.', 'er'); return; }
+        if (!mb)   { toast('최소 입찰 단위를 입력해주세요.', 'er'); return; }
+        if (!sa)   { toast('시작 시간을 입력해주세요.', 'er'); return; }
+        if (!ea)   { toast('종료 시간을 입력해주세요.', 'er'); return; }
+
+        const r = await api('PATCH', `/api/auctions/${id}`, {
+            productName: name, imageUrl: img, category: cat,
+            startPrice: Number(sp), minimumBid: Number(mb),
+            startAt: iso(sa), endAt: iso(ea),
+        });
+        if (r.ok) {
+            toast('경매 수정 완료!', 'ok');
+            closeM('m-auction-edit');
+            openDetail(Number(id));
+        } else {
+            toast(r.d?.message || '수정 실패', 'er');
+        }
+    }
+
+    async function deleteAuction(auctionId) {
+        if (!confirm('경매를 삭제하시겠습니까?')) return;
+        const r = await api('DELETE', `/api/auctions/${auctionId}`);
+        if (r.ok) {
+            toast('경매가 삭제되었습니다.', 'ok');
+            goPage('auctions');
+        } else {
+            toast(r.d?.message || '삭제 실패', 'er');
+        }
     }
 
     // ── COUPON ──
     async function issueCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
         const r = await api('POST', `/api/events/${v('cp-eid')}/coupons`);
-        toast(r.ok ? (r.d?.message||'쿠폰 발급 완료!') : (r.d?.message||'발급 실패'), r.ok?'ok':'er');
+        if (r.ok && r.d?.data?.couponId) {
+            const couponId = r.d.data.couponId;
+            toast(`쿠폰 발급 완료! 쿠폰 ID: ${couponId}`, 'ok');
+            document.getElementById('cp-cid').value = couponId;
+            navigator.clipboard?.writeText(String(couponId)).catch(() => {});
+        } else {
+            toast(r.d?.message || '발급 실패', 'er');
+        }
     }
     async function useCoupon() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
         const r = await api('POST', `/api/coupons/${v('cp-cid')}/use`);
-        toast(r.ok ? (r.d?.message||'쿠폰 사용 완료!') : (r.d?.message||'사용 실패'), r.ok?'ok':'er');
+        toast(r.ok ? (r.d?.message || '쿠폰 사용 완료!') : (r.d?.message || '사용 실패'), r.ok ? 'ok' : 'er');
     }
 
     // ── MYPAGE ──
@@ -866,58 +1813,115 @@
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
         const r = await api('GET', '/api/users/me');
         if (r.ok && r.d?.data) {
-            const u = r.d.data; me = u; localStorage.setItem('me', JSON.stringify(me));
-            document.getElementById('my-av').textContent = (u.nickname?.[0]||'?').toUpperCase();
-            document.getElementById('my-nick').textContent = u.nickname;
+            const u = r.d.data;
+            me = u; myNickname = u.nickname;
+            localStorage.setItem('me', JSON.stringify(me));
+            document.getElementById('my-av').textContent    = (u.nickname?.[0] || '?').toUpperCase();
+            document.getElementById('my-nick').textContent  = u.nickname;
             document.getElementById('my-email').textContent = u.email;
-            document.getElementById('my-pt').textContent = Number(u.point||0).toLocaleString();
+            document.getElementById('my-pt').textContent    = Number(u.point || 0).toLocaleString();
+
+            // 멤버십 정보 표시
+            const grade = u.membership?.grade || 'NORMAL';
+            const expAt = u.membership?.expiredAt;
+            const gradeLabel = { NORMAL: '일반', SELLER: '판매자' };
+            const gradeColor = { NORMAL: 'var(--text2)', SELLER: 'var(--accent)' };
+            const gradeIcon  = { NORMAL: '👤', SELLER: '🏪' };
+            document.getElementById('my-grade').textContent = `${gradeIcon[grade] || ''} ${gradeLabel[grade] || grade}`;
+            document.getElementById('my-grade').style.color = gradeColor[grade] || 'var(--text2)';
+            const badge = document.getElementById('my-grade-badge');
+            badge.textContent = grade;
+            badge.style.cssText = `font-size:11px;padding:2px 8px;border-radius:10px;background:${grade==='VIP'?'rgba(240,165,0,0.15)':grade==='PREMIUM'?'rgba(168,85,247,0.15)':'var(--surface2)'};color:${gradeColor[grade]||'var(--text2)'};border:1px solid ${gradeColor[grade]||'var(--border)'}`;
+            document.getElementById('my-grade-exp').textContent = expAt
+                ? `만료일: ${fDate(expAt)}`
+                : grade === 'NORMAL' ? '기본 멤버십' : '만료일 없음';
+
             applyAuth();
         }
         loadMyAuctions(); loadMyBids(); loadAlerts();
     }
 
+    async function openMyInfo() {
+        const r = await api('GET', '/api/users/me');
+        if (!r.ok || !r.d?.data) { toast('정보를 불러올 수 없습니다.', 'er'); return; }
+        const u = r.d.data;
+        const grade = u.membership?.grade || 'NORMAL';
+        const gradeLabel = { NORMAL: '🪙 일반', SELLER: '🏪 판매자' };
+        const expAt = u.membership?.expiredAt;
+
+        document.getElementById('my-info-content').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:0">
+            ${infoRow('👤', '닉네임', esc(u.nickname))}
+            ${infoRow('📝', '이름', esc(u.name))}
+            ${infoRow('📧', '이메일', esc(u.email))}
+            ${infoRow('📱', '전화번호', esc(u.phone))}
+            ${infoRow('💰', '보유 포인트', Number(u.point || 0).toLocaleString() + 'P')}
+            ${infoRow('🎖️', '멤버십 등급', gradeLabel[grade] || grade)}
+            ${infoRow('📅', '멤버십 만료일', expAt ? fDate(expAt) : '없음')}
+            ${infoRow('🔑', '역할', u.userRole === 'ROLE_ADMIN' ? '관리자' : '일반 유저')}
+        </div>`;
+        openM('m-my-info');
+    }
+
+    function infoRow(icon, label, value) {
+        return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:18px;width:24px;text-align:center;flex-shrink:0">${icon}</span>
+        <div style="flex:1">
+            <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${label}</div>
+            <div style="font-size:14px;font-weight:600">${value}</div>
+        </div>
+    </div>`;
+    }
+
     async function loadMyAuctions() {
-        const r = await api('GET', '/api/users/me/auctions');
+        const r  = await api('GET', '/api/users/me/auctions');
         const el = document.getElementById('tp-auctions');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(a => `
-      <div class="li" onclick="openDetail(${a.auctionId})">
-        <div><div class="lt">${esc(a.productName)}</div><div class="ls">${CL[a.category]} · ${SL[a.status]}</div></div>
-        <div class="lp">${Number(a.startPrice).toLocaleString()}원~</div>
-      </div>`).join('');
+                <div class="li" onclick="openDetail(${a.auctionId})">
+                    <div><div class="lt">${esc(a.productName)}</div><div class="ls">${CL[a.category]} · ${SL[a.status]}</div></div>
+                    <div class="lp">${Number(a.startPrice).toLocaleString()}원~</div>
+                </div>`).join('');
         } else el.innerHTML = empty('등록한 경매가 없습니다.');
     }
 
     async function loadMyBids() {
-        const r = await api('GET', '/api/bids/me');
+        const r  = await api('GET', '/api/bids/me');
         const el = document.getElementById('tp-bids');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(b => `
-      <div class="li" onclick="openDetail(${b.auctionId})">
-        <div><div class="lt">경매 #${b.auctionId}</div><div class="ls">${b.status} · ${fDate(b.createdAt)}</div></div>
-        <div class="lp">${Number(b.price).toLocaleString()}원</div>
-      </div>`).join('');
+                <div class="li" onclick="openDetail(${b.auctionId})">
+                    <div><div class="lt">경매 #${b.auctionId}</div><div class="ls">${b.status} · ${fDate(b.createdAt)}</div></div>
+                    <div class="lp">${Number(b.price).toLocaleString()}원</div>
+                </div>`).join('');
         } else el.innerHTML = empty('입찰 내역이 없습니다.');
     }
 
     async function loadAlerts() {
-        const r = await api('GET', '/api/alerts');
+        const r  = await api('GET', '/api/alerts');
         const el = document.getElementById('tp-alerts');
         if (r.ok && r.d?.data?.length) {
             el.innerHTML = r.d.data.map(a => `
-      <div class="li"><div><div class="lt">${esc(a.message||a.type)}</div><div class="ls">${fDate(a.createdAt)}</div></div></div>`).join('');
+                <div class="li">
+                    <div><div class="lt">${esc(a.message || a.type)}</div><div class="ls">${fDate(a.createdAt)}</div></div>
+                </div>`).join('');
         } else el.innerHTML = empty('알림이 없습니다.');
     }
 
     async function changeNick() {
-        const nick = v('ep-nick'); if (!nick) { toast('닉네임을 입력하세요.', 'er'); return; }
+        const nick = v('ep-nick');
+        if (!nick) { toast('닉네임을 입력하세요.', 'er'); return; }
         const r = await api('PATCH', '/api/users/me', { nickname: nick });
-        toast(r.ok ? '닉네임 변경 완료!' : (r.d?.message||'변경 실패'), r.ok?'ok':'er');
+        toast(r.ok ? '닉네임 변경 완료!' : (r.d?.message || '변경 실패'), r.ok ? 'ok' : 'er');
         if (r.ok) { closeM('m-edit'); loadMypage(); }
     }
+
     async function changePw() {
-        const r = await api('PATCH', '/api/users/me/password', { currentPassword: v('ep-cpw'), newPassword: v('ep-npw') });
-        toast(r.ok ? '비밀번호 변경 완료!' : (r.d?.message||'변경 실패'), r.ok?'ok':'er');
+        const r = await api('PATCH', '/api/users/me/password', {
+            currentPassword: v('ep-cpw'), newPassword: v('ep-npw')
+        });
+        toast(r.ok ? '비밀번호 변경 완료!' : (r.d?.message || '변경 실패'), r.ok ? 'ok' : 'er');
         if (r.ok) closeM('m-edit');
     }
 
@@ -930,18 +1934,88 @@
     }
 
     // ── UTIL ──
-    function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function v(id)    { const el = document.getElementById(id); return el ? el.value : ''; }
+    function esc(s)   { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function iso(val) { return val ? val + ':00' : null; }
     function fDate(s) {
         if (!s) return '-';
-        try { return new Date(s).toLocaleString('ko',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+        try { return new Date(s).toLocaleString('ko', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
         catch { return s; }
     }
     function empty(msg) { return `<div class="empty"><div class="ei">📭</div><p>${msg}</p></div>`; }
+    // ── SOCIAL LOGIN ──
+    function doSocialLogin(provider) {
+        window.location.href = BASE + '/oauth2/authorization/' + provider;
+    }
 
+    function handleOAuth2Callback() {
+        const params = new URLSearchParams(window.location.search);
+        const cbToken   = params.get('token');
+        const provider  = params.get('provider');
+        const isSuccess = params.get('oauth2') === 'additional-info';
+
+        if (!cbToken) return;
+
+        window.history.replaceState({}, '', window.location.pathname);
+
+        token = cbToken;
+        localStorage.setItem('token', token);
+
+        if (provider === 'google') {
+            closeAllModals();
+            openM('m-google-info');
+        } else if (provider === 'kakao') {
+            closeAllModals();
+            openM('m-kakao-info');
+        } else if (isSuccess) {
+            completeSocialLogin(cbToken);
+        }
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open'));
+    }
+
+    async function completeSocialLogin(rawToken) {
+        token = rawToken.startsWith('Bearer ') ? rawToken.substring(7) : rawToken;
+        localStorage.setItem('token', token);
+        await fetchMe();
+        applyAuth();
+        toast('로그인 성공!', 'ok');
+        goPage('home');
+    }
+
+    async function doGoogleAddInfo() {
+        const phone = v('gi-ph');
+        if (!/^\d{11}$/.test(phone)) { toast('전화번호는 숫자 11자리로 입력해주세요.', 'er'); return; }
+        const r = await api('PATCH', '/api/auth/oauth2/me/google', { phone });
+        if (r.ok && r.d?.data?.accessToken) {
+            closeM('m-google-info');
+            document.getElementById('gi-ph').value = '';
+            await completeSocialLogin(r.d.data.accessToken);
+        } else {
+            toast(r.d?.message || '추가 정보 저장 실패', 'er');
+        }
+    }
+
+    async function doKakaoAddInfo() {
+        const phone = v('ki-ph');
+        const email = v('ki-em');
+        if (!/^\d{11}$/.test(phone)) { toast('전화번호는 숫자 11자리로 입력해주세요.', 'er'); return; }
+        if (!email || !email.includes('@')) { toast('올바른 이메일을 입력해주세요.', 'er'); return; }
+        const r = await api('PATCH', '/api/auth/oauth2/me/kakao', { phone, email });
+        if (r.ok && r.d?.data?.accessToken) {
+            closeM('m-kakao-info');
+            document.getElementById('ki-ph').value = '';
+            document.getElementById('ki-em').value = '';
+            await completeSocialLogin(r.d.data.accessToken);
+        } else {
+            toast(r.d?.message || '추가 정보 저장 실패', 'er');
+        }
+    }
     // ── INIT ──
     applyAuth();
+    handleOAuth2Callback();
     loadHome();
 </script>
 </body>
