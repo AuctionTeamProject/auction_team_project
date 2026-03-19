@@ -760,10 +760,20 @@
         const img = a.imageUrl
             ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
             : (CE[a.category] || '📦');
-        const rb = rank ? `<div class="rank-badge">${rank}</div>` : '';
+        const rb = rank ? `<div style="
+        position:absolute; top:8px; left:8px;
+        background:${rank === 1 ? '#f0a500' : rank === 2 ? '#aaaaaa' : rank === 3 ? '#cd7f32' : 'rgba(0,0,0,0.6)'};
+        color:${rank <= 3 ? '#000' : '#fff'};
+        font-family:'Bebas Neue'; font-size:13px; letter-spacing:1px;
+        padding:3px 8px; border-radius:4px; line-height:1.4;
+        z-index:1;
+    ">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`} TOP${rank}</div>` : '';
         return `<div class="auction-card" onclick="openDetail(${a.auctionId})">
-    ${rb}
-    <div class="card-img">${img}<div class="card-badge b-${a.status}">${SL[a.status] || a.status}</div></div>
+    <div class="card-img">
+        ${img}
+        ${rb}
+        <div class="card-badge b-${a.status}">${SL[a.status] || a.status}</div>
+    </div>
     <div class="card-body">
         <div class="card-cat">${CL[a.category] || a.category}</div>
         <div class="card-name">${esc(a.productName)}</div>
