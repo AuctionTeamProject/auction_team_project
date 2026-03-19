@@ -10,17 +10,13 @@ import org.mockito.quality.Strictness;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionCreateRequest;
 import sparta.auction_team_project.domain.auction.dto.request.AuctionUpdateRequest;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionApproveResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionCreateResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionDeleteResponse;
-import sparta.auction_team_project.domain.auction.dto.response.AuctionUpdateResponse;
-import sparta.auction_team_project.domain.auction.entity.Auction;
-import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
-import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
+import sparta.auction_team_project.domain.auction.dto.response.*;
+import sparta.auction_team_project.domain.auction.entity.*;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
+import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.enums.MembershipEnum;
+import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.entity.User;
-import sparta.auction_team_project.domain.user.enums.UserRole;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -41,18 +37,40 @@ class AuctionServiceTest {
     @Mock
     UserRepository userRepository;
 
+    @Mock
+    MembershipRepository membershipRepository;
+
     @InjectMocks
     AuctionService auctionService;
-
 
     // 판매자 Mock
     private User 판매자() {
 
         User user = mock(User.class);
+        Membership membership = mock(Membership.class);
 
         given(user.getId()).willReturn(1L);
         given(user.getEmail()).willReturn("seller@test.com");
-        given(user.getGrade()).willReturn(MembershipEnum.SELLER);
+
+        given(membership.getGrade()).willReturn(MembershipEnum.SELLER);
+        given(membershipRepository.findByUserId(1L))
+                .willReturn(Optional.of(membership));
+
+        return user;
+    }
+
+    // 일반 사용자 Mock
+    private User 일반유저() {
+
+        User user = mock(User.class);
+        Membership membership = mock(Membership.class);
+
+        given(user.getId()).willReturn(2L);
+        given(user.getEmail()).willReturn("user@test.com");
+
+        given(membership.getGrade()).willReturn(MembershipEnum.NORMAL);
+        given(membershipRepository.findByUserId(2L))
+                .willReturn(Optional.of(membership));
 
         return user;
     }
@@ -103,15 +121,7 @@ class AuctionServiceTest {
     @Test
     void 경매등록_판매자가아니면_실패() {
 
-        User user = new User(
-                "닉네임",
-                "이름",
-                "user@test.com",
-                "password",
-                "01012345678",
-                UserRole.ROLE_USER
-        );
-
+        User user = 일반유저();
         AuctionCreateRequest request = 정상등록요청();
 
         given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
@@ -170,6 +180,7 @@ class AuctionServiceTest {
     void 경매수정_판매자가아니면_실패() {
 
         Auction auction = 경매();
+        User 다른유저 = 일반유저();
 
         AuctionUpdateRequest request = new AuctionUpdateRequest(
                 "수정상품",
@@ -180,12 +191,6 @@ class AuctionServiceTest {
                 LocalDateTime.now().plusHours(3),
                 LocalDateTime.now().plusHours(6)
         );
-
-        User 다른유저 = mock(User.class);
-
-        given(다른유저.getId()).willReturn(2L);
-        given(다른유저.getEmail()).willReturn("other@test.com");
-        given(다른유저.getGrade()).willReturn(MembershipEnum.SELLER);
 
         given(userRepository.findByEmail(다른유저.getEmail())).willReturn(Optional.of(다른유저));
         given(auctionRepository.findById(1L)).willReturn(Optional.of(auction));
@@ -214,7 +219,6 @@ class AuctionServiceTest {
 
         User user = 판매자();
         Auction auction = 경매();
-
         auction.approve();
 
         given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
