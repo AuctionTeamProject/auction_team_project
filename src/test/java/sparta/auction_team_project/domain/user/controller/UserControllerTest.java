@@ -51,7 +51,8 @@ class UserControllerTest {
                         "email@test.com",
                         "01012345678",
                         0L,
-                        membershipResponse
+                        membershipResponse,
+                        "ROLE_USER"
                 );
 
         given(userService.getUser(any())).willReturn(response);
