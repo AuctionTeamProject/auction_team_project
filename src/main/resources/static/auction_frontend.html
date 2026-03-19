@@ -795,7 +795,7 @@
     let stompClient = null;
 
     // ── HTTP ──
-    async function api(method, path, body) {
+    async function api(method, path, body, _retry = false) {
         const h = { 'Content-Type': 'application/json' };
         if (token) h['Authorization'] = 'Bearer ' + token;
         try {
@@ -806,10 +806,40 @@
             const txt = await res.text();
             let d;
             try { d = JSON.parse(txt); } catch { d = { message: txt }; }
+
+            // 401이고 아직 재시도 안 했으면 토큰 갱신 후 재시도
+            if (res.status === 401 && !_retry) {
+                const refreshed = await tryRefresh();
+                if (refreshed) return api(method, path, body, true);
+                // 갱신 실패 시 로그아웃
+                token = ''; me = null; myNickname = null;
+                localStorage.removeItem('token'); localStorage.removeItem('me');
+                applyAuth();
+                toast('세션이 만료되었습니다. 다시 로그인해주세요.', 'er');
+                openM('m-login');
+            }
+
             return { ok: res.ok, d };
         } catch(e) {
             return { ok: false, d: { message: e.message } };
         }
+    }
+
+    async function tryRefresh() {
+        try {
+            const res = await fetch(BASE + '/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include', // 쿠키 자동 포함
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const d = await res.json();
+            if (res.ok && d?.data?.accessToken) {
+                token = d.data.accessToken.replace('Bearer ', '').trim();
+                localStorage.setItem('token', token);
+                return true;
+            }
+            return false;
+        } catch { return false; }
     }
 
     // ── TOAST ──
