@@ -27,7 +27,7 @@ class BidAlertEventListenerTest {
         BidPlacedEvent event = new BidPlacedEvent(1L, 2L, 1L);
 
         // when
-        listener.handle(event);
+        listener.bidHandle(event);
 
         // then
         verify(alertService).notifyNewBid(1L, 2L);
@@ -40,7 +40,7 @@ class BidAlertEventListenerTest {
         BidPlacedEvent event = new BidPlacedEvent(1L, 2L, null);
 
         // when
-        listener.handle(event);
+        listener.bidHandle(event);
 
         // then
         verify(alertService).notifyNewBid(1L, 2L);
