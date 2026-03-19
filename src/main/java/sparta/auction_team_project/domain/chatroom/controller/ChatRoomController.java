@@ -37,4 +37,13 @@ public class ChatRoomController {
         return ResponseEntity.ok(BaseResponse.success("200", "채팅방 조회 성공", response)
         );
     }
+
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<BaseResponse<Void>> delete(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal AuthUser authUser) {
+
+        chatRoomService.deleteRoom(authUser.getId(), roomId, authUser.getUserRole());
+        return ResponseEntity.ok(BaseResponse.success("200", "채팅방 삭제 완료", null));
+    }
 }
