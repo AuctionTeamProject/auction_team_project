@@ -10,7 +10,8 @@ public enum AlertType {
     OUT_BID ("입찰 종료"),
     AUCTION_END_SOON ("경매 종료 10분전"),
     AUCTION_END ("경매 종료"),
-    AUCTION_WIN ("낙찰 성공");
+    AUCTION_WIN ("낙찰 성공"),
+    SUPPORT_REQUEST ("채팅 문의가 접수되었습니다");
 
     private final String description;
 }

@@ -1,6 +1,7 @@
 package sparta.auction_team_project.domain.alert.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -14,11 +15,15 @@ import sparta.auction_team_project.domain.alert.repository.AlertRepository;
 import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
 import sparta.auction_team_project.domain.bid.repository.BidRepository;
+import sparta.auction_team_project.domain.user.entity.User;
+import sparta.auction_team_project.domain.user.enums.UserRole;
+import sparta.auction_team_project.domain.user.repository.UserRepository;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AlertService {
@@ -28,6 +33,7 @@ public class AlertService {
     private final AuctionRepository auctionRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final UserRepository userRepository;
 
     /**
      * 새로운 최고 입찰 발생 알림
@@ -80,14 +86,13 @@ public class AlertService {
     /**
      * 알림 생성 + WebSocket 전송
      */
-    public void createAndSend(Long auctionId, Long userId, AlertType type){
+    public void createAndSend(Long targetId, Long userId, AlertType type){
 
-        String key = "alert:" + auctionId + ":" + userId + ":" + type;
+        String key = "alert:" + targetId + ":" + userId + ":" + type;
 
         // Redis 중복 방지
         Boolean isNew = redisTemplate.opsForValue()
-                .setIfAbsent(key, "1", Duration.ofSeconds(2));
-
+                .setIfAbsent(key, "1", Duration.ofSeconds(5));
         if (Boolean.FALSE.equals(isNew)) {
             return; // 이미 보낸 알림이면 종료
         }
@@ -95,7 +100,7 @@ public class AlertService {
         // 알림 DB 저장
         Alert alert = alertRepository.save(
                 new Alert(
-                        auctionId,
+                        targetId,
                         userId,
                         type,
                         type.getDescription(),
@@ -200,6 +205,19 @@ public class AlertService {
                     userId,
                     AlertType.AUCTION_END_SOON
             );
+        }
+    }
+
+    /**
+     * 채팅방 생성시 관리자에게 알림
+     */
+    @Transactional
+    public void notifySupportRequest(Long adminId, Long roomId) {
+        List<User> admins = userRepository.findAllByUserRole(UserRole.ROLE_ADMIN);
+
+        for (User admin : admins) {
+            if (admin.getId().equals(adminId)) continue;
+            createAndSend(roomId, admin.getId(), AlertType.SUPPORT_REQUEST);
         }
     }
 }
