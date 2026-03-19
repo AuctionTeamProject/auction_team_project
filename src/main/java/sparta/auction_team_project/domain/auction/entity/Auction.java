@@ -70,6 +70,9 @@ public class Auction extends BaseEntity {
     @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
 
+    @Column(name = "notifiedEndSoon", nullable = false)
+    private boolean notifiedEndSoon = false;
+
     // 경매 상품 등록
     public static Auction createAuction(
             Long sellerId,
@@ -135,5 +138,21 @@ public class Auction extends BaseEntity {
     // 경매 시작 (준비중 상태에서 시작시간 도달 시)
     public void startAuction() {
         this.status = AuctionStatus.ACTIVE;
+    }
+
+    // 낙찰 처리 (경매 종료 시 입찰자가 있을 경우)
+    public void closeWithWinner(Long winnerId, Long finalPrice) {
+        this.status = AuctionStatus.DONE;
+        this.winnerId = winnerId;
+        this.finalPrice = finalPrice;
+    }
+
+    // 유찰 처리 (경매 종료 시 입찰자가 없을 경우)
+    public void closeWithNoWinner() {
+        this.status = AuctionStatus.NO_BID;
+    }
+
+    public void markEndSoonNotified() {
+        this.notifiedEndSoon = true;
     }
 }

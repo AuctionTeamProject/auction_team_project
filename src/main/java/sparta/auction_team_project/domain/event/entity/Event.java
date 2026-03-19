@@ -73,4 +73,20 @@ public class Event extends BaseEntity {
         this.endAt = eventUpdateRequest.getEndAt();
         this.status = eventUpdateRequest.getStatus();
     }
+
+    public boolean isClosed() {
+        return this.status == EventStatus.CLOSED;
+    }
+
+    public boolean isNotInProgress(LocalDateTime now) {
+        return now.isBefore(this.startAt) || now.isAfter(this.endAt);
+    }
+
+    public boolean isSoldOut() {
+        return this.issuedQuantity >= this.totalQuantity;
+    }
+
+    public void increaseIssuedQuantity() {
+        this.issuedQuantity++;
+    }
 }

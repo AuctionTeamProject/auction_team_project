@@ -8,7 +8,7 @@ import sparta.auction_team_project.domain.bid.entity.Bid;
 import java.util.List;
 import java.util.Optional;
 
-public interface BidRepository extends JpaRepository<Bid, Long> {
+public interface BidRepository extends JpaRepository<Bid, Long>, BidCustomRepository {
 
     // 특정 경매의 현재 최고 입찰(SUCCEEDED 상태)
     @Query("SELECT b FROM Bid b WHERE b.auctionId = :auctionId AND b.status = 'SUCCEEDED' ORDER BY b.price DESC")
