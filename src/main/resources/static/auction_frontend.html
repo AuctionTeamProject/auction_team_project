@@ -369,7 +369,26 @@
         <div class="sec-title"><h2>경매 등록</h2></div>
         <div class="reg-wrap">
             <div class="fg"><label>상품명</label><input id="ra-name" placeholder="예: 1990년대 빈티지 청자켓" /></div>
-            <div class="fg"><label>이미지 URL</label><input id="ra-img" placeholder="https://..." /></div>
+
+            <!-- 이미지 업로드 -->
+            <div class="fg">
+                <label>상품 이미지</label>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <input type="file" id="ra-file" accept="image/*" onchange="previewImage(this)"
+                               style="flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px" />
+                        <button class="btn btn-s btn-sm" onclick="uploadImage()" id="upload-btn">업로드</button>
+                    </div>
+                    <!-- 미리보기 -->
+                    <div id="img-preview" style="display:none;position:relative;width:100%;aspect-ratio:16/9;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                        <img id="img-preview-img" style="width:100%;height:100%;object-fit:cover" />
+                        <div id="upload-status" style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;display:none"></div>
+                    </div>
+                    <!-- 업로드 완료 표시 -->
+                    <div id="upload-ok" style="display:none;font-size:12px;color:var(--green)">✅ 이미지 업로드 완료</div>
+                </div>
+            </div>
+
             <div class="fg">
                 <label>카테고리</label>
                 <select id="ra-cat">
@@ -760,10 +779,20 @@
         const img = a.imageUrl
             ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
             : (CE[a.category] || '📦');
-        const rb = rank ? `<div class="rank-badge">${rank}</div>` : '';
+        const rb = rank ? `<div style="
+        position:absolute; top:8px; left:8px;
+        background:${rank === 1 ? '#f0a500' : rank === 2 ? '#aaaaaa' : rank === 3 ? '#cd7f32' : 'rgba(0,0,0,0.6)'};
+        color:${rank <= 3 ? '#000' : '#fff'};
+        font-family:'Bebas Neue'; font-size:13px; letter-spacing:1px;
+        padding:3px 8px; border-radius:4px; line-height:1.4;
+        z-index:1;
+    ">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`} TOP${rank}</div>` : '';
         return `<div class="auction-card" onclick="openDetail(${a.auctionId})">
-    ${rb}
-    <div class="card-img">${img}<div class="card-badge b-${a.status}">${SL[a.status] || a.status}</div></div>
+    <div class="card-img">
+        ${img}
+        ${rb}
+        <div class="card-badge b-${a.status}">${SL[a.status] || a.status}</div>
+    </div>
     <div class="card-body">
         <div class="card-cat">${CL[a.category] || a.category}</div>
         <div class="card-name">${esc(a.productName)}</div>
@@ -937,16 +966,81 @@
         else toast(r.d?.message || '자동 입찰 실패', 'er');
     }
 
+    // ── IMAGE UPLOAD ──
+    let uploadedImageUrl = null;
+
+    function previewImage(input) {
+        uploadedImageUrl = null;
+        document.getElementById('upload-ok').style.display = 'none';
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('img-preview').style.display = 'block';
+            document.getElementById('img-preview-img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function uploadImage() {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); return; }
+        const fileInput = document.getElementById('ra-file');
+        if (!fileInput.files || !fileInput.files[0]) { toast('이미지를 선택해주세요.', 'er'); return; }
+
+        const btn = document.getElementById('upload-btn');
+        btn.disabled = true;
+        btn.textContent = '업로드 중...';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        const h = {};
+        if (token) h['Authorization'] = 'Bearer ' + token;
+        try {
+            const res = await fetch(BASE + '/api/auctions/files/upload', {
+                method: 'POST', headers: h, body: formData
+            });
+            const data = await res.json();
+            if (!res.ok || !data?.data?.key) {
+                toast(data?.message || '업로드 실패', 'er');
+                btn.disabled = false; btn.textContent = '업로드';
+                return;
+            }
+
+            // key가 이미 완전한 S3 URL이므로 바로 사용
+            uploadedImageUrl = data.data.key;
+            document.getElementById('img-preview-img').src = uploadedImageUrl;
+            document.getElementById('upload-ok').style.display = 'block';
+            toast('이미지 업로드 완료!', 'ok');
+        } catch(e) {
+            toast('업로드 중 오류: ' + e.message, 'er');
+        }
+        btn.disabled = false; btn.textContent = '업로드';
+    }
+
+
     // ── CREATE AUCTION ──
     async function createAuction() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        if (!uploadedImageUrl) { toast('이미지를 업로드해주세요.', 'er'); return; }
         const r = await api('POST', '/api/auctions', {
-            productName: v('ra-name'), imageUrl: v('ra-img'), category: v('ra-cat'),
-            startPrice: Number(v('ra-sp')), minimumBid: Number(v('ra-mb')),
-            startAt: iso(v('ra-sa')), endAt: iso(v('ra-ea')),
+            productName: v('ra-name'),
+            imageUrl: uploadedImageUrl,
+            category: v('ra-cat'),
+            startPrice: Number(v('ra-sp')),
+            minimumBid: Number(v('ra-mb')),
+            startAt: iso(v('ra-sa')),
+            endAt: iso(v('ra-ea')),
         });
-        if (r.ok) { toast('경매 등록 완료!', 'ok'); goPage('auctions'); }
-        else toast(r.d?.message || '등록 실패', 'er');
+        if (r.ok) {
+            toast('경매 등록 완료!', 'ok');
+            uploadedImageUrl = null;
+            document.getElementById('ra-file').value = '';
+            document.getElementById('img-preview').style.display = 'none';
+            document.getElementById('upload-ok').style.display = 'none';
+            goPage('auctions');
+        } else {
+            toast(r.d?.message || '등록 실패', 'er');
+        }
     }
 
     // ── CHAT ──
