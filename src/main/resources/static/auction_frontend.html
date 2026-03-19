@@ -738,17 +738,58 @@
         window.scrollTo(0, 0);
         const dc = document.getElementById('detail-content');
         dc.innerHTML = `<div class="loading-block"><div class="spin"></div></div>`;
-        const r = await api('GET', `/api/auctions/${id}`);
-        if (!r.ok || !r.d?.data) { dc.innerHTML = empty('경매 정보를 불러올 수 없습니다.'); return; }
-        const a = r.d.data;
+
+        const [ra, rb] = await Promise.all([
+            api('GET', `/api/auctions/${id}`),
+            api('GET', `/api/bids/${id}`)
+        ]);
+
+        if (!ra.ok || !ra.d?.data) { dc.innerHTML = empty('경매 정보를 불러올 수 없습니다.'); return; }
+        const a = ra.d.data;
+        window._auctionEndAt = a.endAt; // 5분 블라인드 기준
+
         const img = a.imageUrl
             ? `<img src="${a.imageUrl}" onerror="this.style.display='none'" />`
             : (CE[a.category] || '📦');
+
+        // ── DONE 상태: 낙찰가 + 낙찰자만 표시 ──
+        if (a.status === 'DONE') {
+            const bids = rb.ok && rb.d?.data ? rb.d.data : [];
+            const winBid = bids.find(b => b.status === 'SUCCEEDED');
+            const finalPrice = winBid?.price
+                ?? (bids.filter(b => b.status === 'FAILED').sort((x,y) => (y.price||0) - (x.price||0))[0]?.price || null);
+            dc.innerHTML = `
+<div class="detail-img">${img}</div>
+<div class="detail-info">
+    <div>
+        <div style="margin-bottom:8px">
+            <span class="card-badge" style="position:static;background:#7c3aed;color:#fff">🏆 낙찰 완료</span>
+        </div>
+        <div class="detail-title">${esc(a.productName)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)}</div>
+    </div>
+    <div class="price-block" style="border-color:var(--accent)">
+        <div class="price-label">🏆 최종 낙찰가</div>
+        <div class="price-val">${finalPrice ? Number(finalPrice).toLocaleString() : '-'}<small> 원</small></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">낙찰자</div>
+            <div style="font-size:20px;font-weight:700;color:var(--accent)">${winBid ? esc(winBid.bidderNickname || '비공개') : '-'}</div>
+        </div>
+    </div>
+    <div class="meta-grid">
+        <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
+        <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
+    </div>
+</div>`;
+            return;
+        }
+
+        // ── 일반 상태 ──
         dc.innerHTML = `
 <div class="detail-img">${img}</div>
 <div class="detail-info">
     <div>
-        <div style="margin-bottom:8px"><span class="card-badge b-${a.status}" style="position:static">${SL[a.status]}</span></div>
+        <div style="margin-bottom:8px"><span class="card-badge b-${a.status}" style="position:static">${SL[a.status] || a.status}</span></div>
         <div class="detail-title">${esc(a.productName)}</div>
         <div style="font-size:13px;color:var(--text2);margin-top:6px">판매자: ${esc(a.sellerNickname)} · 조회 ${a.viewCount || 0}회</div>
     </div>
@@ -762,42 +803,71 @@
         <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
     </div>
     <div style="display:flex;gap:8px">
-        <button class="btn btn-p" style="flex:1"
-            onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})"
-            ${a.status === 'DONE' ? 'disabled style="flex:1;opacity:0.4;cursor:not-allowed;background:var(--surface2);color:var(--text2)"' : ''}>
-            ${a.status === 'DONE' ? '경매 종료' : '입찰하기'}
-        </button>
-        <button class="btn btn-s btn-sm" onclick="goPage('chat')">💬 채팅</button>
+        <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>
     </div>
-    ${a.status === 'DONE' && a.finalPrice ? `
-    <div style="background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:16px;">
-        <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🏆 최종 낙찰가</div>
-        <div style="font-family:'Bebas Neue';font-size:42px;color:var(--accent);letter-spacing:2px">${Number(a.finalPrice).toLocaleString()}<small style="font-family:'Noto Sans KR';font-size:14px;color:var(--text2)"> 원</small></div>
-    </div>` : ''}
     <div class="bid-block">
         <div class="bid-block-hd"><span>입찰 내역</span><span id="bid-cnt">-</span></div>
         <div id="bid-body"><div class="loading-block"><div class="spin"></div></div></div>
     </div>
 </div>`;
-        loadBids(id);
+        loadBids(id, rb);
     }
 
-    async function loadBids(auctionId) {
-        const r  = await api('GET', `/api/bids/${auctionId}`);
+    async function loadBids(auctionId, cached) {
+        const r  = cached || await api('GET', `/api/bids/${auctionId}`);
         const el = document.getElementById('bid-body');
         const ct = document.getElementById('bid-cnt');
-        if (r.ok && r.d?.data) {
-            const bids = r.d.data;
-            ct.textContent = `총 ${bids.length}건`;
-            el.innerHTML = bids.length
-                ? bids.map(b => `<div class="bid-row">
-                    <div><div class="bp">${Number(b.price).toLocaleString()}원</div><div class="bt">${b.status}</div></div>
-                    <div class="bt">${fDate(b.createdAt)}</div>
-                  </div>`).join('')
-                : `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">아직 입찰이 없습니다.</div>`;
-        } else {
+        if (!r.ok || !r.d?.data) {
             el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">로드 실패</div>`;
+            return;
         }
+        const bids = r.d.data;
+        ct.textContent = `총 ${bids.length}건`;
+        if (!bids.length) {
+            el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px">아직 입찰이 없습니다.</div>`;
+            return;
+        }
+
+        // 종료 5분 전 기준 시각
+        const blindCutoff = window._auctionEndAt
+            ? new Date(new Date(window._auctionEndAt).getTime() - 5 * 60 * 1000)
+            : null;
+
+        const normalBids  = bids.filter(b => !blindCutoff || new Date(b.createdAt) < blindCutoff);
+        const blindedBids = bids.filter(b =>  blindCutoff && new Date(b.createdAt) >= blindCutoff);
+
+        const normalHtml = normalBids.map(b => `
+        <div class="bid-row">
+            <div>
+                <div class="bp">${Number(b.price).toLocaleString()}원</div>
+                <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
+                <div class="bt">${fDate(b.createdAt)}</div>
+            </div>
+        </div>`).join('');
+
+        const divider = blindedBids.length ? `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 16px">
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <span style="font-size:10px;color:var(--text2);white-space:nowrap">🔒 종료 5분 전 이후 입찰</span>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>` : '';
+
+        const blindedHtml = blindedBids.map(b => `
+        <div class="bid-row" style="opacity:0.5">
+            <div>
+                <div class="bp" style="filter:blur(5px);user-select:none;pointer-events:none">${Number(b.price).toLocaleString()}원</div>
+                <div class="bt" style="filter:blur(4px);user-select:none;pointer-events:none">${b.status}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:var(--text2);font-size:11px">🔒 비공개</span>
+                <div class="bt">${fDate(b.createdAt)}</div>
+            </div>
+        </div>`).join('');
+
+        el.innerHTML = normalHtml + divider + blindedHtml;
     }
 
     // ── BID ──
