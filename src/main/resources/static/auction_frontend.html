@@ -532,6 +532,7 @@
                         <div id="my-grade-exp" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
                     </div>
                     <button class="btn btn-s btn-full btn-sm" onclick="openM('m-edit')">프로필 수정</button>
+                    <button class="btn btn-o btn-full btn-sm" style="margin-top:8px" onclick="openMyInfo()">내 상세정보</button>
                 </div>
             </div>
             <div>
@@ -779,6 +780,16 @@
     </div>
 </div>
 
+
+<!-- 내 상세정보 모달 -->
+<div class="modal-overlay" id="m-my-info">
+    <div class="modal">
+        <button class="modal-x" onclick="closeM('m-my-info')">✕</button>
+        <h2>내 <em>상세정보</em></h2>
+        <div id="my-info-content"></div>
+    </div>
+</div>
+
 <div id="toast-ct"></div>
 
 <script>
@@ -795,7 +806,7 @@
     let stompClient = null;
 
     // ── HTTP ──
-    async function api(method, path, body) {
+    async function api(method, path, body, _retry = false) {
         const h = { 'Content-Type': 'application/json' };
         if (token) h['Authorization'] = 'Bearer ' + token;
         try {
@@ -806,10 +817,40 @@
             const txt = await res.text();
             let d;
             try { d = JSON.parse(txt); } catch { d = { message: txt }; }
+
+            // 401이고 아직 재시도 안 했으면 토큰 갱신 후 재시도
+            if (res.status === 401 && !_retry) {
+                const refreshed = await tryRefresh();
+                if (refreshed) return api(method, path, body, true);
+                // 갱신 실패 시 로그아웃
+                token = ''; me = null; myNickname = null;
+                localStorage.removeItem('token'); localStorage.removeItem('me');
+                applyAuth();
+                toast('세션이 만료되었습니다. 다시 로그인해주세요.', 'er');
+                openM('m-login');
+            }
+
             return { ok: res.ok, d };
         } catch(e) {
             return { ok: false, d: { message: e.message } };
         }
+    }
+
+    async function tryRefresh() {
+        try {
+            const res = await fetch(BASE + '/api/auth/refresh', {
+                method: 'POST',
+                credentials: 'include', // 쿠키 자동 포함
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const d = await res.json();
+            if (res.ok && d?.data?.accessToken) {
+                token = d.data.accessToken.replace('Bearer ', '').trim();
+                localStorage.setItem('token', token);
+                return true;
+            }
+            return false;
+        } catch { return false; }
     }
 
     // ── TOAST ──
@@ -1058,8 +1099,10 @@
         <div class="meta-card"><div class="ml">시작</div><div class="mv">${fDate(a.startAt)}</div></div>
         <div class="meta-card"><div class="ml">종료</div><div class="mv">${fDate(a.endAt)}</div></div>
     </div>
-    <div style="display:flex;gap:8px">
-        <button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${a.status !== 'PENDING' ? `<button class="btn btn-p" style="flex:1" onclick="openBidModal(${a.auctionId},${a.startPrice},${a.minimumBid})">입찰하기</button>` : ''}
+        ${isAdmin() && a.status === 'PENDING' ? `
+        <button class="btn btn-p" style="flex:1;background:#7c3aed" onclick="approveAuction(${a.auctionId})">✅ 경매 승인</button>` : ''}
         ${me && me.nickname === a.sellerNickname && a.status === 'PENDING' ? `
         <button class="btn btn-s btn-sm" onclick="openAuctionEdit(${a.auctionId})">✏️ 수정</button>
         <button class="btn btn-d btn-sm" onclick="deleteAuction(${a.auctionId})">🗑️ 삭제</button>` : ''}
@@ -1231,6 +1274,65 @@
     }
 
     // ── CHAT ──
+    async function loadMoreMessages(roomId) {
+        if (!window._chatCursor || window._chatLoading) return;
+        window._chatLoading = true;
+
+        const msgs = document.getElementById('chat-msgs');
+
+        // 로딩 인디케이터 맨 위에 추가
+        const loader = document.createElement('div');
+        loader.id = 'chat-loader';
+        loader.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:12px';
+        loader.innerHTML = '<div class="spin" style="margin:0 auto"></div>';
+        msgs.prepend(loader);
+
+        const r = await api('GET', `/api/messages/before/${roomId}?cursor=${window._chatCursor}&size=50`);
+
+        document.getElementById('chat-loader')?.remove();
+
+        if (r.ok && Array.isArray(r.d) && r.d.length) {
+            // 현재 스크롤 높이 저장 (삽입 후 위치 유지용)
+            const prevHeight = msgs.scrollHeight;
+
+            // 오래된 메시지를 맨 위에 삽입
+            const fragment = document.createDocumentFragment();
+            r.d.forEach(m => {
+                const isMine = myNickname && m.userName === myNickname;
+                const div = document.createElement('div');
+                div.className = 'cmsg' + (isMine ? ' mine' : '');
+                div.innerHTML = `${!isMine ? `<div class="cs">${esc(m.userName)}</div>` : ''}
+<div class="cb">${esc(m.message)}</div>
+<div class="ct">${m.createdAt ? new Date(m.createdAt).toLocaleTimeString('ko', {hour:'2-digit',minute:'2-digit'}) : ''}</div>`;
+                fragment.appendChild(div);
+            });
+            msgs.prepend(fragment);
+
+            // 스크롤 위치 유지 (새 메시지 삽입 후 튀는 현상 방지)
+            msgs.scrollTop = msgs.scrollHeight - prevHeight;
+
+            // cursor 갱신 — 새로 불러온 것 중 가장 오래된 id
+            window._chatCursor = r.d[0].id;
+            window._chatHasMore = r.d.length >= 50;
+
+            // 더 이상 없으면 안내 표시
+            if (!window._chatHasMore) {
+                const end = document.createElement('div');
+                end.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:11px';
+                end.textContent = '— 대화 시작 —';
+                msgs.prepend(end);
+            }
+        } else {
+            window._chatHasMore = false;
+            const end = document.createElement('div');
+            end.style.cssText = 'text-align:center;padding:10px;color:var(--text2);font-size:11px';
+            end.textContent = '— 대화 시작 —';
+            msgs.prepend(end);
+        }
+
+        window._chatLoading = false;
+    }
+
     async function loadChatPage() {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
         // 채팅 진입 전 myNickname 반드시 확보
@@ -1266,7 +1368,6 @@
 
     async function joinRoom(roomId, roomName) {
         curRoomId = roomId;
-        // 방 입장 시 myNickname 재확인
         if (!myNickname && token) await fetchMe();
         echoSet.clear();
 
@@ -1278,15 +1379,30 @@
         const msgs = document.getElementById('chat-msgs');
         msgs.innerHTML = `<div class="chat-empty"><div class="spin"></div></div>`;
 
+        // 최초 50개 메시지 로드
         const r = await api('GET', `/api/rooms/${roomId}/messages?size=50`);
         msgs.innerHTML = '';
+
         if (r.ok && Array.isArray(r.d) && r.d.length) {
+            // 가장 오래된 메시지의 id를 cursor로 저장
+            window._chatCursor = r.d[0].id;
+            window._chatHasMore = r.d.length >= 50;
             r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
         } else {
+            window._chatCursor = null;
+            window._chatHasMore = false;
             msgs.innerHTML = `<div class="chat-empty">첫 메시지를 보내보세요! 👋</div>`;
         }
+
         msgs.scrollTop = msgs.scrollHeight;
-        msgs.onscroll = () => updateScrollBtn(msgs);
+
+        // 스크롤 맨 위 감지 → 과거 메시지 로드
+        msgs.onscroll = () => {
+            updateScrollBtn(msgs);
+            if (msgs.scrollTop === 0 && window._chatHasMore && !window._chatLoading) {
+                loadMoreMessages(roomId);
+            }
+        };
 
         connectWs(roomId);
     }
@@ -1521,6 +1637,17 @@
     }
 
     // ── AUCTION EDIT / DELETE ──
+    async function approveAuction(auctionId) {
+        if (!confirm('이 경매를 승인하시겠습니까?')) return;
+        const r = await api('PATCH', `/admin/auctions/${auctionId}/approve`);
+        if (r.ok) {
+            toast('경매가 승인되었습니다!', 'ok');
+            openDetail(auctionId); // 상세 새로고침
+        } else {
+            toast(r.d?.message || '승인 실패', 'er');
+        }
+    }
+
     let editUploadedImageUrl = null;
 
     function toggleAeImgMode(mode) {
@@ -1680,6 +1807,39 @@
             applyAuth();
         }
         loadMyAuctions(); loadMyBids(); loadAlerts();
+    }
+
+    async function openMyInfo() {
+        const r = await api('GET', '/api/users/me');
+        if (!r.ok || !r.d?.data) { toast('정보를 불러올 수 없습니다.', 'er'); return; }
+        const u = r.d.data;
+        const grade = u.membership?.grade || 'NORMAL';
+        const gradeLabel = { NORMAL: '🪙 일반', SELLER: '🏪 판매자' };
+        const expAt = u.membership?.expiredAt;
+
+        document.getElementById('my-info-content').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:0">
+            ${infoRow('👤', '닉네임', esc(u.nickname))}
+            ${infoRow('📝', '이름', esc(u.name))}
+            ${infoRow('📧', '이메일', esc(u.email))}
+            ${infoRow('📱', '전화번호', esc(u.phone))}
+            ${infoRow('💰', '보유 포인트', Number(u.point || 0).toLocaleString() + 'P')}
+            ${infoRow('🎖️', '멤버십 등급', gradeLabel[grade] || grade)}
+            ${infoRow('📅', '멤버십 만료일', expAt ? fDate(expAt) : '없음')}
+            ${infoRow('🔑', '역할', u.userRole === 'ROLE_ADMIN' ? '관리자' : '일반 유저')}
+        </div>`;
+        openM('m-my-info');
+    }
+
+    function infoRow(icon, label, value) {
+        return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:18px;width:24px;text-align:center;flex-shrink:0">${icon}</span>
+        <div style="flex:1">
+            <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${label}</div>
+            <div style="font-size:14px;font-weight:600">${value}</div>
+        </div>
+    </div>`;
     }
 
     async function loadMyAuctions() {
