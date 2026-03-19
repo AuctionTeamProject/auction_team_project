@@ -60,10 +60,10 @@ class UserRatingsControllerTest {
     }
 
     @Test
-    @WithAuthUser(userId = 1L, email = "reviewer@test.com", userRole = UserRole.ROLE_USER)
+    @WithAuthUser(userId = 1L, email = "test@test.com", userRole = UserRole.ROLE_USER)
     void 셀러_평점_등록_실패_점수가_1미만() throws Exception {
 
-        // given - score가 0이면 @Min(1) 검증 실패
+        // given - score가 0
         UserGiveRatingsRequest request = new UserGiveRatingsRequest(0);
 
         // when & then
@@ -76,10 +76,10 @@ class UserRatingsControllerTest {
     }
 
     @Test
-    @WithAuthUser(userId = 1L, email = "reviewer@test.com", userRole = UserRole.ROLE_USER)
+    @WithAuthUser(userId = 1L, email = "test@test.com", userRole = UserRole.ROLE_USER)
     void 셀러_평점_등록_실패_점수가_5초과() throws Exception {
 
-        // given - score가 6이면 @Max(5) 검증 실패
+        // given - score가 6
         UserGiveRatingsRequest request = new UserGiveRatingsRequest(6);
 
         // when & then
@@ -92,7 +92,7 @@ class UserRatingsControllerTest {
     }
 
     @Test
-    @WithAuthUser(userId = 1L, email = "reviewer@test.com", userRole = UserRole.ROLE_USER)
+    @WithAuthUser(userId = 1L, email = "test@test.com", userRole = UserRole.ROLE_USER)
     void 셀러_평점_등록_실패_본인평가() throws Exception {
 
         // given
@@ -110,7 +110,7 @@ class UserRatingsControllerTest {
     }
 
     @Test
-    @WithAuthUser(userId = 1L, email = "reviewer@test.com", userRole = UserRole.ROLE_USER)
+    @WithAuthUser(userId = 1L, email = "test@test.com", userRole = UserRole.ROLE_USER)
     void 셀러_평점_등록_실패_중복평가() throws Exception {
 
         // given
@@ -128,7 +128,7 @@ class UserRatingsControllerTest {
     }
 
     @Test
-    @WithAuthUser(userId = 1L, email = "reviewer@test.com", userRole = UserRole.ROLE_USER)
+    @WithAuthUser(userId = 1L, email = "test@test.com", userRole = UserRole.ROLE_USER)
     void 내_평점_조회_성공() throws Exception {
 
         // given
