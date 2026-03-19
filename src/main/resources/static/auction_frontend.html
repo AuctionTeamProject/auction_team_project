@@ -523,6 +523,14 @@
                         <div class="pl">보유 포인트</div>
                         <div class="pv" id="my-pt">0</div>
                     </div>
+                    <div class="point-disp" style="margin-bottom:14px">
+                        <div class="pl">멤버십 등급</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+                            <div id="my-grade" style="font-size:20px;font-weight:700;color:var(--accent)">-</div>
+                            <div id="my-grade-badge" style="font-size:11px;padding:2px 8px;border-radius:10px;"></div>
+                        </div>
+                        <div id="my-grade-exp" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+                    </div>
                     <button class="btn btn-s btn-full btn-sm" onclick="openM('m-edit')">프로필 수정</button>
                 </div>
             </div>
@@ -1653,6 +1661,22 @@
             document.getElementById('my-nick').textContent  = u.nickname;
             document.getElementById('my-email').textContent = u.email;
             document.getElementById('my-pt').textContent    = Number(u.point || 0).toLocaleString();
+
+            // 멤버십 정보 표시
+            const grade = u.membership?.grade || 'NORMAL';
+            const expAt = u.membership?.expiredAt;
+            const gradeLabel = { NORMAL: '일반', SELLER: '판매자' };
+            const gradeColor = { NORMAL: 'var(--text2)', SELLER: 'var(--accent)' };
+            const gradeIcon  = { NORMAL: '👤', SELLER: '🏪' };
+            document.getElementById('my-grade').textContent = `${gradeIcon[grade] || ''} ${gradeLabel[grade] || grade}`;
+            document.getElementById('my-grade').style.color = gradeColor[grade] || 'var(--text2)';
+            const badge = document.getElementById('my-grade-badge');
+            badge.textContent = grade;
+            badge.style.cssText = `font-size:11px;padding:2px 8px;border-radius:10px;background:${grade==='VIP'?'rgba(240,165,0,0.15)':grade==='PREMIUM'?'rgba(168,85,247,0.15)':'var(--surface2)'};color:${gradeColor[grade]||'var(--text2)'};border:1px solid ${gradeColor[grade]||'var(--border)'}`;
+            document.getElementById('my-grade-exp').textContent = expAt
+                ? `만료일: ${fDate(expAt)}`
+                : grade === 'NORMAL' ? '기본 멤버십' : '만료일 없음';
+
             applyAuth();
         }
         loadMyAuctions(); loadMyBids(); loadAlerts();
