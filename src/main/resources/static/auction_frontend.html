@@ -259,6 +259,18 @@
         /* REGISTER */
         .reg-wrap { max-width: 560px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; }
 
+        /* SOCIAL LOGIN */
+        .social-divider { display:flex; align-items:center; gap:10px; margin:18px 0 14px; }
+        .social-divider::before, .social-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+        .social-divider span { font-size:11px; color:var(--text2); white-space:nowrap; }
+        .social-btns { display:flex; flex-direction:column; gap:8px; }
+        .btn-social { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all .2s; }
+        .btn-social:hover { border-color:var(--accent); color:var(--accent); }
+        .btn-social .si { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; flex-shrink:0; }
+        .si-google { background:#fff; color:#4285F4; border:1px solid #ddd; }
+        .si-kakao  { background:#FEE500; color:#3C1E1E; border:none; }
+        .si-naver  { background:#03C75A; color:#fff; border:none; }
+
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .detail-wrap, .mypage-grid { grid-template-columns: 1fr; }
@@ -481,6 +493,18 @@
         <div class="fg"><label>이메일</label><input id="l-em" type="email" placeholder="example@email.com" /></div>
         <div class="fg"><label>비밀번호</label><input id="l-pw" type="password" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()" /></div>
         <button class="btn btn-p btn-full" onclick="doLogin()">로그인</button>
+        <div class="social-divider"><span>소셜 로그인</span></div>
+        <div class="social-btns">
+            <button class="btn-social" onclick="doSocialLogin('google')">
+                <span class="si si-google">G</span> Google로 로그인
+            </button>
+            <button class="btn-social" onclick="doSocialLogin('kakao')">
+                <span class="si si-kakao">K</span> 카카오로 로그인
+            </button>
+            <button class="btn-social" onclick="doSocialLogin('naver')">
+                <span class="si si-naver">N</span> 네이버로 로그인
+            </button>
+        </div>
         <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
             계정이 없으신가요? <a style="color:var(--accent);cursor:pointer" onclick="closeM('m-login');openM('m-signup')">회원가입</a>
         </div>
@@ -517,7 +541,26 @@
         <button class="btn btn-p btn-full" onclick="doSignup()">가입하기</button>
     </div>
 </div>
+<!-- GOOGLE 추가정보 모달 -->
+<div class="modal-overlay" id="m-google-info">
+    <div class="modal">
+        <h2><span class="si si-google" style="width:24px;height:24px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:#4285F4;border:1px solid #ddd;margin-right:8px;vertical-align:middle">G</span><em>Google</em> 추가 정보</h2>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:18px">처음 로그인하셨네요! 전화번호를 입력해 주세요.</p>
+        <div class="fg"><label>전화번호 (숫자 11자리)</label><input id="gi-ph" type="tel" placeholder="01012345678" maxlength="11" onkeydown="if(event.key==='Enter')doGoogleAddInfo()" /></div>
+        <button class="btn btn-p btn-full" onclick="doGoogleAddInfo()">완료</button>
+    </div>
+</div>
 
+<!-- KAKAO 추가정보 모달 -->
+<div class="modal-overlay" id="m-kakao-info">
+    <div class="modal">
+        <h2><span class="si si-kakao" style="width:24px;height:24px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:#FEE500;color:#3C1E1E;margin-right:8px;vertical-align:middle">K</span><em>카카오</em> 추가 정보</h2>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:18px">처음 로그인하셨네요! 추가 정보를 입력해 주세요.</p>
+        <div class="fg"><label>전화번호 (숫자 11자리)</label><input id="ki-ph" type="tel" placeholder="01012345678" maxlength="11" /></div>
+        <div class="fg"><label>이메일</label><input id="ki-em" type="email" placeholder="example@email.com" onkeydown="if(event.key==='Enter')doKakaoAddInfo()" /></div>
+        <button class="btn btn-p btn-full" onclick="doKakaoAddInfo()">완료</button>
+    </div>
+</div>
 <div class="modal-overlay" id="m-room">
     <div class="modal">
         <button class="modal-x" onclick="closeM('m-room')">✕</button>
@@ -1092,9 +1135,79 @@
         catch { return s; }
     }
     function empty(msg) { return `<div class="empty"><div class="ei">📭</div><p>${msg}</p></div>`; }
+    // ── SOCIAL LOGIN ──
+    function doSocialLogin(provider) {
+        window.location.href = BASE + '/oauth2/authorization/' + provider;
+    }
 
+    function handleOAuth2Callback() {
+        const params = new URLSearchParams(window.location.search);
+        const cbToken   = params.get('token');
+        const provider  = params.get('provider');
+        const isSuccess = params.get('oauth2') === 'additional-info';
+
+        if (!cbToken) return;
+
+        window.history.replaceState({}, '', window.location.pathname);
+
+        token = cbToken;
+        localStorage.setItem('token', token);
+
+        if (provider === 'google') {
+            closeAllModals();
+            openM('m-google-info');
+        } else if (provider === 'kakao') {
+            closeAllModals();
+            openM('m-kakao-info');
+        } else if (isSuccess) {
+            completeSocialLogin(cbToken);
+        }
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open'));
+    }
+
+    async function completeSocialLogin(rawToken) {
+        token = rawToken.startsWith('Bearer ') ? rawToken.substring(7) : rawToken;
+        localStorage.setItem('token', token);
+        await fetchMe();
+        applyAuth();
+        toast('로그인 성공!', 'ok');
+        goPage('home');
+    }
+
+    async function doGoogleAddInfo() {
+        const phone = v('gi-ph');
+        if (!/^\d{11}$/.test(phone)) { toast('전화번호는 숫자 11자리로 입력해주세요.', 'er'); return; }
+        const r = await api('PATCH', '/api/auth/oauth2/me/google', { phone });
+        if (r.ok && r.d?.data?.accessToken) {
+            closeM('m-google-info');
+            document.getElementById('gi-ph').value = '';
+            await completeSocialLogin(r.d.data.accessToken);
+        } else {
+            toast(r.d?.message || '추가 정보 저장 실패', 'er');
+        }
+    }
+
+    async function doKakaoAddInfo() {
+        const phone = v('ki-ph');
+        const email = v('ki-em');
+        if (!/^\d{11}$/.test(phone)) { toast('전화번호는 숫자 11자리로 입력해주세요.', 'er'); return; }
+        if (!email || !email.includes('@')) { toast('올바른 이메일을 입력해주세요.', 'er'); return; }
+        const r = await api('PATCH', '/api/auth/oauth2/me/kakao', { phone, email });
+        if (r.ok && r.d?.data?.accessToken) {
+            closeM('m-kakao-info');
+            document.getElementById('ki-ph').value = '';
+            document.getElementById('ki-em').value = '';
+            await completeSocialLogin(r.d.data.accessToken);
+        } else {
+            toast(r.d?.message || '추가 정보 저장 실패', 'er');
+        }
+    }
     // ── INIT ──
     applyAuth();
+    handleOAuth2Callback();
     loadHome();
 </script>
 </body>
