@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import sparta.auction_team_project.common.dto.AuthUser;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.user.dto.request.UserGiveRatingsRequest;
@@ -44,6 +45,9 @@ class UserRatingsServiceTest {
         AuthUser authUser = new AuthUser(1L, "reviewer@test.com", UserRole.ROLE_USER);
         User reviewer = new User("리뷰어", "이름1", "reviewer@test.com", "01011111111", UserRole.ROLE_USER);
         User seller = new User("셀러", "이름2", "seller@test.com", "01022222222", UserRole.ROLE_USER);
+
+        ReflectionTestUtils.setField(reviewer, "id", 1L);
+        ReflectionTestUtils.setField(seller, "id", 2L);
 
         UserGiveRatingsRequest request = new UserGiveRatingsRequest(4);
 
@@ -86,6 +90,9 @@ class UserRatingsServiceTest {
         User reviewer = new User("리뷰어", "이름1", "reviewer@test.com", "01011111111", UserRole.ROLE_USER);
         User seller = new User("셀러", "이름2", "seller@test.com", "01022222222", UserRole.ROLE_USER);
 
+        ReflectionTestUtils.setField(reviewer, "id", 1L);
+        ReflectionTestUtils.setField(seller, "id", 2L);
+
         UserGiveRatingsRequest request = new UserGiveRatingsRequest(3);
 
         given(userRepository.findById(1L)).willReturn(Optional.of(reviewer));
@@ -119,7 +126,7 @@ class UserRatingsServiceTest {
     void 평점조회_실패_존재하지않는유저() {
 
         // given
-        AuthUser authUser = new AuthUser(999L, "none@test.com", UserRole.ROLE_USER);
+        AuthUser authUser = new AuthUser(999L, "no@test.com", UserRole.ROLE_USER);
 
         given(userRepository.findById(999L)).willReturn(Optional.empty());
 

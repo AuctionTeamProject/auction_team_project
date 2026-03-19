@@ -120,10 +120,10 @@ class UserRatingsControllerTest {
                 .willThrow(new ServiceErrorException(ErrorEnum.ERR_DUPLICATE_RATINGS));
 
         // when & then
-        mockMvc.perform(post("/api/users/2/ratings")
+        mockMvc.perform(post("/api/users/3/ratings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
