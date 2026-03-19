@@ -22,6 +22,7 @@ import sparta.auction_team_project.domain.user.dto.response.UserAuctionListRespo
 import sparta.auction_team_project.domain.user.dto.response.UserBidListResponse;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.enums.UserRole;
+import sparta.auction_team_project.domain.user.repository.UserRatingsRepository;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
