@@ -6,32 +6,22 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import sparta.auction_team_project.common.dto.BidPlacedEvent;
+import sparta.auction_team_project.common.dto.AuctionEndedEvent;
+import sparta.auction_team_project.common.dto.SupportRequestEvent;
 import sparta.auction_team_project.domain.alert.service.AlertService;
+import sparta.auction_team_project.domain.chatroom.service.ChatRoomService;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class BidAlertEventListener {
+public class SupportRequestEventListener {
 
     private final AlertService alertService;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void bidHandle(BidPlacedEvent event) {
-        log.info("입찰 EVENT LISTENER 실행됨");
-        // 새 입찰 알림
-        alertService.notifyNewBid(
-                event.getAuctionId(),
-                event.getBidderId()
-        );
-
-        // 이전 최고 입찰자 탈락 알림
-        if (event.getPreviousTopBidderId() != null) {
-            alertService.notifyOutBid(
-                    event.getAuctionId(),
-                    event.getPreviousTopBidderId()
-            );
-        }
+    public void SupHandle(SupportRequestEvent event) {
+        log.info("문의 알림 EVENT LISTENER 실행됨");
+        alertService.notifySupportRequest(event.getUserId(), event.getRoomId());
     }
 }

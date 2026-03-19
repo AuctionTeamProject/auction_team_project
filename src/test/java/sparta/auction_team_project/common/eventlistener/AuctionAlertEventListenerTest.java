@@ -25,7 +25,7 @@ class AuctionAlertEventListenerTest {
         AuctionEndedEvent event = new AuctionEndedEvent(1L, 2L);
 
         // when
-        listener.handle(event);
+        listener.AuctionHandle(event);
 
         // then
         verify(alertService).notifyAuctionEnd(1L);
@@ -38,7 +38,7 @@ class AuctionAlertEventListenerTest {
         AuctionEndedEvent event = new AuctionEndedEvent(1L, null);
 
         // when
-        listener.handle(event);
+        listener.AuctionHandle(event);
 
         // then
         verify(alertService).notifyAuctionEnd(1L);
