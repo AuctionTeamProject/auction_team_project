@@ -62,8 +62,8 @@ public class AuctionService {
         if (request.getStartPrice() < request.getMinimumBid()) {
             throw new ServiceErrorException(ErrorEnum.INVALID_START_PRICE);
         }
-        // 경매 시작 시간 검증(현재시간보다 이후인지 검증)
-        if (request.getStartAt().isBefore(LocalDateTime.now())) {
+        // 경매 시작 시간 검증(현재시간보다 30분 이후 인지 검증)
+        if (request.getStartAt().isBefore(LocalDateTime.now().plusMinutes(30))) {
             throw new ServiceErrorException(ErrorEnum.INVALID_AUCTION_START_TIME);
         }
         // 경매 종료 시간 검증(종료시간은 시작시간보다 최소 1시간 이후)
