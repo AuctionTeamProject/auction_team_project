@@ -60,7 +60,7 @@ public class UserService {
         Membership membership = membershipRepository.findByUserId(user.getId()).orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_MEMBERSHIP));
         MembershipResponse membershipResponse = new MembershipResponse(membership.getGrade(), membership.getExpiredAt());
 
-        return new UserGetResponse(user.getNickname(), user.getName(), user.getEmail(), user.getPhone(), user.getPoint(), membershipResponse);
+        return new UserGetResponse(user.getNickname(), user.getName(), user.getEmail(), user.getPhone(), user.getPoint(), membershipResponse, user.getUserRole().name());
 
     }
 
