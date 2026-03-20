@@ -8,7 +8,9 @@ import sparta.auction_team_project.common.entity.BaseEntity;
 
 @Getter
 @Entity
-@Table(name = "chat_rooms")
+@Table(name = "chat_rooms", indexes = {
+        @Index(name = "idx_chatroom_user_id", columnList = "user_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoom extends BaseEntity {
     @Id

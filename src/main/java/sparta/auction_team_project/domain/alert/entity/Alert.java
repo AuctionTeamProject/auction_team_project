@@ -8,7 +8,9 @@ import sparta.auction_team_project.common.entity.BaseEntity;
 
 @Entity
 @Getter
-@Table(name = "alerts")
+@Table(name = "alerts", indexes = {
+        @Index(name = "idx_alert_user_id", columnList = "user_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Alert extends BaseEntity {
     @Id
