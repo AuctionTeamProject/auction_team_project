@@ -116,6 +116,77 @@ public class BidService {
                 : BidResponse.of(bid, getNickname(userId));
     }
 
+    //낙관적 락
+    public BidResponse placeBidOptimistic(AuthUser authUser, Long auctionId, BidRequest request) {
+        int attempt = 0;
+        while (true) {
+            try {
+                BidService proxy = applicationContext.getBean(BidService.class);
+                return proxy.processBidOptimisticOnce(authUser.getId(), auctionId, request.getPrice());
+            } catch (OptimisticLockingFailureException e) {
+                attempt++;
+                log.warn("[낙관적 락] 충돌 auctionId={} attempt={}/{}", auctionId, attempt, OPTIMISTIC_MAX_RETRY);
+                if (attempt >= OPTIMISTIC_MAX_RETRY) {
+                    throw new ServiceErrorException(ErrorEnum.ERR_CONCURRENCY_OCCURRED);
+                }
+                try {
+                    Thread.sleep(OPTIMISTIC_RETRY_DELAY * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new ServiceErrorException(ErrorEnum.ERR_CONCURRENCY_OCCURRED);
+                }
+            }
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public BidResponse processBidOptimisticOnce(Long userId, Long auctionId, Long price) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_BID_AUCTION_NOT_FOUND));
+
+        validateAuction(auction);
+
+        boolean isBlindPhase = isWithin5MinutesOfEnd(auction);
+
+        Long currentTopBidderId = getCurrentTopBidderId(auctionId);
+        if (currentTopBidderId != null && currentTopBidderId.equals(userId)) {
+            saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            throw new ServiceErrorException(ErrorEnum.ERR_BID_ALREADY_TOP_BIDDER);
+        }
+
+        Long currentTopPrice = getCurrentTopPrice(auctionId);
+        if (price <= currentTopPrice) {
+            saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            throw new ServiceErrorException(ErrorEnum.ERR_BID_PRICE_TOO_LOW);
+        }
+
+        long balanceAfterDeduct = deductBalanceAtomically(userId, price);
+        if (balanceAfterDeduct < 0) {
+            refundBalance(userId, price);
+            saveBidLog(null, userId, auctionId, price, BidLogStatus.FAIL);
+            if (isBlindPhase) return BidResponse.ofBlindFail(auctionId, getNickname(userId));
+            throw new ServiceErrorException(ErrorEnum.ERR_BID_INSUFFICIENT_BALANCE);
+        }
+
+        handlePreviousTopBidder(auctionId, currentTopBidderId, currentTopPrice);
+
+        Bid bid = saveBid(userId, auctionId, price, BidStatus.SUCCEEDED);
+        saveBidLog(bid.getId(), userId, auctionId, price, BidLogStatus.SUCCESS);
+        updateTopBid(auctionId, userId, price);
+
+        // @Version 충돌 감지를 위한 더미 업데이트
+        // Hibernate 는 변경 없으면 UPDATE 생략 -> version 검사 안 됨
+        // touchVersion() 으로 dirty 상태 강제 -> UPDATE + version++ 유도
+        auction.touchVersion();
+
+        publishBidEvent(auctionId, userId, currentTopBidderId);
+
+        return isBlindPhase
+                ? BidResponse.ofBlind(bid, getNickname(userId))
+                : BidResponse.of(bid, getNickname(userId));
+    }
 
     // 자동 입찰
     // 동시 자동입찰 요청 시 락을 먼저 잡은 1명만 실행
