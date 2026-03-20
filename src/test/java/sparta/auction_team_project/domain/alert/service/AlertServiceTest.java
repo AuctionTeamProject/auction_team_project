@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.domain.alert.dto.response.AlertResponse;
 import sparta.auction_team_project.domain.alert.entity.Alert;
 import sparta.auction_team_project.domain.alert.entity.AlertType;
@@ -22,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
@@ -199,5 +200,64 @@ class AlertServiceTest {
                 eq("1"),
                 any(Duration.class)
         );
+    }
+
+    @Test
+    void DB_저장_실패시_Redis_key_복원() {
+        // given
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.setIfAbsent(anyString(), anyString(), any()))
+                .willReturn(true);
+        given(alertRepository.save(any()))
+                .willThrow(new RuntimeException("DB 오류"));
+
+        // when
+        assertThatThrownBy(() ->
+                alertService.createAndSend(1L, 2L, AlertType.OUT_BID)
+        ).isInstanceOf(RuntimeException.class);
+
+        // then — Redis key가 즉시 삭제되어야 함
+        verify(redisTemplate).delete(startsWith("alert:1:2"));
+    }
+
+    @Test
+    void WebSocket_실패해도_예외_전파_안됨() {
+        // given
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.setIfAbsent(anyString(), anyString(), any()))
+                .willReturn(true);
+        given(alertRepository.save(any()))
+                .willAnswer(invocation -> invocation.getArgument(0));
+        willThrow(new RuntimeException("WebSocket 연결 끊김"))
+                .given(messagingTemplate).convertAndSend(anyString(), (Object) any());
+
+        // when & then
+        assertThatNoException().isThrownBy(() ->
+                alertService.createAndSend(1L, 2L, AlertType.OUT_BID)
+        );
+        verify(alertRepository).save(any());
+    }
+
+    @Test
+    void notifyOutBid_이전최고입찰자_null이면_스킵() {
+        alertService.notifyOutBid(1L, null);
+        verifyNoInteractions(auctionRepository);
+    }
+
+    @Test
+    void alertRead_본인_아닌_알림_읽기시_예외() {
+        Alert alert = new Alert(1L, 99L, AlertType.NEW_BID, "msg", false);
+        given(alertRepository.findById(1L)).willReturn(Optional.of(alert));
+
+        assertThatThrownBy(() -> alertService.alertRead(1L /*다른 userId*/, 1L))
+                .isInstanceOf(ServiceErrorException.class);
+    }
+
+    @Test
+    void alertRead_없는_alertId_예외() {
+        given(alertRepository.findById(anyLong())).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> alertService.alertRead(1L, 999L))
+                .isInstanceOf(ServiceErrorException.class);
     }
 }

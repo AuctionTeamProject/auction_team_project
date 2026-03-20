@@ -98,21 +98,28 @@ public class AlertService {
         }
 
         // 알림 DB 저장
-        Alert alert = alertRepository.save(
-                new Alert(
-                        targetId,
-                        userId,
-                        type,
-                        type.getDescription(),
-                        false
-                )
-        );
+        Alert alert;
+        try {
+            alert = alertRepository.save(
+                    new Alert(targetId, userId, type, type.getDescription(), false)
+            );
+        } catch (Exception e) {
+            // DB 저장 실패 시 Redis key 즉시 삭제 — 재시도 가능하도록 복원
+            redisTemplate.delete(key);
+            log.error("알림 DB 저장 실패, Redis key 복원 - key: {}, error: {}", key, e.getMessage());
+            throw e;
+        }
 
         // WebSocket 알림 전송
-        messagingTemplate.convertAndSend(
-                "/sub/alert/" + userId,
-                AlertResponse.from(alert)
-        );
+        try {
+            messagingTemplate.convertAndSend(
+                    "/sub/alert/" + userId,
+                    AlertResponse.from(alert)
+            );
+        } catch (Exception e) {
+            // WebSocket 전송 실패는 알림 저장 자체를 롤백하지 않음
+            log.warn("WebSocket 알림 전송 실패 - userId: {}, alertId: {}", userId, alert.getId());
+        }
     }
 
     /**

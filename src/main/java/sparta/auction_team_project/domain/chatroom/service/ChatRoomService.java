@@ -5,11 +5,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sparta.auction_team_project.common.dto.AuthUser;
+import sparta.auction_team_project.common.dto.ChatRoomClosedEvent;
 import sparta.auction_team_project.common.dto.SupportRequestEvent;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
 import sparta.auction_team_project.common.redis.ChatRedisPublisher;
-import sparta.auction_team_project.common.redis.RedisChat;
+import sparta.auction_team_project.common.redis.RedisLock;
 import sparta.auction_team_project.domain.chat.repository.ChatRepository;
 import sparta.auction_team_project.domain.chatroom.dto.request.ChatRoomRequest;
 import sparta.auction_team_project.domain.chatroom.dto.response.ChatRoomResponse;
@@ -17,7 +18,6 @@ import sparta.auction_team_project.domain.chatroom.entity.ChatRoom;
 import sparta.auction_team_project.domain.chatroom.repository.ChatRoomRepository;
 import sparta.auction_team_project.domain.user.enums.UserRole;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,6 +28,7 @@ public class ChatRoomService {
     private final ChatRedisPublisher chatRedisPublisher;
     private final ChatRepository chatRepository;
 
+    @RedisLock(prefix = "chatroom-create", key = "#userId", timeout = 5)
     @Transactional
     public ChatRoomResponse save(Long userId, ChatRoomRequest request) {
         ChatRoom chatRoom = new ChatRoom(userId, request.getName());
@@ -61,26 +62,17 @@ public class ChatRoomService {
 
     @Transactional
     public void deleteRoom(Long requesterId, Long roomId, UserRole role) {
-
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ServiceErrorException(ErrorEnum.ERR_NOT_FOUND_CHATROOM));
 
-        // 방장 본인 또는 관리자만 삭제 가능
         if (!chatRoom.getUserId().equals(requesterId) && role != UserRole.ROLE_ADMIN) {
             throw new ServiceErrorException(ErrorEnum.ERR_FORBIDDEN);
         }
 
-        RedisChat closeMessage = new RedisChat(
-                roomId,
-                0L,
-                "SYSTEM",
-                "채팅이 종료되었습니다.",
-                LocalDateTime.now()
-        );
-        chatRedisPublisher.publish(roomId, closeMessage);
-
         chatRepository.deleteAllByChatRoomId(roomId);
-
         chatRoomRepository.delete(chatRoom);
+
+        // DB 삭제 커밋 후 비동기로 Redis 종료 메시지 전송
+        publisher.publishEvent(new ChatRoomClosedEvent(roomId));
     }
 }
