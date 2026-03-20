@@ -8,6 +8,8 @@ public class Constants {
     public static final String MSG_DUPLICATE_NICKNAME = "중복된 닉네임 입니다";
     public static final String MSG_DUPLICATE_PHONE = "중복된 번호 입니다";
     public static final String MSG_EXISTING_MEMBER = "이미 등록된 번호입니다. 해당 계정으로 로그인해주세요";
+    public static final String MSG_REVIEW_MYSELF = "자기 자신을 평가할 수 없습니다";
+    public static final String MSG_DUPLICATE_RATINGS = "같은 사람을 중복 평가할 수 없습니다";
     public static final String MSG_INVALID_PASSWORD = "비밀번호가 잘못되었습니다";
     public static final String MSG_INVALID_EMAIL = "이메일이 잘못되었습니다";
     public static final String MSG_INVALID_PHONE = "전화번호가 잘못되었습니다";

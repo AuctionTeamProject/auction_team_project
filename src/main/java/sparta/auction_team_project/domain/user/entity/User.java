@@ -37,6 +37,8 @@ public class User extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private UserRole userRole;
 
+    private double ratings;
+
 
     public User(String nickname, String name, String email, String password, String phone, UserRole userRole) {
         this.nickname = nickname;
@@ -46,6 +48,7 @@ public class User extends BaseEntity {
         this.phone = phone;
         this.point = 0L;
         this.userRole = userRole;
+        this.ratings = 0.0;
     }
 
     // 소셜 로그인용 생성자 (password 없음, 이메일/폰/닉네임은 있을수도 없을수도 있다)
@@ -57,6 +60,7 @@ public class User extends BaseEntity {
         this.phone = phone;
         this.point = 0L;
         this.userRole = userRole;
+        this.ratings = 0.0;
     }
 
     public void changePassword(String password) {
@@ -78,6 +82,10 @@ public class User extends BaseEntity {
 
     // 소셜 로그인용(카카오)
     public void updateEmail(String email) { this.email = email; }
+
+    public void updateRatings(double ratings) {
+        this.ratings = ratings;
+    }
 
     public void plusPoint(Long point) {
         this.point += point;

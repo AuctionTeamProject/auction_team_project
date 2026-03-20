@@ -221,6 +221,14 @@
         .tab-pane.active { display: block; }
         .li { padding: 11px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; cursor: pointer; }
         .li:last-child { border-bottom: none; }
+        /* RATINGS */
+        .star-display { color: var(--accent); font-size: 20px; letter-spacing: 2px; }
+        .star-input { display: flex; gap: 6px; margin: 8px 0; }
+        .star-input span { font-size: 28px; cursor: pointer; color: var(--border); transition: color .15s; }
+        .star-input span.on { color: var(--accent); }
+        .ratings-summary { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+        .ratings-summary .big-score { font-family: 'Bebas Neue'; font-size: 42px; color: var(--accent); line-height: 1; }
+        .ratings-summary .score-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
         .li .lt { font-weight: 500; }
         .li .ls { font-size: 11px; color: var(--text2); margin-top: 2px; }
         .li .lp { font-family: 'Bebas Neue'; font-size: 18px; color: var(--accent); }
@@ -534,6 +542,13 @@
                         </div>
                         <div id="my-grade-exp" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
                     </div>
+                    <div class="point-disp" style="margin-bottom:14px">
+                        <div class="pl">내 평점</div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                            <div class="pv" id="my-ratings" style="font-size:28px">-</div>
+                            <div id="my-ratings-stars" class="star-display" style="font-size:16px"></div>
+                        </div>
+                    </div>
                     <button class="btn btn-s btn-full btn-sm" onclick="openM('m-edit')">프로필 수정</button>
                     <button class="btn btn-o btn-full btn-sm" style="margin-top:8px" onclick="openMyInfo()">내 상세정보</button>
                 </div>
@@ -544,10 +559,33 @@
                         <button class="active" onclick="switchTab('tp-auctions',this)">내 경매</button>
                         <button onclick="switchTab('tp-bids',this)">입찰 내역</button>
                         <button onclick="switchTab('tp-alerts',this)">알림</button>
+                        <button onclick="switchTab('tp-ratings',this)">셀러 평가</button>
                     </div>
                     <div id="tp-auctions" class="tab-pane active"><div class="loading-block"><div class="spin"></div></div></div>
                     <div id="tp-bids" class="tab-pane"><div class="loading-block"><div class="spin"></div></div></div>
                     <div id="tp-alerts" class="tab-pane"><div class="loading-block"><div class="spin"></div></div></div>
+                    <div id="tp-ratings" class="tab-pane">
+                        <div style="margin-bottom:16px">
+                            <div style="font-size:12px;color:var(--text2);margin-bottom:10px">유저 ID로 셀러를 평가하세요 (1~5점)</div>
+                            <div style="display:flex;gap:10px;align-items:flex-start;flex-direction:column">
+                                <div class="fg" style="width:100%;margin-bottom:6px">
+                                    <label>셀러 유저 ID</label>
+                                    <input id="rt-seller-id" type="number" placeholder="평가할 셀러의 유저 ID" />
+                                </div>
+                                <div>
+                                    <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">점수 선택</label>
+                                    <div class="star-input" id="star-input">
+                                        <span onclick="selectStar(1)">★</span>
+                                        <span onclick="selectStar(2)">★</span>
+                                        <span onclick="selectStar(3)">★</span>
+                                        <span onclick="selectStar(4)">★</span>
+                                        <span onclick="selectStar(5)">★</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-p btn-sm" onclick="giveRatings()">평가하기</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -792,7 +830,17 @@
         <div id="my-info-content"></div>
     </div>
 </div>
-
+<div class="modal-overlay" id="m-ratings-result">
+    <div class="modal">
+        <button class="modal-x" onclick="closeM('m-ratings-result')">✕</button>
+        <h2>평가 <em>완료</em></h2>
+        <div id="ratings-result-content" style="text-align:center;padding:10px 0">
+            <div class="star-display" id="result-stars" style="font-size:32px;margin-bottom:8px"></div>
+            <div style="font-size:13px;color:var(--text2)" id="result-desc"></div>
+        </div>
+        <button class="btn btn-p btn-full" style="margin-top:16px" onclick="closeM('m-ratings-result')">확인</button>
+    </div>
+</div>
 <div id="toast-ct"></div>
 
 <script>
@@ -1838,7 +1886,7 @@
 
             applyAuth();
         }
-        loadMyAuctions(); loadMyBids(); loadAlerts();
+        loadMyAuctions(); loadMyBids(); loadAlerts(); loadMyRatings();
     }
 
     async function openMyInfo() {
@@ -1907,6 +1955,56 @@
                     <div><div class="lt">${esc(a.message || a.type)}</div><div class="ls">${fDate(a.createdAt)}</div></div>
                 </div>`).join('');
         } else el.innerHTML = empty('알림이 없습니다.');
+    }
+
+    async function loadMyRatings() {
+        const r = await api('GET', '/api/users/me/ratings');
+        if (r.ok && r.d?.data) {
+            const score = r.d.data.ratings || 0;
+            const rounded = Math.round(score * 10) / 10;
+            document.getElementById('my-ratings').textContent = rounded.toFixed(1);
+            document.getElementById('my-ratings-stars').textContent = scoreToStars(score);
+        }
+    }
+
+    let selectedScore = 0;
+
+    function selectStar(n) {
+        selectedScore = n;
+        const stars = document.querySelectorAll('#star-input span');
+        stars.forEach((s, i) => s.classList.toggle('on', i < n));
+    }
+
+    function scoreToStars(score) {
+        const full  = Math.round(score);
+        const empty = 5 - full;
+        return '★'.repeat(full) + '☆'.repeat(empty);
+    }
+
+    async function giveRatings() {
+        if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        const sellerId = Number(document.getElementById('rt-seller-id').value);
+        if (!sellerId) { toast('셀러 유저 ID를 입력하세요.', 'er'); return; }
+        if (!selectedScore) { toast('점수를 선택하세요.', 'er'); return; }
+
+        const r = await api('POST', `/api/users/${sellerId}/ratings`, { score: selectedScore });
+        if (r.ok && r.d?.data) {
+            document.getElementById('result-stars').textContent = scoreToStars(selectedScore);
+            document.getElementById('result-desc').textContent =
+                `셀러 #${sellerId}에게 ${selectedScore}점을 주었습니다.`;
+            closeM('m-ratings-result');
+            openM('m-ratings-result');
+
+            // 입력 초기화
+            document.getElementById('rt-seller-id').value = '';
+            selectedScore = 0;
+            document.querySelectorAll('#star-input span').forEach(s => s.classList.remove('on'));
+
+            // 내 평점도 갱신
+            loadMyRatings();
+        } else {
+            toast(r.d?.message || '평가 실패', 'er');
+        }
     }
 
     async function changeNick() {
