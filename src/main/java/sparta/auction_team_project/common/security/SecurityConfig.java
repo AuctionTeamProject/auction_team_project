@@ -43,6 +43,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/login/oauth2/**", "/oauth2/**").permitAll()
                         .requestMatchers("/ws/**", "/sub/**", "/pub/**").permitAll()
                         .requestMatchers("/auction_frontend.html", "/").permitAll()  // 프론트 접속
+
+                        // 목록 조회 검색 테스트용 (데이터 넣고 테스트할때만 주석풀기!)
+//                        .requestMatchers("/api/auctions/**").permitAll()
+
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
