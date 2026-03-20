@@ -86,6 +86,7 @@ public class AlertService {
     /**
      * 알림 생성 + WebSocket 전송
      */
+    @Transactional
     public void createAndSend(Long targetId, Long userId, AlertType type){
 
         String key = "alert:" + targetId + ":" + userId + ":" + type;

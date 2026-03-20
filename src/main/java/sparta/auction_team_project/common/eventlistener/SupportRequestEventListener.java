@@ -6,10 +6,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import sparta.auction_team_project.common.dto.AuctionEndedEvent;
 import sparta.auction_team_project.common.dto.SupportRequestEvent;
 import sparta.auction_team_project.domain.alert.service.AlertService;
-import sparta.auction_team_project.domain.chatroom.service.ChatRoomService;
 
 @Component
 @RequiredArgsConstructor

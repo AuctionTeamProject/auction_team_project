@@ -14,6 +14,7 @@ import sparta.auction_team_project.domain.user.entity.User;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -37,7 +38,10 @@ public class ChatStompEventListener {
 
         Long roomId = Long.parseLong(destination.split("/")[3]);
 
-        accessor.getSessionAttributes().put("roomId", roomId);
+        Map<String, Object> attrs = accessor.getSessionAttributes();
+        if (attrs != null) {
+            attrs.put("roomId", roomId);
+        }
 
         Principal principal = accessor.getUser();
         if (principal == null) return;

@@ -1,5 +1,6 @@
 package sparta.auction_team_project.domain.user.service;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,8 @@ import sparta.auction_team_project.domain.memberShip.entity.Membership;
 import sparta.auction_team_project.domain.memberShip.repository.MembershipRepository;
 import sparta.auction_team_project.domain.user.dto.request.UserChangeNicknameRequest;
 import sparta.auction_team_project.domain.user.dto.request.UserChangePasswordRequest;
-import sparta.auction_team_project.domain.user.dto.response.UserAuctionListResponse;
-import sparta.auction_team_project.domain.user.dto.response.MembershipResponse;
-import sparta.auction_team_project.domain.user.dto.response.UserBidListResponse;
-import sparta.auction_team_project.domain.user.dto.response.UserGetResponse;
+import sparta.auction_team_project.domain.user.dto.request.UserGiveRatingsRequest;
+import sparta.auction_team_project.domain.user.dto.response.*;
 import sparta.auction_team_project.domain.user.entity.User;
 import sparta.auction_team_project.domain.user.repository.UserRepository;
 
@@ -86,4 +85,5 @@ public class UserService {
         return bidRepository.findAllByUserIdOrderByCreatedAtDesc(authUser.getId())
                 .stream().map(UserBidListResponse::from).collect(Collectors.toList());
     }
+
 }

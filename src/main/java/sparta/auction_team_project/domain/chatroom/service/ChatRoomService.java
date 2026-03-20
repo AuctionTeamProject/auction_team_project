@@ -9,7 +9,6 @@ import sparta.auction_team_project.common.dto.ChatRoomClosedEvent;
 import sparta.auction_team_project.common.dto.SupportRequestEvent;
 import sparta.auction_team_project.common.exception.ErrorEnum;
 import sparta.auction_team_project.common.exception.ServiceErrorException;
-import sparta.auction_team_project.common.redis.ChatRedisPublisher;
 import sparta.auction_team_project.common.redis.RedisLock;
 import sparta.auction_team_project.domain.chat.repository.ChatRepository;
 import sparta.auction_team_project.domain.chatroom.dto.request.ChatRoomRequest;
@@ -25,10 +24,9 @@ import java.util.List;
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final ApplicationEventPublisher publisher;
-    private final ChatRedisPublisher chatRedisPublisher;
     private final ChatRepository chatRepository;
 
-    @RedisLock(prefix = "chatroom-create", key = "#userId", timeout = 5)
+    @RedisLock(prefix = "chatroom-create", key = "#userId")
     @Transactional
     public ChatRoomResponse save(Long userId, ChatRoomRequest request) {
         ChatRoom chatRoom = new ChatRoom(userId, request.getName());
