@@ -12,6 +12,7 @@ import sparta.auction_team_project.domain.auction.entity.Auction;
 import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
 import sparta.auction_team_project.domain.auction.repository.AuctionRepository;
 import sparta.auction_team_project.domain.bid.dto.request.BidRequest;
+import sparta.auction_team_project.domain.bid.dto.response.BidResponse;
 import sparta.auction_team_project.domain.bid.entity.Bid;
 import sparta.auction_team_project.domain.bid.entity.BidStatus;
 import sparta.auction_team_project.domain.bid.repository.BidRepository;
@@ -34,25 +35,6 @@ import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * 락 방식별 동시성 성능 비교 테스트
- *
- * [테스트 대상 락 방식]
- *   1. Lettuce SETNX  - 즉시 실패 분산 락 (현재 운영)
- *   2. 비관적 락       - MySQL SELECT ... FOR UPDATE
- *   3. 낙관적 락       - JPA @Version + 재시도
- *   4. Redisson       - pub/sub 분산 락 (의존성 추가 필요)
- *
- * [공통 측정 지표]
- *   - 총 소요시간 (ms)
- *   - TPS (성공 건수 / 총 시간)
- *   - 성공 / 실패 건수
- *   - 평균 / 최소 / 최대 응답시간 (ms)
- *   - 정확성: SUCCEEDED Bid 는 반드시 1개
- *
- * [실행 방법]
- *   ./gradlew test --tests "*.LockConcurrencyComparisonTest"
- */
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DisplayName("락 방식별 동시성 성능 비교 테스트")
@@ -72,10 +54,7 @@ class LockConcurrencyComparisonTest {
     // 결과 누적 (전체 실행 후 비교표 출력용)
     private static final List<PerfResult> allResults = new ArrayList<>();
 
-    // ══════════════════════════════════════════════════════════════
-    // TC-1: Lettuce SETNX
-    // ══════════════════════════════════════════════════════════════
-
+    //Lettuce
     @Test
     @Order(1)
     @DisplayName("[1] Lettuce SETNX - 즉시 실패 분산 락")
@@ -105,10 +84,7 @@ class LockConcurrencyComparisonTest {
         cleanup(users, auctionId);
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // TC-2: 비관적 락 (MySQL FOR UPDATE)
-    // ══════════════════════════════════════════════════════════════
-
+    //비관적 락
     @Test
     @Order(2)
     @DisplayName("[2] 비관적 락 - MySQL SELECT FOR UPDATE")
@@ -135,11 +111,7 @@ class LockConcurrencyComparisonTest {
         cleanup(users, auctionId);
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // TC-3: 낙관적 락 (JPA @Version)
-    // Auction 엔티티 @Version 주석 해제 + ALTER TABLE 필요
-    // ══════════════════════════════════════════════════════════════
-
+    //낙관적 락
     @Test
     @Order(3)
     @DisplayName("[3] 낙관적 락 - JPA @Version + 재시도")
@@ -166,12 +138,7 @@ class LockConcurrencyComparisonTest {
         cleanup(users, auctionId);
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // TC-4: Redisson
-    // build.gradle: implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
-    // ══════════════════════════════════════════════════════════════
-
-    // Redisson 의존성 추가 후 아래 메서드를 true → false 로 변경하면 테스트 활성화
+    //Redisson
     static boolean isRedissonDisabled() { return false; }
 
     @Test
@@ -235,21 +202,10 @@ class LockConcurrencyComparisonTest {
         allResults.stream()
                 .min((a, b) -> Long.compare(a.totalElapsedMs, b.totalElapsedMs))
                 .ifPresent(best ->
-                        System.out.printf("  ✅ 가장 빠른 락: %s (%dms)%n%n", best.lockType, best.totalElapsedMs));
+                        System.out.printf("가장 빠른 락: %s (%dms)%n%n", best.lockType, best.totalElapsedMs));
     }
 
-    // ══════════════════════════════════════════════════════════════
     // 핵심 측정 엔진
-    // ══════════════════════════════════════════════════════════════
-
-    /**
-     * N명 동시 입찰 실행 + 성능 지표 수집
-     *
-     * @param lockType  락 방식 이름 (출력용)
-     * @param users     입찰 참여 유저 목록
-     * @param auctionId 테스트 경매 ID
-     * @param bidFn     (AuthUser, auctionId) → BidResponse 호출 람다
-     */
     private PerfResult runConcurrentBid(
             String lockType,
             List<AuthUser> users,
@@ -318,10 +274,7 @@ class LockConcurrencyComparisonTest {
         return new PerfResult(lockType, totalElapsed, tps, success, fail, avg, min, max);
     }
 
-    // ══════════════════════════════════════════════════════════════
     // 결과 출력
-    // ══════════════════════════════════════════════════════════════
-
     private void printResult(PerfResult r) {
         System.out.println("\n┌─────────────────────────────────────────────┐");
         System.out.printf( "│  락 방식   : %-31s│%n", r.lockType);
@@ -337,11 +290,8 @@ class LockConcurrencyComparisonTest {
         System.out.println("└─────────────────────────────────────────────┘");
     }
 
-    // ══════════════════════════════════════════════════════════════
     // 헬퍼
-    // ══════════════════════════════════════════════════════════════
-
-    /** 테스트용 유저 N명 생성 + Redis 잔액 세팅 */
+    // 테스트용 유저 N명 생성 + Redis 잔액 세팅
     private List<AuthUser> createUsers(String prefix, int count) {
         List<AuthUser> users = new ArrayList<>();
         for (int i = 0; i < count; i++) {
@@ -355,7 +305,7 @@ class LockConcurrencyComparisonTest {
         return users;
     }
 
-    /** 테스트 후 Redis 잔액 키 정리 */
+    // 테스트 후 Redis 잔액 키 정리
     private void cleanup(List<AuthUser> users, Long auctionId) {
         users.forEach(u -> redisTemplate.delete("user:point:" + u.getId()));
         redisTemplate.delete("auction:topBid:" + auctionId);
@@ -413,10 +363,7 @@ class LockConcurrencyComparisonTest {
         } catch (IllegalAccessException e) { throw new RuntimeException(e); }
     }
 
-    // ══════════════════════════════════════════════════════════════
     // 결과 레코드
-    // ══════════════════════════════════════════════════════════════
-
     record PerfResult(
             String lockType,
             long   totalElapsedMs,
