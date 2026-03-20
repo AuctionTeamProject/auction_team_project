@@ -58,6 +58,17 @@ public class BidController {
                 .body(BaseResponse.success(String.valueOf(HttpStatus.CREATED.value()), "[낙관적 락] 입찰이 완료되었습니다.", data));
     }
 
+    //Redisson
+    @PostMapping("/{auctionId}/lock/redisson")
+    public ResponseEntity<BaseResponse<BidResponse>> placeBidRedisson(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long auctionId,
+            @Valid @RequestBody BidRequest request
+    ) {
+        BidResponse data = bidService.placeBidRedisson(authUser, auctionId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.success(String.valueOf(HttpStatus.CREATED.value()), "[Redisson] 입찰이 완료되었습니다.", data));
+    }
 
     //자동 입찰
     @PostMapping("/{auctionId}/auto")

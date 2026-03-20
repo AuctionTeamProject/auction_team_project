@@ -188,6 +188,35 @@ public class BidService {
                 : BidResponse.of(bid, getNickname(userId));
     }
 
+    //Redisson - pub/sub 기반 분산 락
+    //Redisson 락 활성화
+    public BidResponse placeBidRedisson(AuthUser authUser, Long auctionId, BidRequest request) {
+        // Lettuce SETNX 와 달리 pub/sub 으로 락 해제 이벤트를 받아 waitTime 내 재시도
+        // waitTime=3s: 최대 3초 대기, leaseTime=5s: 락 자동 해제 TTL
+        org.redisson.api.RLock lock = redissonClient.getLock("lock:bid:" + auctionId);
+        boolean locked;
+        try {
+            locked = lock.tryLock(3, 5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceErrorException(ErrorEnum.ERR_CONCURRENCY_OCCURRED);
+        }
+        if (!locked) {
+            log.warn("[Redisson] 락 획득 실패 auctionId={}", auctionId);
+            throw new ServiceErrorException(ErrorEnum.ERR_CONCURRENCY_OCCURRED);
+        }
+        log.info("[Redisson] 락 획득 성공 auctionId={}", auctionId);
+        try {
+            return processBid(authUser.getId(), auctionId, request.getPrice());
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                log.info("[Redisson] 락 해제 auctionId={}", auctionId);
+            }
+        }
+    }
+
+
     // 자동 입찰
     // 동시 자동입찰 요청 시 락을 먼저 잡은 1명만 실행
     // 나머지는 AOP에서 즉시 ERR_BID_CONCURRENCY 반환
