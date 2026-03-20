@@ -22,7 +22,7 @@ public class BidController {
 
     private final BidService bidService;
 
-    //수동 입찰
+    //수동 입찰 (Lettuce)
     @PostMapping("/{auctionId}")
     public ResponseEntity<BaseResponse<BidResponse>> placeBid(
             @AuthenticationPrincipal AuthUser authUser,
@@ -32,6 +32,18 @@ public class BidController {
         BidResponse data = bidService.placeBid(authUser, auctionId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(BaseResponse.success(String.valueOf(HttpStatus.CREATED.value()), "입찰이 완료되었습니다.", data));
+    }
+
+    //비관적 락
+    @PostMapping("/{auctionId}/lock/pessimistic")
+    public ResponseEntity<BaseResponse<BidResponse>> placeBidPessimistic(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long auctionId,
+            @Valid @RequestBody BidRequest request
+    ) {
+        BidResponse data = bidService.placeBidPessimistic(authUser, auctionId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.success(String.valueOf(HttpStatus.CREATED.value()), "[비관적 락] 입찰이 완료되었습니다.", data));
     }
 
     //자동 입찰
