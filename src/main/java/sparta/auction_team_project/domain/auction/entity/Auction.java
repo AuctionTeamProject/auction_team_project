@@ -73,6 +73,12 @@ public class Auction extends BaseEntity {
     @Column(name = "notifiedEndSoon", nullable = false)
     private boolean notifiedEndSoon = false;
 
+    // 낙관적 락 버전
+    // ddl-auto: create-drop이 아니라면 DB에 생성해야함 -> ALTER TABLE auctions ADD COLUMN version BIGINT DEFAULT 0
+    @Version
+    private Long version;
+
+
     // 경매 상품 등록
     public static Auction createAuction(
             Long sellerId,
@@ -154,5 +160,11 @@ public class Auction extends BaseEntity {
 
     public void markEndSoonNotified() {
         this.notifiedEndSoon = true;
+    }
+
+    // 낙관적 락 충돌 감지용 더미 업데이트
+    // @Version 충돌 감지용
+    public void touchVersion() {
+        this.viewCount = this.viewCount + 1L;
     }
 }

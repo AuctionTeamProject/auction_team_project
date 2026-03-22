@@ -2,7 +2,9 @@ package sparta.auction_team_project.domain.auction.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +15,7 @@ import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomAuctionRepository {
 
@@ -107,5 +110,11 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, CustomA
         AND a.endAt <= :now
     """)
     List<Auction> findActiveAuctionsToClose(LocalDateTime now);
+
+
+    // 비관적 락
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM Auction a WHERE a.id = :id")
+    Optional<Auction> findByIdWithPessimisticLock(@Param("id") Long id);
 
 }
