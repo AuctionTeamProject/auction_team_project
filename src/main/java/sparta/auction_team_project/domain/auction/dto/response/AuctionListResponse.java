@@ -2,12 +2,14 @@ package sparta.auction_team_project.domain.auction.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import sparta.auction_team_project.domain.auction.entity.AuctionCategory;
 import sparta.auction_team_project.domain.auction.entity.AuctionStatus;
 
 import java.time.LocalDateTime;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class AuctionListResponse {
 

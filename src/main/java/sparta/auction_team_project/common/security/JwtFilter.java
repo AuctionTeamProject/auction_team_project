@@ -35,6 +35,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (url.startsWith("/api/auth/login") || url.startsWith("/api/auth/signup")
                 || url.startsWith("/api/auth/refresh") || url.startsWith("/ws")
+//                || url.startsWith("/api/auctions") // 목록조회 테스트시 주석 해제
                 || url.startsWith("/auction_frontend.html")) {  // 프론트 접속
             chain.doFilter(request, response);
             return;
