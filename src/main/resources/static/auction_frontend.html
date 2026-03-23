@@ -1189,16 +1189,18 @@
         const blindedBids = bids.filter(b =>  blindCutoff && new Date(b.createdAt) >= blindCutoff);
 
         const normalHtml = normalBids.map(b => `
-        <div class="bid-row">
-            <div>
-                <div class="bp">${Number(b.price).toLocaleString()}원</div>
-                <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+    <div class="bid-row">
+        <div>
+            <div class="bp">
+                ${b.price ? Number(b.price).toLocaleString() + '원' : '비공개'}
             </div>
-            <div style="display:flex;align-items:center;gap:8px">
-                ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
-                <div class="bt">${fDate(b.createdAt)}</div>
-            </div>
-        </div>`).join('');
+            <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
+            <div class="bt">${fDate(b.createdAt)}</div>
+        </div>
+    </div>`).join('');
 
         const divider = blindedBids.length ? `
         <div style="display:flex;align-items:center;gap:8px;padding:8px 16px">
@@ -1219,9 +1221,7 @@
             </div>
         </div>`).join('');
 
-        el.innerHTML = normalHtml + divider + blindedHtml;
-    }
-
+        el.innerHTML = blindedHtml + divider + normalHtml;    }
     // ── BID ──
     function openBidModal(id, sp, mb) {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
