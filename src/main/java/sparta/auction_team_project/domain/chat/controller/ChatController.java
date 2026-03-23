@@ -2,6 +2,7 @@ package sparta.auction_team_project.domain.chat.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import sparta.auction_team_project.domain.user.entity.User;
 
 import java.security.Principal;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -38,6 +40,11 @@ public class ChatController {
                 chatResponse.getCreatedAt()
         );
 
-        chatRedisPublisher.publish(redisChat.getRoomId(), redisChat);
+        try {
+            chatRedisPublisher.publish(redisChat.getRoomId(), redisChat);
+        } catch (Exception e) {
+            log.error("Redis publish 실패 - roomId: {}, messageId: {}",
+                    chatResponse.getRoomId(), chatResponse.getId());
+        }
     }
 }

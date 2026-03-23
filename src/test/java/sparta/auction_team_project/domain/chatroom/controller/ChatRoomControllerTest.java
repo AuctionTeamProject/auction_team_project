@@ -19,10 +19,10 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -102,6 +102,29 @@ class ChatRoomControllerTest {
                         )))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void 채팅방_삭제_성공() throws Exception {
+        // given
+        AuthUser authUser = new AuthUser(1L, "test@test.com", UserRole.ROLE_USER);
+
+        willDoNothing()
+                .given(chatRoomService)
+                .deleteRoom(1L, 1L, UserRole.ROLE_USER);
+
+        // when & then
+        mockMvc.perform(delete("/api/chat/rooms/{roomId}", 1L)
+                        .with(csrf())
+                        .with(authentication(
+                                new UsernamePasswordAuthenticationToken(
+                                        authUser,
+                                        null,
+                                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                )
+                        )))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
 }

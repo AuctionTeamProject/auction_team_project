@@ -1348,7 +1348,7 @@
 
             // 오래된 메시지를 맨 위에 삽입
             const fragment = document.createDocumentFragment();
-            r.d.forEach(m => {
+            r.d.reverse().forEach(m => {
                 const isMine = myNickname && m.userName === myNickname;
                 const div = document.createElement('div');
                 div.className = 'cmsg' + (isMine ? ' mine' : '');
@@ -1363,7 +1363,7 @@
             msgs.scrollTop = msgs.scrollHeight - prevHeight;
 
             // cursor 갱신 — 새로 불러온 것 중 가장 오래된 id
-            window._chatCursor = r.d[0].id;
+            window._chatCursor = r.d[r.d.length - 1].id;
             window._chatHasMore = r.d.length >= 50;
 
             // 더 이상 없으면 안내 표시
@@ -1437,9 +1437,9 @@
 
         if (r.ok && Array.isArray(r.d) && r.d.length) {
             // 가장 오래된 메시지의 id를 cursor로 저장
-            window._chatCursor = r.d[0].id;
+            window._chatCursor = r.d[r.d.length - 1].id;
             window._chatHasMore = r.d.length >= 50;
-            r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
+            r.d.reverse().forEach(m => appendMsg(m.userName, m.message, m.createdAt));
         } else {
             window._chatCursor = null;
             window._chatHasMore = false;
