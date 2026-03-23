@@ -13,7 +13,12 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "auctions")
+@Table(
+        name = "auctions",
+        indexes = {
+                @Index(name = "idx_auction_start", columnList = "start_at DESC, id DESC")
+        }
+)
 public class Auction extends BaseEntity {
 
     @Id

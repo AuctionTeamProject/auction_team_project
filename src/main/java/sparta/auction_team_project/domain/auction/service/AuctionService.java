@@ -237,7 +237,7 @@ public class AuctionService {
                     "(#category == null ? 'all' : #category) + '-' + " +
                     "(#status == null ? 'all' : #status) + '-' + " +
                     "#pageable.pageNumber + '-' + #pageable.pageSize"
-    )
+    ) // 인덱싱 테스트할때 주석처리하기!
     public PageResponse<AuctionListResponse> searchAuctionsV2(
             String keyword,
             AuctionCategory category,

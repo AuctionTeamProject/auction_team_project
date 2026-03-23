@@ -16,7 +16,7 @@ public class DummyController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dummy")
     public String insertDummy() {
-        auctionDummyService.insertDummyData(100000);
+        auctionDummyService.insertDummyData(500000);
         return "OK";
     }
 }
