@@ -1,0 +1,21 @@
+import http from 'k6/http';
+import { sleep } from 'k6';
+
+export const options = {
+    stages: [
+        { duration: '30s', target: 50 },
+        { duration: '30s', target: 100 },
+        { duration: '30s', target: 200 },
+        { duration: '30s', target: 300 },
+        { duration: '30s', target: 400 },
+        { duration: '30s', target: 0 },
+    ],
+};
+
+export default function () {
+    const res = http.get('http://localhost:8080/api/auctions/v1');
+
+    // console.log(res.status);
+
+    // sleep(1);do
+}

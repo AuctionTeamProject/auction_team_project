@@ -39,6 +39,7 @@ public class AuctionService {
     private final RedisViewService redisViewService;
 
     // 경매 상품 등록
+    @CacheEvict(value = "auctionSearch", allEntries = true)
     @Transactional
     public AuctionCreateResponse createAuction(String email, AuctionCreateRequest request) {
         User user = userRepository.findByEmail(email)
@@ -91,6 +92,7 @@ public class AuctionService {
 
 
     // 경매 수정
+    @CacheEvict(value = "auctionSearch", allEntries = true)
     @Transactional
     public AuctionUpdateResponse updateAuction(Long auctionId, String email, AuctionUpdateRequest request) {
         // 유저 조회
@@ -140,6 +142,7 @@ public class AuctionService {
     }
 
     // 경매 삭제
+    @CacheEvict(value = "auctionSearch", allEntries = true)
     @Transactional
     public AuctionDeleteResponse deleteAuction(Long auctionId, String email) {
 
@@ -230,7 +233,10 @@ public class AuctionService {
     @Transactional(readOnly = true)
     @Cacheable(
             value = "auctionSearch",
-            key = "'auction:' + #keyword + '-' + #category + '-' + #status + '-' + #pageable.pageNumber"
+            key = "(#keyword == null ? 'none' : #keyword) + '-' + " +
+                    "(#category == null ? 'all' : #category) + '-' + " +
+                    "(#status == null ? 'all' : #status) + '-' + " +
+                    "#pageable.pageNumber + '-' + #pageable.pageSize"
     )
     public PageResponse<AuctionListResponse> searchAuctionsV2(
             String keyword,
