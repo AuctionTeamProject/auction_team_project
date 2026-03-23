@@ -207,7 +207,7 @@ class EventServiceTest {
             then(valueOperations).should(times(1)).get(cacheKey);
             then(eventRepository).should(times(1)).findAll(any(Pageable.class));
             then(valueOperations).should(times(1))
-                    .set(eq(cacheKey), any(EventGetResponse.class), eq(Duration.ofMinutes(5)));
+                    .set(eq(cacheKey), any(EventGetResponse.class), eq(Duration.ofMinutes(1)));
         }
 
         @Test
