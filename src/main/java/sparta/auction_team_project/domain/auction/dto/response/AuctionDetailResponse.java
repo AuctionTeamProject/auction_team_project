@@ -24,4 +24,6 @@ public class AuctionDetailResponse {
     private Long viewCount;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
+    private Long finalPrice;
+    private Long winnerId;
 }

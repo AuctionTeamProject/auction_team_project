@@ -1102,10 +1102,9 @@
 
         // ── DONE 상태: 낙찰가 + 낙찰자만 표시 ──
         if (a.status === 'DONE') {
+            const finalPrice = a.finalPrice;  // 백엔드에서 직접 받아옴
             const bids = rb.ok && rb.d?.data ? rb.d.data : [];
             const winBid = bids.find(b => b.status === 'SUCCEEDED');
-            const finalPrice = winBid?.price
-                ?? (bids.filter(b => b.status === 'FAILED').sort((x,y) => (y.price||0) - (x.price||0))[0]?.price || null);
             dc.innerHTML = `
 <div class="detail-img">${img}</div>
 <div class="detail-info">
