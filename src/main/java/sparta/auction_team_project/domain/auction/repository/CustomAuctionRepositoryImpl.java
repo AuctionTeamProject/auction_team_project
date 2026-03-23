@@ -95,6 +95,7 @@ public class CustomAuctionRepositoryImpl implements CustomAuctionRepository {
                 .from(auction)
                 .join(user).on(auction.sellerId.eq(user.id))
                 .where(keywordCond, categoryCond, statusCond)
+                .orderBy(auction.startAt.desc(), auction.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
