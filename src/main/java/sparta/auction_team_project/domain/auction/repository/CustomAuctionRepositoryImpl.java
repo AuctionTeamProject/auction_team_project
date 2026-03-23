@@ -44,7 +44,9 @@ public class CustomAuctionRepositoryImpl implements CustomAuctionRepository {
                         auction.minimumBid,
                         auction.viewCount,
                         auction.startAt,
-                        auction.endAt
+                        auction.endAt,
+                        auction.finalPrice,
+                        auction.winnerId
                 ))
                 .from(auction)
                 .join(user).on(auction.sellerId.eq(user.id))

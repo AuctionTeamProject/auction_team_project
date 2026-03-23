@@ -112,7 +112,7 @@
         .meta-card .ml { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
         .meta-card .mv { font-size: 13px; font-weight: 600; }
         .bid-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .bid-block-hd { padding: 12px 16px; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .bid-block #bid-body { max-height: 420px; overflow-y: auto; }        .bid-block-hd { padding: 12px 16px; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
         .bid-row { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .bid-row:last-child { border-bottom: none; }
         .bid-row .bp { font-family: 'Bebas Neue'; font-size: 18px; color: var(--accent); }
@@ -932,7 +932,7 @@
         else if (p === 'chat')     loadChatPage();
         else if (p === 'mypage')   loadMypage();
         else if (p === 'event')    loadEventPage(1);
-        else if (p === 'register' && !token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
+        else if (!token && p === 'register') { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
     }
     function goBack() { goPage(prevPage || 'home'); }
 
@@ -993,6 +993,7 @@
 
     // ── HOME ──
     async function loadHome() {
+        if (!token) { openM('m-login'); return; }
         const r5 = await api('GET', '/api/auctions/top5');
         const g5 = document.getElementById('g-top5');
         if (r5.ok && r5.d?.data?.length) {
@@ -1008,6 +1009,7 @@
 
     // ── AUCTION LIST ──
     async function loadAuctions(page) {
+        if (!token) { openM('m-login'); return; }
         // PENDING 옵션 — 어드민 또는 본인 등록 경매가 있는 판매자만 표시
         const stSelect = document.getElementById('s-st');
         const hasPending = stSelect.querySelector('option[value="PENDING"]');
@@ -1102,10 +1104,9 @@
 
         // ── DONE 상태: 낙찰가 + 낙찰자만 표시 ──
         if (a.status === 'DONE') {
+            const finalPrice = a.finalPrice;  // 백엔드에서 직접 받아옴
             const bids = rb.ok && rb.d?.data ? rb.d.data : [];
             const winBid = bids.find(b => b.status === 'SUCCEEDED');
-            const finalPrice = winBid?.price
-                ?? (bids.filter(b => b.status === 'FAILED').sort((x,y) => (y.price||0) - (x.price||0))[0]?.price || null);
             dc.innerHTML = `
 <div class="detail-img">${img}</div>
 <div class="detail-info">
@@ -1190,16 +1191,18 @@
         const blindedBids = bids.filter(b =>  blindCutoff && new Date(b.createdAt) >= blindCutoff);
 
         const normalHtml = normalBids.map(b => `
-        <div class="bid-row">
-            <div>
-                <div class="bp">${Number(b.price).toLocaleString()}원</div>
-                <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+    <div class="bid-row">
+        <div>
+            <div class="bp">
+                ${b.price ? Number(b.price).toLocaleString() + '원' : '비공개'}
             </div>
-            <div style="display:flex;align-items:center;gap:8px">
-                ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
-                <div class="bt">${fDate(b.createdAt)}</div>
-            </div>
-        </div>`).join('');
+            <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
+            <div class="bt">${fDate(b.createdAt)}</div>
+        </div>
+    </div>`).join('');
 
         const divider = blindedBids.length ? `
         <div style="display:flex;align-items:center;gap:8px;padding:8px 16px">
@@ -1220,9 +1223,7 @@
             </div>
         </div>`).join('');
 
-        el.innerHTML = normalHtml + divider + blindedHtml;
-    }
-
+        el.innerHTML = blindedHtml + divider + normalHtml;    }
     // ── BID ──
     function openBidModal(id, sp, mb) {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
@@ -1348,7 +1349,7 @@
 
             // 오래된 메시지를 맨 위에 삽입
             const fragment = document.createDocumentFragment();
-            r.d.forEach(m => {
+            r.d.reverse().forEach(m => {
                 const isMine = myNickname && m.userName === myNickname;
                 const div = document.createElement('div');
                 div.className = 'cmsg' + (isMine ? ' mine' : '');
@@ -1363,7 +1364,7 @@
             msgs.scrollTop = msgs.scrollHeight - prevHeight;
 
             // cursor 갱신 — 새로 불러온 것 중 가장 오래된 id
-            window._chatCursor = r.d[0].id;
+            window._chatCursor = r.d[r.d.length - 1].id;
             window._chatHasMore = r.d.length >= 50;
 
             // 더 이상 없으면 안내 표시
@@ -1437,9 +1438,9 @@
 
         if (r.ok && Array.isArray(r.d) && r.d.length) {
             // 가장 오래된 메시지의 id를 cursor로 저장
-            window._chatCursor = r.d[0].id;
+            window._chatCursor = r.d[r.d.length - 1].id;
             window._chatHasMore = r.d.length >= 50;
-            r.d.forEach(m => appendMsg(m.userName, m.message, m.createdAt));
+            r.d.reverse().forEach(m => appendMsg(m.userName, m.message, m.createdAt));
         } else {
             window._chatCursor = null;
             window._chatHasMore = false;
@@ -2114,7 +2115,11 @@
     // ── INIT ──
     applyAuth();
     handleOAuth2Callback();
-    loadHome();
+    if (!token) {
+        openM('m-login');
+    } else {
+        loadHome();
+    }
 </script>
 </body>
 </html>
