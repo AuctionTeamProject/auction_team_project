@@ -112,7 +112,7 @@
         .meta-card .ml { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
         .meta-card .mv { font-size: 13px; font-weight: 600; }
         .bid-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .bid-block-hd { padding: 12px 16px; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .bid-block #bid-body { max-height: 420px; overflow-y: auto; }        .bid-block-hd { padding: 12px 16px; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
         .bid-row { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .bid-row:last-child { border-bottom: none; }
         .bid-row .bp { font-family: 'Bebas Neue'; font-size: 18px; color: var(--accent); }
@@ -1102,10 +1102,9 @@
 
         // ── DONE 상태: 낙찰가 + 낙찰자만 표시 ──
         if (a.status === 'DONE') {
+            const finalPrice = a.finalPrice;  // 백엔드에서 직접 받아옴
             const bids = rb.ok && rb.d?.data ? rb.d.data : [];
             const winBid = bids.find(b => b.status === 'SUCCEEDED');
-            const finalPrice = winBid?.price
-                ?? (bids.filter(b => b.status === 'FAILED').sort((x,y) => (y.price||0) - (x.price||0))[0]?.price || null);
             dc.innerHTML = `
 <div class="detail-img">${img}</div>
 <div class="detail-info">
@@ -1190,16 +1189,18 @@
         const blindedBids = bids.filter(b =>  blindCutoff && new Date(b.createdAt) >= blindCutoff);
 
         const normalHtml = normalBids.map(b => `
-        <div class="bid-row">
-            <div>
-                <div class="bp">${Number(b.price).toLocaleString()}원</div>
-                <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+    <div class="bid-row">
+        <div>
+            <div class="bp">
+                ${b.price ? Number(b.price).toLocaleString() + '원' : '비공개'}
             </div>
-            <div style="display:flex;align-items:center;gap:8px">
-                ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
-                <div class="bt">${fDate(b.createdAt)}</div>
-            </div>
-        </div>`).join('');
+            <div class="bt" style="${b.status === 'SUCCEEDED' ? 'color:var(--accent);font-weight:700' : ''}">${b.status}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            ${b.status === 'SUCCEEDED' ? `<span style="background:rgba(240,165,0,0.15);border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px">👑 현재 최고 입찰가</span>` : ''}
+            <div class="bt">${fDate(b.createdAt)}</div>
+        </div>
+    </div>`).join('');
 
         const divider = blindedBids.length ? `
         <div style="display:flex;align-items:center;gap:8px;padding:8px 16px">
@@ -1220,9 +1221,7 @@
             </div>
         </div>`).join('');
 
-        el.innerHTML = normalHtml + divider + blindedHtml;
-    }
-
+        el.innerHTML = blindedHtml + divider + normalHtml;    }
     // ── BID ──
     function openBidModal(id, sp, mb) {
         if (!token) { toast('로그인이 필요합니다.', 'er'); openM('m-login'); return; }
