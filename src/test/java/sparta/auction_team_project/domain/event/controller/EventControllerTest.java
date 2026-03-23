@@ -203,8 +203,7 @@ class EventControllerTest {
                 200,
                 RewardType.MEMBERSHIP,
                 LocalDateTime.of(2026, 3, 20, 10, 0),
-                LocalDateTime.of(2026, 3, 30, 23, 59),
-                EventStatus.OPEN
+                LocalDateTime.of(2026, 3, 30, 23, 59)
         );
 
         Event updatedEvent = createEvent(
@@ -279,8 +278,7 @@ class EventControllerTest {
             Integer totalQuantity,
             RewardType rewardType,
             LocalDateTime startAt,
-            LocalDateTime endAt,
-            EventStatus status
+            LocalDateTime endAt
     ) {
         EventUpdateRequest request = new EventUpdateRequest();
         ReflectionTestUtils.setField(request, "eventName", eventName);
@@ -289,7 +287,6 @@ class EventControllerTest {
         ReflectionTestUtils.setField(request, "rewardType", rewardType);
         ReflectionTestUtils.setField(request, "startAt", startAt);
         ReflectionTestUtils.setField(request, "endAt", endAt);
-        ReflectionTestUtils.setField(request, "status", status);
         return request;
     }
 

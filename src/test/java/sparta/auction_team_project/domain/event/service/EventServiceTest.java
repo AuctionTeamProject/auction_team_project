@@ -37,10 +37,10 @@ class EventServiceTest {
     private static final Long OTHER_ADMIN_ID = 2L;
     private static final Long EVENT_ID = 1L;
 
-    private static final LocalDateTime START_AT = LocalDateTime.of(2026, 3, 12, 10, 0);
-    private static final LocalDateTime END_AT = LocalDateTime.of(2026, 3, 20, 23, 59);
-    private static final LocalDateTime INVALID_START_AT = LocalDateTime.of(2026, 3, 21, 10, 0);
-    private static final LocalDateTime SAME_TIME = LocalDateTime.of(2026, 3, 12, 10, 0);
+    private static final LocalDateTime START_AT = LocalDateTime.now().minusDays(1);
+    private static final LocalDateTime END_AT = LocalDateTime.now().plusDays(1);
+    private static final LocalDateTime INVALID_START_AT = LocalDateTime.now().plusDays(2);
+    private static final LocalDateTime SAME_TIME = LocalDateTime.now().plusDays(1);
 
     @Mock
     private EventRepository eventRepository;
@@ -207,7 +207,7 @@ class EventServiceTest {
             then(valueOperations).should(times(1)).get(cacheKey);
             then(eventRepository).should(times(1)).findAll(any(Pageable.class));
             then(valueOperations).should(times(1))
-                    .set(eq(cacheKey), any(EventGetResponse.class), eq(Duration.ofMinutes(5)));
+                    .set(eq(cacheKey), any(EventGetResponse.class), eq(Duration.ofMinutes(1)));
         }
 
         @Test
@@ -350,8 +350,7 @@ class EventServiceTest {
                     200,
                     RewardType.POINT,
                     LocalDateTime.of(2026, 3, 1, 10, 0),
-                    LocalDateTime.of(2026, 3, 15, 10, 0),
-                    EventStatus.OPEN
+                    LocalDateTime.of(2026, 3, 15, 10, 0)
             );
 
             given(eventRepository.findById(EVENT_ID)).willReturn(Optional.of(event));
@@ -379,8 +378,7 @@ class EventServiceTest {
                     100,
                     RewardType.POINT,
                     LocalDateTime.of(2026, 3, 10, 10, 0),
-                    LocalDateTime.of(2026, 3, 1, 10, 0),
-                    EventStatus.OPEN
+                    LocalDateTime.of(2026, 3, 1, 10, 0)
             );
 
             // when & then
@@ -413,8 +411,7 @@ class EventServiceTest {
                     100,
                     RewardType.POINT,
                     LocalDateTime.of(2026, 3, 1, 10, 0),
-                    LocalDateTime.of(2026, 3, 15, 10, 0),
-                    EventStatus.OPEN
+                    LocalDateTime.of(2026, 3, 15, 10, 0)
             );
 
             given(eventRepository.findById(EVENT_ID)).willReturn(Optional.of(event));
@@ -449,8 +446,7 @@ class EventServiceTest {
                     10,
                     RewardType.POINT,
                     LocalDateTime.of(2026, 3, 1, 10, 0),
-                    LocalDateTime.of(2026, 3, 15, 10, 0),
-                    EventStatus.OPEN
+                    LocalDateTime.of(2026, 3, 15, 10, 0)
             );
 
             given(eventRepository.findById(EVENT_ID)).willReturn(Optional.of(event));
@@ -607,8 +603,7 @@ class EventServiceTest {
             Integer totalQuantity,
             RewardType rewardType,
             LocalDateTime startAt,
-            LocalDateTime endAt,
-            EventStatus status
+            LocalDateTime endAt
     ) {
         EventUpdateRequest request = new EventUpdateRequest();
         ReflectionTestUtils.setField(request, "eventName", eventName);
@@ -617,7 +612,6 @@ class EventServiceTest {
         ReflectionTestUtils.setField(request, "rewardType", rewardType);
         ReflectionTestUtils.setField(request, "startAt", startAt);
         ReflectionTestUtils.setField(request, "endAt", endAt);
-        ReflectionTestUtils.setField(request, "status", status);
         return request;
     }
 
