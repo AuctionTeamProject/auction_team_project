@@ -60,8 +60,8 @@ public class EventService {
 
         EventGetResponse response = EventGetResponse.from(eventPage);
 
-        // 캐시 키와 response로 key, value 저장, ttl 5분으로 설정
-        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(5));
+        // 캐시 키와 response로 key, value 저장, ttl 1분으로 설정
+        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(1));
 
         return response;
     }

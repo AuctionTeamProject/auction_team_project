@@ -51,6 +51,8 @@ public class Event extends BaseEntity {
     private Long adminId;
 
     public static Event from(Long adminId, EventCreateRequest eventCreateRequest) {
+        LocalDateTime now = LocalDateTime.now();
+
         return Event.builder()
                 .eventName(eventCreateRequest.getEventName())
                 .eventDescription(eventCreateRequest.getEventDescription())
@@ -59,7 +61,7 @@ public class Event extends BaseEntity {
                 .rewardType(eventCreateRequest.getRewardType())
                 .startAt(eventCreateRequest.getStartAt())
                 .endAt(eventCreateRequest.getEndAt())
-                .status(EventStatus.OPEN)
+                .status(calculateStatus(eventCreateRequest.getStartAt(), eventCreateRequest.getEndAt(), now))
                 .adminId(adminId)
                 .build();
     }
@@ -71,7 +73,7 @@ public class Event extends BaseEntity {
         this.rewardType = eventUpdateRequest.getRewardType();
         this.startAt = eventUpdateRequest.getStartAt();
         this.endAt = eventUpdateRequest.getEndAt();
-        this.status = eventUpdateRequest.getStatus();
+        this.status = calculateStatus(this.startAt, this.endAt, LocalDateTime.now());
     }
 
     public boolean isClosed() {
@@ -88,5 +90,21 @@ public class Event extends BaseEntity {
 
     public void increaseIssuedQuantity() {
         this.issuedQuantity++;
+    }
+
+    public void changeStatusByTime(LocalDateTime now) {
+        this.status = calculateStatus(this.startAt, this.endAt, now);
+    }
+
+    private static EventStatus calculateStatus(LocalDateTime startAt, LocalDateTime endAt, LocalDateTime now) {
+        if (now.isBefore(startAt)) {
+            return EventStatus.PENDING;
+        }
+
+        if (now.isAfter(endAt) || now.isEqual(endAt)) {
+            return EventStatus.CLOSED;
+        }
+
+        return EventStatus.OPEN;
     }
 }
