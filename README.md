@@ -38,7 +38,7 @@
 |     |         |                         |  |
 | 정인호 | Backend | 이벤트, 쿠폰, 캐싱, Redis Lock | https://github.com/eNoLJ |
 | 유지현 | Backend | 채팅, 알림 |https://github.com/jihyeon1346  |
-|     |         |                         |  |
+| 조현희 | Backend | 유저, 인증 | https://github.com/hhjo96 |
 
 <br>
 
@@ -102,12 +102,13 @@
 - Redis 캐싱을 통한 목록 조회 성능 개선
 
 ### 💎 멤버십 (Membership)
--
+- Enum 기반 멤버십 상태 관리 설계
 
 ### 🔐 인증 / 소셜 로그인 (Auth)
 - JWT 기반 인증 (Access Token + Refresh Token)
-- 소셜 로그인 (Google / Kakao / Naver)
-- 토큰 블랙리스트 처리
+- Spring Security를 통한 인증/인가
+- OAuth2 기반 소셜 로그인 (Google / Kakao / Naver)
+- 토큰 블랙리스트 처리(redis)
 
 <br>
 
@@ -176,7 +177,7 @@
 {
   "success": true,
   "code": "200",
-  "message": "회원가입이 완료되었습니다.",
+  "message": "회원가입 성공",
   "data": {
     "nickname": "홍길동",
     "name": "홍길동",
@@ -203,7 +204,7 @@
 {
   "success": true,
   "code": "200",
-  "message": "로그인이 완료되었습니다.",
+  "message": "로그인 성공",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiJ9..."
   }
@@ -224,7 +225,7 @@ Authorization: Bearer {accessToken}
 {
   "success": true,
   "code": "200",
-  "message": "로그아웃이 완료되었습니다.",
+  "message": "로그아웃 성공",
   "data": null
 }
 ```
@@ -243,7 +244,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "토큰이 재발급되었습니다.",
+  "message": "토큰 갱신 성공",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiJ9..."
   }
@@ -266,7 +267,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "추가 정보가 저장되었습니다.",
+  "message": "추가정보 입력 완료",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
     "nickname": "홍길동",
@@ -293,7 +294,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "추가 정보가 저장되었습니다.",
+  "message": "추가정보 입력 완료",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
     "nickname": "홍길동",
@@ -329,7 +330,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "프로필 조회에 성공했습니다.",
+  "message": "마이페이지 조회 성공",
   "data": {
     "nickname": "홍길동",
     "name": "홍길동",
@@ -362,7 +363,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "닉네임이 변경되었습니다.",
+  "message": "닉네임 변경 성공",
   "data": null
 }
 ```
@@ -384,7 +385,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "비밀번호가 변경되었습니다.",
+  "message": "비밀번호 변경 성공",
   "data": null
 }
 ```
@@ -398,7 +399,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "경매 목록 조회에 성공했습니다.",
+  "message": "내 경매 상품 내역 조회 성공",
   "data": [
     {
       "auctionId": 1,
@@ -422,7 +423,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "입찰 내역 조회에 성공했습니다.",
+  "message": "내 입찰 내역 조회 성공",
   "data": [
     {
       "bidId": 10,
@@ -453,7 +454,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "평점이 등록되었습니다.",
+  "message": "셀러 평점 등록 성공",
   "data": {
     "reviewerId": 2,
     "sellerId": 1,
@@ -471,7 +472,7 @@ refreshToken={refreshToken}
 {
   "success": true,
   "code": "200",
-  "message": "평점 조회에 성공했습니다.",
+  "message": "내 점수 확인 성공",
   "data": {
     "userId": 1,
     "ratings": 4.5
@@ -1333,4 +1334,5 @@ AWS_REGION=
 |------|------|----------|
 | 선착순 쿠폰 발급 시 초과 발급 발생 | 선착순 쿠폰 발급 시 초과 발급 발생 | Redis 분산 락을 적용하여 eventId 기준으로 임계 구역을 설정하고 동시성 제어 |
 | 이벤트 목록 조회 성능 저하 | 동일 데이터 반복 조회로 DB 부하 증가 | Redis Cache-Aside 전략 적용 및 TTL 설정으로 조회 성능 개선 |
+| 소셜 로그인 후 필수값 누락 | 소셜 로그인 제공자별로 정보제공 범위가 다름 | 제공자별 추가 정보 입력 api 분리 |
 | 채팅방 삭제 시 실패하여 롤백되어도 채팅 종료 메세지 나옴 | deleteRoom() 트랜잭션 도중 chatRedisPublisher.publish() 직접 호출. Redis는 트랜잭션 대상이 아니므로 DB가 롤백돼도 이미 나간 메시지는 회수 불가. 삭제 중 race condition으로 다른 사용자가 메시지를 전송하는 문제도 존재 | ChatRoomClosedEvent 도입 + @TransactionalEventListener(AFTER_COMMIT). DB 커밋이 완전히 확정된 이후에만 Redis 메시지 발행. |
