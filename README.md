@@ -39,6 +39,8 @@
 | 정인호 | Backend | 이벤트, 쿠폰, 캐싱, Redis Lock | https://github.com/eNoLJ |
 | 유지현 | Backend | 채팅, 알림 |https://github.com/jihyeon1346  |
 | 조현희 | Backend | 유저, 인증 | https://github.com/hhjo96 |
+| 정은식 | Backend | 경매, 캐싱, 인덱싱 |https://github.com/S1K1DA  |
+
 
 <br>
 
@@ -70,7 +72,254 @@
 ## ✨ 주요 기능
 
 ### 🏷 경매 (Auction)
--
+- 경매 등록 / 수정 / 삭제 (PENDING 상태에서만 가능, 판매자 본인 검증)
+- SELLER 등급 검증, 시작가·최소입찰단위·시작/종료 시간 유효성 검증
+- 관리자 승인 기능 (PENDING → READY)
+- 경매 상세 조회 (QueryDSL + Redis 조회수 실시간 합산)
+- 경매 목록 조회 v1 (기본 JPA) / v2 (QueryDSL + Redis Cache, @Cacheable)
+- 등록·수정·삭제 시 @CacheEvict로 캐시 자동 무효화
+- Redis ZSet 기반 일일 인기 경매 TOP5 조회
+- 조회수 Redis 임시 저장 후 2분마다 DB 동기화 (AuctionViewScheduler)
+- 매일 자정 인기 랭킹 초기화 (AuctionRankingScheduler)
+- 1분마다 READY 경매 자동 시작 / 만료된 ACTIVE 경매 자동 정산 (AuctionScheduler)
+- 시작 10분 전까지 미승인 경매 자동 취소 (Scheduler)
+- k6 + Grafana + InfluxDB를 활용한 v1/v2 성능 부하 테스트 및 수치 검증
+- 인덱스(idx_auction_start) 설계 및 적용으로 응답시간 91.9% 감소
+
+
+<details>
+  
+<summary> 경매 성능 최적화 관련 (Redis Cache & Indexing) </summary>
+
+<details>
+<summary> Redis 캐시 — 왜 검색 API에 Cache를 적용했나</summary>
+
+<br>
+
+### 도입 배경
+
+경매 목록 조회 API(`/api/auctions/v2`)는 서비스에서 **가장 빈번하게 호출되는 API** 중 하나입니다.
+
+매 요청마다 DB에 접근하면 다음과 같은 문제가 발생합니다:
+
+- 동일한 조건(키워드, 카테고리, 상태, 페이지)으로 반복 요청 시 **불필요한 DB 부하 발생**
+- 트래픽이 몰리는 경매 시작 전후 시간대에 **응답 속도 저하** 우려
+- 경매 목록 데이터는 **실시간성이 크게 중요하지 않아** 짧은 TTL의 캐시로 대체 가능
+
+이를 해결하기 위해 **Spring Cache + Redis** 를 활용한 캐싱 전략을 도입했습니다.
+
+---
+
+### 적용 방법
+
+**캐시 저장 — `@Cacheable`**
+```java
+@Cacheable(
+    value = "auctionSearch",
+    key = "(#keyword == null ? 'none' : #keyword) + '-' + " +
+          "(#category == null ? 'all' : #category) + '-' + " +
+          "(#status == null ? 'all' : #status) + '-' + " +
+          "#pageable.pageNumber + '-' + #pageable.pageSize"
+)
+public PageResponse<AuctionListResponse> searchAuctionsV2(...) { ... }
+```
+
+**캐시 무효화 — `@CacheEvict`**
+```java
+// 경매 등록 / 수정 / 삭제 시 캐시 전체 삭제
+@CacheEvict(value = "auctionSearch", allEntries = true)
+public AuctionCreateResponse createAuction(...) { ... }
+```
+
+**캐시 키 설계 전략**
+| 구성 요소 | 예시 | 설명 |
+|-----------|------|------|
+| keyword | `none` or `나이키` | null이면 none으로 처리 |
+| category | `all` or `FASHION` | null이면 전체 |
+| status | `all` or `ACTIVE` | null이면 전체 |
+| pageNumber | `0`, `1` ... | 페이지 번호 |
+| pageSize | `20` | 페이지 크기 |
+
+> 예시 캐시 키: `none-all-ACTIVE-0-20`
+
+</details>
+
+---
+
+<details>
+<summary> Redis 캐시 — 적용 전/후 성능 비교 결과</summary>
+
+<br>
+
+### 테스트 환경
+
+| 항목 | 내용 |
+|------|------|
+| 테스트 도구 | k6 |
+| 더미 데이터 | 10만 건 |
+| VU (가상 유저) | 50명 |
+| 테스트 시간 | 30초 |
+| 대상 API | 경매 목록 조회 (`/api/auctions/v1` vs `/api/auctions/v2`) |
+
+---
+
+### 성능 비교 결과
+
+| 지표 | v1 (JPA) | v2 (QueryDSL + Redis Cache) | 개선율 |
+|------|:--------:|:---------------------------:|:------:|
+| 평균 응답시간 | 65.55 ms | 11.82 ms | **↓ 81.9%** |
+| P50 (중앙값) | 61.57 ms | 4.56 ms | **↓ 92.6%** |
+| P90 | 84.9 ms | 8.43 ms | **↓ 90.1%** |
+| P95 | 99.42 ms | 11.11 ms | **↓ 88.8%** |
+| 처리량 (TPS) | 46.7 /s | 49.3 /s | ↑ 5.6% |
+| 에러율 | 0% | 0% | — |
+
+---
+
+### 테스트 결과 스크린샷
+
+**v1 — 기본 JPA 결과 (k6)**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/dc2237a7-c4d0-4eb3-bcd0-dc77180137f0" />
+
+
+<br>
+
+**v2 — QueryDSL + Redis Cache 결과 (k6)**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/06a344af-1b00-4ae8-9032-7160a0d35378" />
+
+
+---
+
+### 부하 테스트 (VU 최대 400, 3분)
+
+| 지표 | v1 (JPA) | v2 (QueryDSL + Redis Cache) | 개선율 |
+|------|:--------:|:---------------------------:|:------:|
+| 평균 응답시간 | 713 ms | 16 ms | **↓ 97.7%** |
+| P95 | 1.66 s | 35 ms | **↓ 97.9%** |
+| TPS | 270 /s | 10,677 /s | **↑ 39.5배** |
+| 총 처리 건수 | 48,635건 | 1,921,868건 | **↑ 39.5배** |
+
+> v2 고부하 테스트 시 Grafana + InfluxDB가 트래픽을 감당하지 못해 k6 단독으로 측정
+> (캐시 성능이 로컬 모니터링 인프라의 한계를 초과한 것으로 판단)
+
+**v1 — Grafana 대시보드**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/01781131-c851-48fe-b344-58ee86d53842" />
+
+
+<br>
+
+**v2 — k6 터미널 결과 및 Grafana대시보드 (Grafana 측정 불가)**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/f0644190-ba85-4723-bb10-8688c27822f5" />
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/da3848b0-cc04-4598-86bc-6ec6556481ef" />
+
+
+</details>
+
+---
+
+<details>
+<summary> 인덱싱 최적화 — DDL 쿼리 및 설계 근거</summary>
+
+<br>
+
+### 적용 DDL
+
+```sql
+CREATE INDEX idx_auction_start
+ON auctions (start_at DESC, id DESC);
+```
+
+---
+
+### 컬럼 이유
+
+**대상 쿼리**
+```sql
+SELECT a.id, u.nickname, a.product_name, ...
+FROM auctions a
+JOIN users u ON a.seller_id = u.id
+WHERE a.status IN ('READY', 'ACTIVE', 'DONE')
+ORDER BY a.start_at DESC, a.id DESC
+LIMIT 0, 20;
+```
+
+**설계 근거**
+
+| 결정 | 이유 |
+|------|------|
+| `start_at`을 첫 번째 컬럼으로 | `ORDER BY start_at DESC`와 인덱스 순서 일치 → **filesort 제거** |
+| `id`를 두 번째 컬럼으로 | 동일 `start_at` 값이 있을 때 정렬 안정성 보장 + **LIMIT 조기 종료(Early Stop)** 가능 |
+| `status`를 인덱스에서 제외 | 카디널리티가 낮아 (READY/ACTIVE/DONE 대부분 해당) 인덱스 선택도가 낮음 → 효과 없음 |
+| 두 컬럼 모두 `DESC` | 쿼리의 정렬 방향과 완전히 일치시켜 **역방향 스캔 비용 제거** |
+
+</details>
+
+---
+
+<details>
+<summary>인덱싱 최적화 — EXPLAIN 분석 및 전/후 성능 비교</summary>
+
+<br>
+
+### EXPLAIN 실행 계획 비교
+
+| 항목 | 인덱스 적용 전 | 인덱스 적용 후 | 개선 내용 |
+|------|:------------:|:------------:|---------|
+| type | `ALL` | `index` | Full Table Scan → Index Scan |
+| key | `NULL` | `idx_auction_start` | 인덱스 사용 |
+| rows | `497,147` | `20` | 스캔 rows **99.996% 감소** |
+| Extra | `Using where; Using filesort` | `Using where` | **filesort 완전 제거** |
+
+
+### 인덱스 적용 전/후 비교 (k6, VU 최대 150)
+
+**테스트 환경**
+
+| 항목 | 내용 |
+|------|------|
+| 테스트 도구 | k6 + Grafana + InfluxDB |
+| 더미 데이터 | 50만 건 |
+| Stages | 50 → 100 → 150 VU (각 30s) |
+| 대상 API | 경매 목록 조회 |
+
+**결과 비교**
+
+| 지표 | 인덱스 전 | 인덱스 후 | 개선 |
+|------|:--------:|:--------:|:----:|
+| 평균 응답시간 | 3.69 s | 298.78 ms | **↓ 91.9% (약 12.3배 단축)** |
+| 처리량 (TPS) | 16.4 /s | 57.4 /s | **↑ 3.5배 증가** |
+| rows 스캔 | 497,147 | 20 | **↓ 약 24,847배 감소** |
+| filesort | 있음 | 제거 | **정렬 최적화 성공** |
+
+**인덱스 적용 전 — k6 결과**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/1f729066-62ce-43e8-acd2-518cc2666ce2" />
+
+<br>
+
+**인덱스 적용 전 — Grafana 대시보드**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/fb25b462-0dba-4b43-93a5-8bf56be110fc" />
+
+<br>
+
+**인덱스 적용 후 — k6 결과**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/959e477a-9a8b-49de-8585-888d44429f01" />
+
+<br>
+
+**인덱스 적용 후 — Grafana 대시보드**
+
+<img width="450" height="420" alt="image" src="https://github.com/user-attachments/assets/a7ad33f0-c3b8-40f8-8172-2177c84892b6" />
+
+</details>
+</details>
+
 
 ### 💰 입찰 (Bid)
 -
