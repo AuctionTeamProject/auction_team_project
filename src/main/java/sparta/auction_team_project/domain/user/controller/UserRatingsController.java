@@ -34,6 +34,6 @@ public class UserRatingsController {
     public ResponseEntity<BaseResponse<UserGetRatingsResponse>> getMyRatings(
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        return ResponseEntity.ok(BaseResponse.success(String.valueOf(HttpStatus.OK.value()), "셀러 평점 등록 성공", ratingsService.getMyRatings(authUser)));
+        return ResponseEntity.ok(BaseResponse.success(String.valueOf(HttpStatus.OK.value()), "내 점수 확인 성공", ratingsService.getMyRatings(authUser)));
     }
 }
