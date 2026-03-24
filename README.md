@@ -1579,7 +1579,7 @@ LIMIT 0, 20;
 
 <br>
 
-## 🛡️동시성 테스트
+## 🛡️ 동시성 테스트
 
 <details>
 <summary>분산 락(Lettuce, Redisson), 비관적 락, 낙관적 락 테스트 코드 결과 분석</summary>
@@ -1613,6 +1613,8 @@ LIMIT 0, 20;
 
 
 </details>
+
+---
 
 <details>
 <summary>비관적 / 낙관적 / 분산 락 비교 분석 및 선택 근거</summary>
@@ -1682,6 +1684,7 @@ LIMIT 0, 20;
 
 </details>
 
+---
 
 <details>
 <summary>낙관적 락 생각할 것</summary>
